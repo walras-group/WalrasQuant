@@ -11,6 +11,8 @@ import json
 from nexustrader.exchange.kucoin.constants import KucoinAccountType
 from nexustrader.exchange.kucoin.rest_api import KucoinApiClient
 import websocket
+
+
 class KucoinWSClient(WSClient):
     def __init__(
         self,

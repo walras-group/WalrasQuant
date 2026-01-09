@@ -42,12 +42,15 @@ class KucoinOrderManagementSystem(OrderManagementSystem):
         task_manager,
         ws_client: KucoinWSClient | None = None,
     ):
-        # Allow injecting a custom KucoinWSClient; otherwise create a default one.
+        api_client = KucoinApiClient(clock=clock)
+        ws_url = api_client.fetch_ws_url_sync(futures=False, private=False)
+
         _ws_client = ws_client or KucoinWSClient(
             account_type=account_type,
             handler=self._ws_msg_handler,
             task_manager=task_manager,
             clock=clock,
+            custom_url=ws_url,
         )
 
         super().__init__(
@@ -899,11 +902,11 @@ async def _test_create_and_cancel_order_spot(api_key: str, secret: str, passphra
     )
 
     api_client = KucoinApiClient(clock=clock, api_key=api_key, secret=secret)
-    # attach passphrase for signed requests where required
+    
     setattr(api_client, "_passphrase", passphrase)
     setattr(api_client, "_key_version", "2")
 
-    # Minimal market mapping
+    
     symbol = "BTC-USDT"
     class _M: id = symbol
     market = {symbol: _M()}
@@ -967,7 +970,6 @@ async def _test_create_and_cancel_order_ws(api_key: str, secret: str, passphrase
     setattr(api_client, "_passphrase", passphrase)
     setattr(api_client, "_key_version", "2")
 
-    # Minimal market mapping for spot
     symbol = "BTC-USDT"
     class _M: id = symbol
     market = {symbol: _M()}
@@ -987,8 +989,7 @@ async def _test_create_and_cancel_order_ws(api_key: str, secret: str, passphrase
         msgbus=msgbus,
         task_manager=task_manager,
     )
-
-    # Ensure WS-API is connected before sending
+    
     await oms._ws_api_client.connect()
 
     oid = f"ws-spot-{clock.timestamp_ms()}"
@@ -1006,7 +1007,6 @@ async def _test_create_and_cancel_order_ws(api_key: str, secret: str, passphrase
 
     await asyncio.sleep(2)
 
-    # Modify the order (via REST) before canceling
     print("Modifying spot order via REST...")
     mod_res = await oms.modify_order(
         oid=oid,
@@ -1205,7 +1205,6 @@ async def _test_subscribe_spot_book_l2_then_unsubscribe(
         cache=cache,
     )
 
-    # Print a concise L2 summary
     def _on_bookl2(b: BookL2):
         top_bid = b.bids[0].price if b.bids else None
         top_ask = b.asks[0].price if b.asks else None
@@ -1246,20 +1245,20 @@ async def _build_spot_oms_with_public_ws(
     market: Dict[str, Any] = {symbol: _M()}
     market_id: Dict[str, str] = {symbol: symbol}
 
-    ws_url = await api_client.fetch_ws_url(futures=False, private=False)
-    forward_handler = None
+    # ws_url = await api_client.fetch_ws_url(futures=False, private=False)
+    # forward_handler = None
 
-    def _handler(raw: bytes):
-        if forward_handler:
-            forward_handler(raw)
+    # def _handler(raw: bytes):
+    #     if forward_handler:
+    #         forward_handler(raw)
 
-    custom_ws = KucoinWSClient(
-        account_type=KucoinAccountType.SPOT,
-        handler=_handler,
-        task_manager=task_manager,
-        clock=clock,
-        custom_url=ws_url,
-    )
+    # custom_ws = KucoinWSClient(
+    #     account_type=KucoinAccountType.SPOT,
+    #     handler=_handler,
+    #     task_manager=task_manager,
+    #     clock=clock,
+    #     custom_url=ws_url,
+    # )
 
     oms = KucoinOrderManagementSystem(
         account_type=KucoinAccountType.SPOT,
@@ -1270,14 +1269,14 @@ async def _build_spot_oms_with_public_ws(
         registry=registry,
         cache=cache,
         api_client=api_client,
-        ws_client=custom_ws,
+        # ws_client=custom_ws,
         exchange_id=ExchangeType.KUCOIN,
         clock=clock,
         msgbus=msgbus,
         task_manager=task_manager,
     )
 
-    forward_handler = oms._ws_msg_handler
+    # forward_handler = oms._ws_msg_handler
     return oms
 
 async def _test_create_batch_orders_futures_then_cancel_all(
@@ -1328,12 +1327,10 @@ async def _test_create_batch_orders_futures_then_cancel_all(
         task_manager=task_manager,
     )
 
-    # Create batch orders for futures
     print(f"\n{'=' * 60}")
     print("Creating batch futures orders...")
     print(f"{'=' * 60}\n")
 
-    # Build InstrumentId required by BatchOrderSubmit
     inst_id = InstrumentId.from_str(f"{symbol.replace('_', '-')}.KUCOIN")
 
     batch_orders = [
@@ -1381,11 +1378,9 @@ async def _test_create_batch_orders_futures_then_cancel_all(
             f"EID: {order.eid}, Price: {order.price}, Amount: {order.amount}"
         )
 
-    # Wait a bit to let orders settle
     print("\nWaiting 3 seconds before canceling all orders...\n")
     await asyncio.sleep(3)
 
-    # Cancel all orders for the symbol
     print(f"{'=' * 60}")
     print(f"Canceling all orders for {symbol}...")
     print(f"{'=' * 60}\n")
@@ -1417,49 +1412,42 @@ if __name__ == "__main__":
     common_parser.add_argument("--secret", help="KuCoin API secret")
     common_parser.add_argument("--passphrase", help="KuCoin API passphrase")
 
-    # Kline subscribe/unsubscribe (public WS)
     p_kline = subparsers.add_parser(
         "kline",
         help="Subscribe spot kline for 10s then unsubscribe",
         parents=[common_parser],
     )
 
-    # Book L1 subscribe/unsubscribe (public WS)
     p_bookl1 = subparsers.add_parser(
         "bookl1",
         help="Subscribe spot book L1 for 10s then unsubscribe",
         parents=[common_parser],
     )
 
-    # Trade subscribe/unsubscribe (public WS)
     p_trade = subparsers.add_parser(
         "trade",
         help="Subscribe spot trade for 10s then unsubscribe",
         parents=[common_parser],
     )
 
-    # Book L2 subscribe/unsubscribe (public WS)
     p_bookl2 = subparsers.add_parser(
         "bookl2",
         help="Subscribe spot book L2 for 10s then unsubscribe",
         parents=[common_parser],
     )
 
-    # WS order create+cancel (requires credentials)
     p_wsorder = subparsers.add_parser(
         "ws-order",
         help="Create then cancel a spot order via WS API",
         parents=[common_parser],
     )
 
-    # Spot order create+cancel via REST (requires credentials)
     p_spotorder = subparsers.add_parser(
         "spot-order",
         help="Create then cancel a spot order via REST API",
         parents=[common_parser],
     )
 
-    # Batch futures orders create+cancel (requires credentials)
     p_futures_batch = subparsers.add_parser(
         "futures-batch",
         help="Create batch futures orders then cancel all orders",
