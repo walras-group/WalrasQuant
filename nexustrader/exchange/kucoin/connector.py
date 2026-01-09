@@ -51,7 +51,6 @@ class KucoinPublicConnector(PublicConnector):
         msgbus: MessageBus,
         clock: LiveClock,
         task_manager: TaskManager,
-        custom_url: str | None = None,
         enable_rate_limit: bool = True,
         handler = None,
     ):
@@ -61,26 +60,18 @@ class KucoinPublicConnector(PublicConnector):
             )
         
         api_client = KucoinApiClient(clock=clock, enable_rate_limit=enable_rate_limit)
-
-        ws_url: str
-        fetched_token_url: bool = False
-        if custom_url:
-            ws_url = custom_url
-        else:
-            try:
-                ws_url = task_manager.run_sync(
-                    api_client.fetch_ws_url(
-                        futures=(account_type == KucoinAccountType.FUTURES),
-                        private=False,
-                    )
+        try:
+            ws_url = api_client.fetch_ws_url_sync(
+                    futures=(account_type == KucoinAccountType.FUTURES),
+                    private=False,
                 )
-                fetched_token_url = True
-            except Exception:
-                ws_url = (
-                    KucoinAccountType.FUTURES.stream_url
-                    if account_type == KucoinAccountType.FUTURES
-                    else KucoinAccountType.SPOT.stream_url
-                )
+            fetched_token_url = True
+        except Exception:
+            ws_url = (
+                KucoinAccountType.FUTURES.stream_url
+                if account_type == KucoinAccountType.FUTURES
+                else KucoinAccountType.SPOT.stream_url
+            )
 
         super().__init__(
             account_type=account_type,
@@ -105,7 +96,6 @@ class KucoinPublicConnector(PublicConnector):
         self._ws_book_l2_decoder = msgspec.json.Decoder(KucoinWsBook2Message)
         self._ws_kline_decoder = msgspec.json.Decoder(KucoinWsKlinesMessage)
 
-        # Start periodic token refresh if using tokenized URL
         self._refresh_task_started = False
         if fetched_token_url:
             self._start_token_refresh()
@@ -116,7 +106,6 @@ class KucoinPublicConnector(PublicConnector):
         self._refresh_task_started = True
 
         async def _refresh_ws_token_loop():
-            # Token valid for 24h; refresh slightly before expiry
             refresh_interval_sec = 23 * 3600
             while True:
                 try:
@@ -125,26 +114,20 @@ class KucoinPublicConnector(PublicConnector):
                         futures=(self._account_type == KucoinAccountType.FUTURES),
                         private=False,
                     )
-                    # Update WS URL and force reconnect to apply new token
                     try:
-                        # Update underlying client URL
                         self._ws_client._url = url
-                        # Trigger reconnect (connection handler will resubscribe)
                         self._ws_client.disconnect()
                     except Exception as e:
                         self._log.warning(f"Failed to apply refreshed WS token: {e}")
                 except Exception as e:
-                    # Retry sooner on failure
                     self._log.warning(f"WS token refresh failed: {e}, retrying in 5 minutes")
                     try:
                         await asyncio.sleep(300)
                     except Exception:
                         pass
 
-        # Launch refresh loop in background
         self._task_manager.create_task(_refresh_ws_token_loop(), name="kucoin_ws_token_refresh")
 
-    # Interval mapping now centralized in KucoinEnumParser
 
     def request_ticker(self, symbol: str) -> Ticker:
         raise NotImplementedError("Implement KuCoin ticker via KucoinApiClient")
@@ -174,11 +157,8 @@ class KucoinPublicConnector(PublicConnector):
         if not market:
             raise ValueError(f"Symbol {symbol} formated wrongly, or not supported")
 
-        # Interval mapping centralized in KucoinEnumParser
-
         all_klines: list[Kline] = []
 
-        # Resolve exchange-specific symbol id
         market_id = market.id
 
         end_bound = int(end_time) if end_time is not None else None
@@ -248,7 +228,6 @@ class KucoinPublicConnector(PublicConnector):
 
             remaining = int(limit) if limit is not None else None
             while True:
-                # Futures API expects seconds for from/to
                 from_sec = None if next_start is None else (next_start // 1000)
                 to_sec = None if end_bound is None else (end_bound // 1000)
 
@@ -461,27 +440,21 @@ class KucoinPublicConnector(PublicConnector):
             raise ValueError(f"Account type {self._account_type} not supported for trade subscription")
 
     async def subscribe_funding_rate(self, symbol: str | List[str]):
-        """Subscribe to the funding rate data"""
         raise NotImplementedError
 
     async def unsubscribe_funding_rate(self, symbol: str | List[str]):
-        """Unsubscribe from the funding rate data"""
         raise NotImplementedError
 
     async def subscribe_index_price(self, symbol: str | List[str]):
-        """Subscribe to the index price data"""
         raise NotImplementedError
 
     async def unsubscribe_index_price(self, symbol: str | List[str]):
-        """Unsubscribe from the index price data"""
         raise NotImplementedError
 
     async def subscribe_mark_price(self, symbol: str | List[str]):
-        """Subscribe to the mark price data"""
         raise NotImplementedError
 
     async def unsubscribe_mark_price(self, symbol: str | List[str]):
-        """Unsubscribe from the mark price data"""
         raise NotImplementedError
 
     def _ws_msg_handler(self, raw: bytes):
@@ -584,7 +557,6 @@ class KucoinPublicConnector(PublicConnector):
         msg = self._ws_kline_decoder.decode(raw)
         data = msg.data
 
-        # Resolve symbol id
         symbol_id = getattr(data, "symbol", None)
         if not symbol_id:
             topic = msg.topic or ""
@@ -611,7 +583,6 @@ class KucoinPublicConnector(PublicConnector):
         l = float(candles[4])
         v = float(candles[5]) if len(candles) > 5 else 0.0
 
-        # Parse interval from topic suffix
         interval_str = ""
         topic = msg.topic or ""
         if ":" in topic and "_" in topic:
@@ -696,7 +667,7 @@ class KucoinPrivateConnector(PrivateConnector):
             await self._oms._ws_api_client.connect()
 
 
-import asyncio  # noqa
+import asyncio
 import argparse
 
 
@@ -737,11 +708,6 @@ def _interval_to_enum(interval_str: str) -> KlineInterval:
     return mapping.get(key, KlineInterval.MINUTE_1)
 
 async def _setup_public_connector(args: argparse.Namespace):
-    """Build shared public connector setup and return connector, symbols, and core objects.
-
-    Returns a tuple: (connector, symbols, msgbus, clock, task_manager)
-    """
-    # Core components
     loop = asyncio.get_event_loop()
     task_manager = TaskManager(loop=loop)
     from nexustrader.core.nautilius_core import MessageBus, LiveClock
@@ -750,21 +716,11 @@ async def _setup_public_connector(args: argparse.Namespace):
     clock = LiveClock()
     msgbus = MessageBus(trader_id=TraderId("TESTER-KUCOIN"), clock=clock)
 
-    # Exchange and market setup
     exchange = KuCoinExchangeManager()
     exchange.load_markets()
 
-    # Account type
     account_type = KucoinAccountType.FUTURES if getattr(args, "futures", False) else KucoinAccountType.SPOT
 
-    # Fetch tokenized WS URL asynchronously
-    api_client = KucoinApiClient(clock=clock, enable_rate_limit=True)
-    token_url = await api_client.fetch_ws_url(
-        futures=(account_type == KucoinAccountType.FUTURES),
-        private=False,
-    )
-
-    # Ensure input symbols exist in market maps for testing
     from types import SimpleNamespace
     symbols = [s.upper() for s in getattr(args, "symbols", ["BTC-USDT"])]
     for _sym in symbols:
@@ -780,38 +736,30 @@ async def _setup_public_connector(args: argparse.Namespace):
             )
             exchange.market_id[_sym] = _sym
 
-    def handler(raw: bytes):
-        print("Raw message:", raw)
     connector = KucoinPublicConnector(
         account_type=account_type,
         exchange=exchange,
         msgbus=msgbus,
         clock=clock,
         task_manager=task_manager,
-        custom_url=token_url,
-        #handler=handler,
     )
 
     return connector, symbols, msgbus, clock, task_manager
 
 async def _main_kline_public(args: argparse.Namespace) -> None:
-    # Setup shared public connector and core objects
     connector, symbols, msgbus, _clock, _task_manager = await _setup_public_connector(args)
 
-    # Print incoming kline messages
     def _print_kline(k: Kline):
         print("kline:", k)
 
     msgbus.subscribe(topic="kline", handler=_print_kline)
 
-    # Subscribe
     interval_enum = _interval_to_enum(args.interval)
     await connector.subscribe_kline(symbols, interval_enum)
 
     try:
         await asyncio.sleep(args.duration)
     finally:
-        # Best effort teardown
         try:
             await connector.unsubscribe_kline(symbols, interval_enum)
         except Exception:
@@ -822,7 +770,6 @@ async def _main_kline_public(args: argparse.Namespace) -> None:
             pass
 
 async def _main_trade_public(args: argparse.Namespace) -> None:
-    # Setup shared public connector and core objects
     connector, symbols, msgbus, _clock, _task_manager = await _setup_public_connector(args)
 
     def _print_trade(t: Trade):
@@ -845,7 +792,6 @@ async def _main_trade_public(args: argparse.Namespace) -> None:
             pass
 
 async def _main_bookl1_public(args: argparse.Namespace) -> None:
-    # Setup shared public connector and core objects
     connector, symbols, msgbus, _clock, _task_manager = await _setup_public_connector(args)
 
     def _print_bookl1(b1: BookL1):
@@ -868,7 +814,6 @@ async def _main_bookl1_public(args: argparse.Namespace) -> None:
             pass
 
 async def _main_bookl2_public(args: argparse.Namespace) -> None:
-    # Setup shared public connector and core objects
     connector, symbols, msgbus, _clock, _task_manager = await _setup_public_connector(args)
 
     def _print_bookl2(b2: BookL2):
@@ -887,17 +832,12 @@ async def _main_bookl2_public(args: argparse.Namespace) -> None:
             pass
 
 async def _main_request_klines_public(args: argparse.Namespace) -> None:
-    # Setup shared public connector and core objects
     connector, symbols, _msgbus, _clock, _task_manager = await _setup_public_connector(args)
-
-    # Use the first symbol for the request test
     symbol = symbols[0]
     interval_enum = _interval_to_enum(getattr(args, "interval", "1m"))
     limit = getattr(args, "limit", 10)
     start = getattr(args, "start", None)
     end = getattr(args, "end", None)
-
-    # Perform REST klines request and print results
     try:
         kline_list = await connector.request_klines(
             symbol=symbol,
@@ -916,10 +856,6 @@ async def _main_request_klines_public(args: argparse.Namespace) -> None:
             connector._ws_client.disconnect()
         except Exception:
             pass
-        try:
-            connector._ws_client.disconnect()
-        except Exception:
-            pass
 
 
 if __name__ == "__main__":
@@ -929,7 +865,6 @@ if __name__ == "__main__":
     parser.add_argument("--interval", default="1m", help="Interval (for kline mode)")
     parser.add_argument("--futures", action="store_true", help="Use futures public stream")
     parser.add_argument("--duration", type=int, default=30, help="Run seconds before exit")
-    # Defaults: start = 3 hours ago, end = 5 hours ago (ms)
     _now_ms = int(time.time())
     _start_default = _now_ms - (5 * 3600 * 24)
     _end_default = _now_ms - (3 * 3600 * 24)

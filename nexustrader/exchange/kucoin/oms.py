@@ -1244,22 +1244,6 @@ async def _build_spot_oms_with_public_ws(
 
     market: Dict[str, Any] = {symbol: _M()}
     market_id: Dict[str, str] = {symbol: symbol}
-
-    # ws_url = await api_client.fetch_ws_url(futures=False, private=False)
-    # forward_handler = None
-
-    # def _handler(raw: bytes):
-    #     if forward_handler:
-    #         forward_handler(raw)
-
-    # custom_ws = KucoinWSClient(
-    #     account_type=KucoinAccountType.SPOT,
-    #     handler=_handler,
-    #     task_manager=task_manager,
-    #     clock=clock,
-    #     custom_url=ws_url,
-    # )
-
     oms = KucoinOrderManagementSystem(
         account_type=KucoinAccountType.SPOT,
         api_key=None,
@@ -1275,8 +1259,6 @@ async def _build_spot_oms_with_public_ws(
         msgbus=msgbus,
         task_manager=task_manager,
     )
-
-    # forward_handler = oms._ws_msg_handler
     return oms
 
 async def _test_create_batch_orders_futures_then_cancel_all(
