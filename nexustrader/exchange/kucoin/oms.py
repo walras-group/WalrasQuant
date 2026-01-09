@@ -9,7 +9,7 @@ from nexustrader.core.registry import OrderRegistry
 from nexustrader.exchange.kucoin.constants import KucoinAccountType,KUCOIN_INTERVAL_MAP
 from nexustrader.exchange.kucoin.rest_api import KucoinApiClient
 from nexustrader.exchange.kucoin.websockets import KucoinWSClient, KucoinWSApiClient
-from nexustrader.schema import Order, Position, BatchOrderSubmit
+from nexustrader.schema import Order, Position, BatchOrderSubmit, InstrumentId
 from nexustrader.schema import Kline, BookL1, BookL2, Trade, BookOrderData, Balance
 from nexustrader.constants import KlineInterval
 from nexustrader.constants import (
@@ -1333,10 +1333,14 @@ async def _test_create_batch_orders_futures_then_cancel_all(
     print("Creating batch futures orders...")
     print(f"{'=' * 60}\n")
 
+    # Build InstrumentId required by BatchOrderSubmit
+    inst_id = InstrumentId.from_str(f"{symbol.replace('_', '-')}.KUCOIN")
+
     batch_orders = [
         BatchOrderSubmit(
             oid=f"futures-order-1-{clock.timestamp_ms()}",
             symbol=symbol,
+            instrument_id=inst_id,
             side=OrderSide.BUY,
             type=OrderType.LIMIT,
             amount=Decimal("1"),
@@ -1347,6 +1351,7 @@ async def _test_create_batch_orders_futures_then_cancel_all(
         BatchOrderSubmit(
             oid=f"futures-order-2-{clock.timestamp_ms()}",
             symbol=symbol,
+            instrument_id=inst_id,
             side=OrderSide.BUY,
             type=OrderType.LIMIT,
             amount=Decimal("2"),
@@ -1357,6 +1362,7 @@ async def _test_create_batch_orders_futures_then_cancel_all(
         BatchOrderSubmit(
             oid=f"futures-order-3-{clock.timestamp_ms()}",
             symbol=symbol,
+            instrument_id=inst_id,
             side=OrderSide.SELL,
             type=OrderType.LIMIT,
             amount=Decimal("1"),
@@ -1446,6 +1452,13 @@ if __name__ == "__main__":
         parents=[common_parser],
     )
 
+    # Spot order create+cancel via REST (requires credentials)
+    p_spotorder = subparsers.add_parser(
+        "spot-order",
+        help="Create then cancel a spot order via REST API",
+        parents=[common_parser],
+    )
+
     # Batch futures orders create+cancel (requires credentials)
     p_futures_batch = subparsers.add_parser(
         "futures-batch",
@@ -1485,6 +1498,16 @@ if __name__ == "__main__":
             parser.error("ws-order requires --api-key, --secret, and --passphrase")
         asyncio.run(
             _test_create_and_cancel_order_ws(
+                args.api_key,
+                args.secret,
+                args.passphrase,
+            )
+        )
+    elif args.cmd == "spot-order":
+        if not (args.api_key and args.secret and args.passphrase):
+            parser.error("spot-order requires --api-key, --secret, and --passphrase")
+        asyncio.run(
+            _test_create_and_cancel_order_spot(
                 args.api_key,
                 args.secret,
                 args.passphrase,

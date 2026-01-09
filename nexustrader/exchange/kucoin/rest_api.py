@@ -661,9 +661,6 @@ class KucoinApiClient(ApiClient):
         newPrice: str | None = None,
         newSize: str | None = None,
     ) -> KucoinSpotModifyOrderResponse:
-        """
-        https://www.kucoin.com/docs-new/rest/spot-trading/orders/modify-order
-        """
         base_url = self._get_base_url(KucoinAccountType.SPOT)
         end_point = "/api/v1/hf/orders/alter"
 
@@ -744,7 +741,7 @@ class KucoinApiClient(ApiClient):
         Sync: https://www.kucoin.com/docs-new/rest/futures-trading/positions/get-position-mode
         """
         base_url = self._get_base_url(KucoinAccountType.FUTURES)
-        end_point = "/api/v1/position/mode"
+        end_point = "/api/v2/position/getPositionMode"
 
         raw = self._fetch_sync(
             "GET",
@@ -754,11 +751,7 @@ class KucoinApiClient(ApiClient):
             signed=True,
         )
         resp = self._dec_futures_position_mode.decode(raw)
-        if resp.data.positionMode != 1:
-            raise KucoinError(
-                code=-1,
-                message=f"Only one-way position mode (1) is allowed, current: {resp.data.positionMode}",
-            )
+        
         return resp
     
     async def get_api_v1_positions(
@@ -839,11 +832,7 @@ class KucoinApiClient(ApiClient):
         visibleSize: str | None = None,
         positionSide: str | None = None,
     ) -> Dict[str, Any]:
-        """
-        Futures: Add order
-        Doc: https://www.kucoin.com/docs-new/rest/futures-trading/orders/add-order
-        Endpoint: POST /api/v1/orders (futures base URL)
-        """
+        
         base_url = self._get_base_url(KucoinAccountType.FUTURES)
         end_point = "/api/v1/orders"
 
