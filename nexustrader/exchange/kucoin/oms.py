@@ -1006,6 +1006,23 @@ async def _test_create_and_cancel_order_ws(api_key: str, secret: str, passphrase
 
     await asyncio.sleep(2)
 
+    # Modify the order (via REST) before canceling
+    print("Modifying spot order via REST...")
+    mod_res = await oms.modify_order(
+        oid=oid,
+        symbol=symbol,
+        price=Decimal("2"),
+        amount=Decimal("0.25"),
+    )
+    print({
+        "modify_status": mod_res.status,
+        "oid": mod_res.oid,
+        "price": mod_res.price,
+        "amount": mod_res.amount,
+    })
+
+    await asyncio.sleep(1)
+
     print("Canceling spot order via WS...")
     await oms.cancel_order_ws(oid=oid, symbol=symbol)
 
@@ -1263,6 +1280,121 @@ async def _build_spot_oms_with_public_ws(
     forward_handler = oms._ws_msg_handler
     return oms
 
+async def _test_create_batch_orders_futures_then_cancel_all(
+    api_key: str, secret: str, passphrase: str, symbol: str = "BTCUSDT_PERP"
+) -> None:
+    """Test futures: create batch orders then cancel all orders."""
+    import asyncio
+    from decimal import Decimal
+    from nexustrader.core.entity import TaskManager
+    from nautilus_trader.model.identifiers import TraderId
+
+    loop = asyncio.get_event_loop()
+    task_manager = TaskManager(loop=loop)
+    clock = LiveClock()
+    msgbus = MessageBus(trader_id=TraderId("TESTER-FUTURES"), clock=clock)
+    registry = OrderRegistry()
+    cache = AsyncCache(
+        strategy_id="STRAT-FUTURES",
+        user_id="USER-FUTURES",
+        msgbus=msgbus,
+        clock=clock,
+        task_manager=task_manager,
+    )
+
+    api_client = KucoinApiClient(clock=clock, api_key=api_key, secret=secret)
+    setattr(api_client, "_passphrase", passphrase)
+    setattr(api_client, "_key_version", "2")
+
+    # Minimal market mapping for futures
+    class _M:
+        id = symbol
+
+    market: Dict[str, Any] = {symbol: _M()}
+    market_id: Dict[str, str] = {symbol: symbol}
+
+    oms = KucoinOrderManagementSystem(
+        account_type=KucoinAccountType.FUTURES,
+        api_key=api_key,
+        secret=secret,
+        market=market,
+        market_id=market_id,
+        registry=registry,
+        cache=cache,
+        api_client=api_client,
+        exchange_id=ExchangeType.KUCOIN,
+        clock=clock,
+        msgbus=msgbus,
+        task_manager=task_manager,
+    )
+
+    # Create batch orders for futures
+    print(f"\n{'=' * 60}")
+    print("Creating batch futures orders...")
+    print(f"{'=' * 60}\n")
+
+    batch_orders = [
+        BatchOrderSubmit(
+            oid=f"futures-order-1-{clock.timestamp_ms()}",
+            symbol=symbol,
+            side=OrderSide.BUY,
+            type=OrderType.LIMIT,
+            amount=Decimal("1"),
+            price=Decimal("30000"),
+            time_in_force=TimeInForce.GTC,
+            reduce_only=False,
+        ),
+        BatchOrderSubmit(
+            oid=f"futures-order-2-{clock.timestamp_ms()}",
+            symbol=symbol,
+            side=OrderSide.BUY,
+            type=OrderType.LIMIT,
+            amount=Decimal("2"),
+            price=Decimal("29900"),
+            time_in_force=TimeInForce.GTC,
+            reduce_only=False,
+        ),
+        BatchOrderSubmit(
+            oid=f"futures-order-3-{clock.timestamp_ms()}",
+            symbol=symbol,
+            side=OrderSide.SELL,
+            type=OrderType.LIMIT,
+            amount=Decimal("1"),
+            price=Decimal("35000"),
+            time_in_force=TimeInForce.GTC,
+            reduce_only=False,
+        ),
+    ]
+
+    results = await oms.create_batch_orders(batch_orders)
+
+    print(f"Batch orders created: {len(results)} orders")
+    for order in results:
+        print(
+            f"  - OID: {order.oid}, Status: {order.status.value if hasattr(order.status, 'value') else order.status}, "
+            f"EID: {order.eid}, Price: {order.price}, Amount: {order.amount}"
+        )
+
+    # Wait a bit to let orders settle
+    print("\nWaiting 3 seconds before canceling all orders...\n")
+    await asyncio.sleep(3)
+
+    # Cancel all orders for the symbol
+    print(f"{'=' * 60}")
+    print(f"Canceling all orders for {symbol}...")
+    print(f"{'=' * 60}\n")
+
+    cancel_result = await oms.cancel_all_orders(symbol)
+
+    if cancel_result:
+        print(f"✓ Successfully cancelled all orders for {symbol}")
+    else:
+        print(f"✗ Failed to cancel all orders for {symbol}")
+
+    print("\n" + "=" * 60)
+    print("Test completed!")
+    print("=" * 60)
+
 
 if __name__ == "__main__":
     import argparse
@@ -1271,76 +1403,101 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="KuCoin OMS tests")
     subparsers = parser.add_subparsers(dest="cmd", required=True)
 
+    # Common arguments shared across subcommands
+    common_parser = argparse.ArgumentParser(add_help=False)
+    common_parser.add_argument("--symbol", help="Symbol for tests (spot or futures)")
+    common_parser.add_argument("--interval", default="1min", help="Interval (for kline tests)")
+    common_parser.add_argument("--api-key", help="KuCoin API key")
+    common_parser.add_argument("--secret", help="KuCoin API secret")
+    common_parser.add_argument("--passphrase", help="KuCoin API passphrase")
+
     # Kline subscribe/unsubscribe (public WS)
     p_kline = subparsers.add_parser(
         "kline",
         help="Subscribe spot kline for 10s then unsubscribe",
+        parents=[common_parser],
     )
-    p_kline.add_argument("--symbol", default="BTC-USDT", help="Spot symbol, e.g. BTC-USDT")
-    p_kline.add_argument("--interval", default="1min", help="Interval, e.g. 1min, 5min, 1hour")
 
     # Book L1 subscribe/unsubscribe (public WS)
     p_bookl1 = subparsers.add_parser(
         "bookl1",
         help="Subscribe spot book L1 for 10s then unsubscribe",
+        parents=[common_parser],
     )
-    p_bookl1.add_argument("--symbol", default="BTC-USDT", help="Spot symbol, e.g. BTC-USDT")
 
     # Trade subscribe/unsubscribe (public WS)
     p_trade = subparsers.add_parser(
         "trade",
         help="Subscribe spot trade for 10s then unsubscribe",
+        parents=[common_parser],
     )
-    p_trade.add_argument("--symbol", default="BTC-USDT", help="Spot symbol, e.g. BTC-USDT")
 
     # Book L2 subscribe/unsubscribe (public WS)
     p_bookl2 = subparsers.add_parser(
         "bookl2",
         help="Subscribe spot book L2 for 10s then unsubscribe",
+        parents=[common_parser],
     )
-    p_bookl2.add_argument("--symbol", default="BTC-USDT", help="Spot symbol, e.g. BTC-USDT")
 
     # WS order create+cancel (requires credentials)
     p_wsorder = subparsers.add_parser(
         "ws-order",
         help="Create then cancel a spot order via WS API",
+        parents=[common_parser],
     )
-    p_wsorder.add_argument("--api-key", required=True, help="KuCoin API key")
-    p_wsorder.add_argument("--secret", required=True, help="KuCoin API secret")
-    p_wsorder.add_argument("--passphrase", required=True, help="KuCoin API passphrase")
+
+    # Batch futures orders create+cancel (requires credentials)
+    p_futures_batch = subparsers.add_parser(
+        "futures-batch",
+        help="Create batch futures orders then cancel all orders",
+        parents=[common_parser],
+    )
 
     args = parser.parse_args()
 
     if args.cmd == "kline":
         asyncio.run(
             _test_subscribe_kline_then_unsubscribe_spot(
-                symbol=args.symbol,
+                symbol=args.symbol or "BTC-USDT",
                 interval=args.interval,
             )
         )
     elif args.cmd == "bookl1":
         asyncio.run(
             _test_subscribe_spot_book_l1_then_unsubscribe(
-                symbol=args.symbol,
+                symbol=args.symbol or "BTC-USDT",
             )
         )
     elif args.cmd == "trade":
         asyncio.run(
             _test_subscribe_spot_trade_then_unsubscribe(
-                symbol=args.symbol,
+                symbol=args.symbol or "BTC-USDT",
             )
         )
     elif args.cmd == "bookl2":
         asyncio.run(
             _test_subscribe_spot_book_l2_then_unsubscribe(
-                symbol=args.symbol,
+                symbol=args.symbol or "BTC-USDT",
             )
         )
     elif args.cmd == "ws-order":
+        if not (args.api_key and args.secret and args.passphrase):
+            parser.error("ws-order requires --api-key, --secret, and --passphrase")
         asyncio.run(
             _test_create_and_cancel_order_ws(
                 args.api_key,
                 args.secret,
                 args.passphrase,
+            )
+        )
+    elif args.cmd == "futures-batch":
+        if not (args.api_key and args.secret and args.passphrase):
+            parser.error("futures-batch requires --api-key, --secret, and --passphrase")
+        asyncio.run(
+            _test_create_batch_orders_futures_then_cancel_all(
+                args.api_key,
+                args.secret,
+                args.passphrase,
+                symbol=args.symbol or "BTCUSDT_PERP",
             )
         )
