@@ -475,9 +475,9 @@ class BybitPublicConnector(PublicConnector):
     def subscribe_funding_rate(self, symbol: str):
         symbols = []
         if isinstance(symbol, str):
-            symbol_list = [symbol]
+            symbol = [symbol]
 
-        for s in symbol_list:
+        for s in symbol:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
@@ -488,9 +488,9 @@ class BybitPublicConnector(PublicConnector):
     def unsubscribe_funding_rate(self, symbol: str):
         symbols = []
         if isinstance(symbol, str):
-            symbol_list = [symbol]
+            symbol = [symbol]
 
-        for s in symbol_list:
+        for s in symbol:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
@@ -501,9 +501,9 @@ class BybitPublicConnector(PublicConnector):
     def subscribe_index_price(self, symbol: str):
         symbols = []
         if isinstance(symbol, str):
-            symbol_list = [symbol]
+            symbol = [symbol]
 
-        for s in symbol_list:
+        for s in symbol:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
@@ -514,9 +514,9 @@ class BybitPublicConnector(PublicConnector):
     def unsubscribe_index_price(self, symbol: str):
         symbols = []
         if isinstance(symbol, str):
-            symbol_list = [symbol]
+            symbol = [symbol]
 
-        for s in symbol_list:
+        for s in symbol:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
@@ -527,9 +527,9 @@ class BybitPublicConnector(PublicConnector):
     def subscribe_mark_price(self, symbol: str):
         symbols = []
         if isinstance(symbol, str):
-            symbol_list = [symbol]
+            symbol = [symbol]
 
-        for s in symbol_list:
+        for s in symbol:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
@@ -540,9 +540,9 @@ class BybitPublicConnector(PublicConnector):
     def unsubscribe_mark_price(self, symbol: str):
         symbols = []
         if isinstance(symbol, str):
-            symbol_list = [symbol]
+            symbol = [symbol]
 
-        for s in symbol_list:
+        for s in symbol:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
@@ -553,9 +553,9 @@ class BybitPublicConnector(PublicConnector):
     def subscribe_bookl1(self, symbol: str | List[str]):
         symbols = []
         if isinstance(symbol, str):
-            symbol_list = [symbol]
+            symbol = [symbol]
 
-        for s in symbol_list:
+        for s in symbol:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
@@ -566,9 +566,9 @@ class BybitPublicConnector(PublicConnector):
     def unsubscribe_bookl1(self, symbol: str | List[str]):
         symbols = []
         if isinstance(symbol, str):
-            symbol_list = [symbol]
+            symbol = [symbol]
 
-        for s in symbol_list:
+        for s in symbol:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
@@ -579,9 +579,9 @@ class BybitPublicConnector(PublicConnector):
     def subscribe_trade(self, symbol: str | List[str]):
         symbols = []
         if isinstance(symbol, str):
-            symbol_list = [symbol]
+            symbol = [symbol]
 
-        for s in symbol_list:
+        for s in symbol:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
@@ -592,9 +592,9 @@ class BybitPublicConnector(PublicConnector):
     def unsubscribe_trade(self, symbol: str | List[str]):
         symbols = []
         if isinstance(symbol, str):
-            symbol_list = [symbol]
+            symbol = [symbol]
 
-        for s in symbol_list:
+        for s in symbol:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
@@ -605,9 +605,9 @@ class BybitPublicConnector(PublicConnector):
     def subscribe_kline(self, symbol: str | List[str], interval: KlineInterval):
         symbols = []
         if isinstance(symbol, str):
-            symbol_list = [symbol]
+            symbol = [symbol]
 
-        for s in symbol_list:
+        for s in symbol:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
@@ -619,9 +619,9 @@ class BybitPublicConnector(PublicConnector):
     def unsubscribe_kline(self, symbol: str | List[str], interval: KlineInterval):
         symbols = []
         if isinstance(symbol, str):
-            symbol_list = [symbol]
+            symbol = [symbol]
 
-        for s in symbol_list:
+        for s in symbol:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")

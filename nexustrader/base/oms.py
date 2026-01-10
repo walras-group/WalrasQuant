@@ -92,6 +92,17 @@ class OrderManagementSystem(ABC):
             self._registry.unregister_order(order.oid)
             self._registry.unregister_tmp_order(order.oid)
 
+    async def wait_ready(self):
+        """Wait for the WebSocket client(s) to be ready.
+
+        This method waits for the main WebSocket client and optionally
+        for the WebSocket API client if it exists.
+        """
+        await self._ws_client.wait_ready()
+        # Check if subclass has a WebSocket API client
+        if hasattr(self, '_ws_api_client') and self._ws_api_client is not None:
+            await self._ws_api_client.wait_ready()
+
     def _price_to_precision(
         self,
         symbol: str,

@@ -368,11 +368,21 @@ class Engine:
         self._is_built = True
 
     async def _start_connectors(self):
+        # Start all public connectors
         for connector in self._public_connectors.values():
             await connector.connect()
 
+        # Wait for all public connectors to be ready
+        for connector in self._public_connectors.values():
+            await connector.wait_ready()
+
+        # Start all private connectors
         for connector in self._private_connectors.values():
             await connector.connect()
+
+        # Wait for all private connectors to be ready
+        for connector in self._private_connectors.values():
+            await connector.wait_ready()
 
     async def _start_ems(self):
         for ems in self._ems.values():

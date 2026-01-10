@@ -1,6 +1,6 @@
 [project]
 name = "nexustrader"
-version = "0.2.36"
+version = "0.2.37"
 description = "fastest python trading bot"
 authors = [
     {name = "River-Shi",email = "nachuan.shi.quant@gmail.com"}
@@ -36,7 +36,7 @@ dependencies = [
     "fastapi>=0.117.1",
     "uvicorn>=0.36.0",
     "curl-cffi>=0.13.0",
-    "picows>=1.10.1",
+    "picows>=1.10.2",
     "dynaconf[redis]>=3.2.12",
 ]
 

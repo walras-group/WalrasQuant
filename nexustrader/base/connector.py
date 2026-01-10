@@ -365,6 +365,10 @@ class PublicConnector(ABC):
         """Connect to the exchange"""
         await self._ws_client.connect()
 
+    async def wait_ready(self):
+        """Wait for the initial WebSocket connection to be established"""
+        await self._ws_client.wait_ready()
+
     async def disconnect(self):
         """Disconnect from the exchange"""
         # Stop all aggregators
@@ -444,9 +448,13 @@ class PrivateConnector(ABC):
         """Connect to the exchange"""
         pass
 
+    async def wait_ready(self):
+        """Wait for the OMS WebSocket client(s) to be ready"""
+        await self._oms.wait_ready()
+
     async def disconnect(self):
         """Disconnect from the exchange"""
-        self._oms._ws_client.disconnect()
+        # self._oms._ws_client.disconnect() # not needed to await
         await self._api_client.close_session()
 
 
@@ -804,6 +812,10 @@ class MockLinearConnector:
         await self._init_position()
         await self._init_balance()
         self._task_manager.create_task(self._handle_pnl_update())
+
+    async def wait_ready(self):
+        """Mock connector is ready immediately after connect"""
+        pass
 
     async def disconnect(self):
         await self._cache._sync_pnl(

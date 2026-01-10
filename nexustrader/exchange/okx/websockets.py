@@ -112,6 +112,9 @@ class OkxWSClient(WSClient):
         for param in params:
             self._subscriptions.append(param)
             self._log.debug(f"Subscribing to {param}...")
+        
+        if self.connected:
+            self._send_payload(params, op="subscribe")
 
     def subscribe_funding_rate(self, symbols: List[str]):
         params = [{"channel": "funding-rate", "instId": symbol} for symbol in symbols]

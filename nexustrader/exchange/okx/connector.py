@@ -772,9 +772,14 @@ class OkxPublicConnector(PublicConnector):
             confirm=False if int(kline.confirm) == 0 else True,
         )
 
-    async def disconnect(self):
-        await super().disconnect()
-        self._business_ws_client.disconnect()
+    async def connect(self):
+        await self._ws_client.connect()
+        await self._business_ws_client.connect()
+    
+    async def wait_ready(self):
+        """Wait for the initial WebSocket connection to be established"""
+        await self._ws_client.wait_ready()
+        await self._business_ws_client.wait_ready()
 
 
 class OkxPrivateConnector(PrivateConnector):

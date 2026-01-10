@@ -169,6 +169,7 @@ class WSClient(ABC):
             self._auto_ping_strategy = WSAutoPingStrategy.PING_PERIODICALLY
         self._task_manager = task_manager
         self._log = Logger(name=type(self).__name__)
+        self._ready = asyncio.Event()  # Only set once on initial connection
 
 
     @property
@@ -192,34 +193,40 @@ class WSClient(ABC):
             auto_ping_strategy=self._auto_ping_strategy,
             enable_auto_pong=self._enable_auto_pong,
         )
-        self._log.info(f"Websocket connected successfully to {self._url}.")
+        self._log.debug(f"Websocket connected successfully to {self._url}.")
 
     async def connect(self):
         self._task_manager.create_task(self._connection_handler())
+
+    async def wait_ready(self):
+        """Wait for the initial connection to be established.
+
+        This method only waits for the first successful connection.
+        Subsequent reconnections will not affect this event.
+        """
+        await self._ready.wait()
 
     async def _connection_handler(self):
         while True:
             try:
                 await self._connect()
                 await self._resubscribe()
+                # Set ready event only on first successful connection
+                if not self._ready.is_set():
+                    self._ready.set()
+                    self._log.debug("Initial connection ready.")
                 await self._transport.wait_disconnected()  # type: ignore
                 self._log.debug("Websocket disconnected.")
             except asyncio.CancelledError:
-                self._log.info("Websocket connection loop cancelled.")
+                self._log.debug("Websocket connection loop cancelled.")
                 break
             except Exception as e:
                 self._log.error(f"Connection error: {e}")
-            finally:
-                pass
-                # self._clean_up()
 
             self._log.warning(
                 f"Websocket reconnecting in {self._reconnect_interval} seconds..."
             )
             await asyncio.sleep(self._reconnect_interval)
-
-    def _clean_up(self):
-        self._transport, self._listener = None, None
 
     def _send(self, payload: dict):
         if not self._transport:
