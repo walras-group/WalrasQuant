@@ -17,6 +17,7 @@ from nexustrader.schema import (
     MarkPrice,
     KlineList,
     Ticker,
+    BaseMarket,
 )
 from nexustrader.constants import (
     KlineInterval,
@@ -28,7 +29,6 @@ from nexustrader.exchange.bybit.schema import (
     BybitWsMessageGeneral,
     BybitWsOrderbookDepthMsg,
     BybitOrderBook,
-    BybitMarket,
     BybitWsTradeMsg,
     BybitWsTickerMsg,
     BybitWsKlineMsg,
@@ -107,7 +107,7 @@ class BybitPublicConnector(PublicConnector):
         else:
             raise ValueError(f"Unsupported BybitAccountType.{self._account_type.value}")
 
-    def _get_category(self, market: BybitMarket):
+    def _get_category(self, market: BaseMarket):
         if market.spot:
             return "spot"
         elif market.linear:
@@ -275,6 +275,7 @@ class BybitPublicConnector(PublicConnector):
                 volume=float(ticker.volume24h),
                 volumeCcy=float(ticker.turnover24h),
             )
+        raise ValueError(f"No ticker data found for symbol {symbol}")
 
     def request_all_tickers(
         self,
@@ -471,165 +472,165 @@ class BybitPublicConnector(PublicConnector):
         )
         return kline_list
 
-    async def subscribe_funding_rate(self, symbol: str):
+    def subscribe_funding_rate(self, symbol: str):
         symbols = []
         if isinstance(symbol, str):
-            symbol = [symbol]
+            symbol_list = [symbol]
 
-        for s in symbol:
+        for s in symbol_list:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
             symbols.append(market.id)
 
-        await self._ws_client.subscribe_ticker(symbols)
+        self._ws_client.subscribe_ticker(symbols)
 
-    async def unsubscribe_funding_rate(self, symbol: str):
+    def unsubscribe_funding_rate(self, symbol: str):
         symbols = []
         if isinstance(symbol, str):
-            symbol = [symbol]
+            symbol_list = [symbol]
 
-        for s in symbol:
+        for s in symbol_list:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
             symbols.append(market.id)
 
-        await self._ws_client.unsubscribe_ticker(symbols)
+        self._ws_client.unsubscribe_ticker(symbols)
 
-    async def subscribe_index_price(self, symbol: str):
+    def subscribe_index_price(self, symbol: str):
         symbols = []
         if isinstance(symbol, str):
-            symbol = [symbol]
+            symbol_list = [symbol]
 
-        for s in symbol:
+        for s in symbol_list:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
             symbols.append(market.id)
 
-        await self._ws_client.subscribe_ticker(symbols)
+        self._ws_client.subscribe_ticker(symbols)
 
-    async def unsubscribe_index_price(self, symbol: str):
+    def unsubscribe_index_price(self, symbol: str):
         symbols = []
         if isinstance(symbol, str):
-            symbol = [symbol]
+            symbol_list = [symbol]
 
-        for s in symbol:
+        for s in symbol_list:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
             symbols.append(market.id)
 
-        await self._ws_client.unsubscribe_ticker(symbols)
+        self._ws_client.unsubscribe_ticker(symbols)
 
-    async def subscribe_mark_price(self, symbol: str):
+    def subscribe_mark_price(self, symbol: str):
         symbols = []
         if isinstance(symbol, str):
-            symbol = [symbol]
+            symbol_list = [symbol]
 
-        for s in symbol:
+        for s in symbol_list:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
             symbols.append(market.id)
 
-        await self._ws_client.subscribe_ticker(symbols)
+        self._ws_client.subscribe_ticker(symbols)
 
-    async def unsubscribe_mark_price(self, symbol: str):
+    def unsubscribe_mark_price(self, symbol: str):
         symbols = []
         if isinstance(symbol, str):
-            symbol = [symbol]
+            symbol_list = [symbol]
 
-        for s in symbol:
+        for s in symbol_list:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
             symbols.append(market.id)
 
-        await self._ws_client.unsubscribe_ticker(symbols)
+        self._ws_client.unsubscribe_ticker(symbols)
 
-    async def subscribe_bookl1(self, symbol: str | List[str]):
+    def subscribe_bookl1(self, symbol: str | List[str]):
         symbols = []
         if isinstance(symbol, str):
-            symbol = [symbol]
+            symbol_list = [symbol]
 
-        for s in symbol:
+        for s in symbol_list:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
             symbols.append(market.id)
 
-        await self._ws_client.subscribe_order_book(symbols, depth=1)
+        self._ws_client.subscribe_order_book(symbols, depth=1)
 
-    async def unsubscribe_bookl1(self, symbol: str | List[str]):
+    def unsubscribe_bookl1(self, symbol: str | List[str]):
         symbols = []
         if isinstance(symbol, str):
-            symbol = [symbol]
+            symbol_list = [symbol]
 
-        for s in symbol:
+        for s in symbol_list:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
             symbols.append(market.id)
 
-        await self._ws_client.unsubscribe_order_book(symbols, depth=1)
+        self._ws_client.unsubscribe_order_book(symbols, depth=1)
 
-    async def subscribe_trade(self, symbol: str | List[str]):
+    def subscribe_trade(self, symbol: str | List[str]):
         symbols = []
         if isinstance(symbol, str):
-            symbol = [symbol]
+            symbol_list = [symbol]
 
-        for s in symbol:
+        for s in symbol_list:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
             symbols.append(market.id)
 
-        await self._ws_client.subscribe_trade(symbols)
+        self._ws_client.subscribe_trade(symbols)
 
-    async def unsubscribe_trade(self, symbol: str | List[str]):
+    def unsubscribe_trade(self, symbol: str | List[str]):
         symbols = []
         if isinstance(symbol, str):
-            symbol = [symbol]
+            symbol_list = [symbol]
 
-        for s in symbol:
+        for s in symbol_list:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
             symbols.append(market.id)
 
-        await self._ws_client.unsubscribe_trade(symbols)
+        self._ws_client.unsubscribe_trade(symbols)
 
-    async def subscribe_kline(self, symbol: str | List[str], interval: KlineInterval):
+    def subscribe_kline(self, symbol: str | List[str], interval: KlineInterval):
         symbols = []
         if isinstance(symbol, str):
-            symbol = [symbol]
+            symbol_list = [symbol]
 
-        for s in symbol:
+        for s in symbol_list:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
             symbols.append(market.id)
 
-        interval = BybitEnumParser.to_bybit_kline_interval(interval)
-        await self._ws_client.subscribe_kline(symbols, interval)
+        bybit_interval = BybitEnumParser.to_bybit_kline_interval(interval)
+        self._ws_client.subscribe_kline(symbols, bybit_interval)
 
-    async def unsubscribe_kline(self, symbol: str | List[str], interval: KlineInterval):
+    def unsubscribe_kline(self, symbol: str | List[str], interval: KlineInterval):
         symbols = []
         if isinstance(symbol, str):
-            symbol = [symbol]
+            symbol_list = [symbol]
 
-        for s in symbol:
+        for s in symbol_list:
             market = self._market.get(s)
             if not market:
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
             symbols.append(market.id)
 
-        interval = BybitEnumParser.to_bybit_kline_interval(interval)
-        await self._ws_client.unsubscribe_kline(symbols, interval)
+        bybit_interval = BybitEnumParser.to_bybit_kline_interval(interval)
+        self._ws_client.unsubscribe_kline(symbols, bybit_interval)
 
-    async def subscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
+    def subscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
         if level != BookLevel.L50:
             raise ValueError(f"Unsupported book level: {level}")
 
@@ -643,9 +644,9 @@ class BybitPublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
             symbols.append(market.id)
 
-        await self._ws_client.subscribe_order_book(symbols, depth=50)
+        self._ws_client.subscribe_order_book(symbols, depth=50)
 
-    async def unsubscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
+    def unsubscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
         if level != BookLevel.L50:
             raise ValueError(f"Unsupported book level: {level}")
 
@@ -659,7 +660,7 @@ class BybitPublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} formated wrongly, or not supported")
             symbols.append(market.id)
 
-        await self._ws_client.unsubscribe_order_book(symbols, depth=50)
+        self._ws_client.unsubscribe_order_book(symbols, depth=50)
 
     def _handle_index_candlesticks(
         self,
@@ -718,7 +719,7 @@ class BybitPublicConnector(PublicConnector):
 
 class BybitPrivateConnector(PrivateConnector):
     _account_type: BybitAccountType
-    _market: Dict[str, BybitMarket]
+    _market: Dict[str, BaseMarket]
     _market_id: Dict[str, str]
     _api_client: BybitApiClient
     _oms: BybitOrderManagementSystem
@@ -780,7 +781,8 @@ class BybitPrivateConnector(PrivateConnector):
         )
 
     async def connect(self):
+        self._oms._ws_client.subscribe_order()
+        self._oms._ws_client.subscribe_position()
+        self._oms._ws_client.subscribe_wallet()
+        await self._oms._ws_client.connect()
         await self._oms._ws_api_client.connect()
-        await self._oms._ws_client.subscribe_order()
-        await self._oms._ws_client.subscribe_position()
-        await self._oms._ws_client.subscribe_wallet()

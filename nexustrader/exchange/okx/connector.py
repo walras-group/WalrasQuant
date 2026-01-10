@@ -123,6 +123,7 @@ class OkxPublicConnector(PublicConnector):
                 volumeCcy=float(item.volCcy24h) if item.volCcy24h else 0.0,
             )
             return ticker
+        raise RuntimeError(f"Ticker data for symbol {symbol} not found")
 
     def request_all_tickers(
         self,
@@ -175,13 +176,11 @@ class OkxPublicConnector(PublicConnector):
         seen_timestamps: set[int] = set()
 
         # First request to get the most recent data using before parameter
-        klines_response: OkxCandlesticksResponse = (
-            self._api_client.get_api_v5_market_history_index_candles(
-                instId=self._market[symbol].id,
-                bar=okx_interval.value,
-                limit=100,  # Maximum allowed by the API is 100
-                before="0",  # Get the latest klines
-            )
+        klines_response = self._api_client.get_api_v5_market_history_index_candles(
+            instId=self._market[symbol].id,
+            bar=okx_interval.value,
+            limit=100,  # Maximum allowed by the API is 100
+            before="0",  # Get the latest klines
         )
 
         response_klines = sorted(klines_response.data, key=lambda x: int(x.ts))
@@ -322,7 +321,7 @@ class OkxPublicConnector(PublicConnector):
                 klines_response = self._api_client.get_api_v5_market_history_candles(
                     instId=self._market[symbol].id,
                     bar=okx_interval.value,
-                    limit=100,
+                    limit="100",
                     after=str(oldest_timestamp),  # Get klines before this timestamp
                 )
 
@@ -370,7 +369,7 @@ class OkxPublicConnector(PublicConnector):
         )
         return kline_list
 
-    async def subscribe_trade(self, symbol: str | List[str]):
+    def subscribe_trade(self, symbol: str | List[str]):
         symbols = []
         if isinstance(symbol, str):
             symbol = [symbol]
@@ -381,9 +380,9 @@ class OkxPublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found in market")
             symbols.append(market.id)
 
-        await self._ws_client.subscribe_trade(symbols)
+        self._ws_client.subscribe_trade(symbols)
 
-    async def subscribe_bookl1(self, symbol: str | List[str]):
+    def subscribe_bookl1(self, symbol: str | List[str]):
         symbols = []
         if isinstance(symbol, str):
             symbol = [symbol]
@@ -394,9 +393,9 @@ class OkxPublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found in market")
             symbols.append(market.id)
 
-        await self._ws_client.subscribe_order_book(symbols, channel="bbo-tbt")
+        self._ws_client.subscribe_order_book(symbols, channel="bbo-tbt")
 
-    async def subscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
+    def subscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
         if level != BookLevel.L5:
             raise ValueError("Only L5 book level is supported for OKX")
 
@@ -410,9 +409,9 @@ class OkxPublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found in market")
             symbols.append(market.id)
 
-        await self._ws_client.subscribe_order_book(symbols, channel="books5")
+        self._ws_client.subscribe_order_book(symbols, channel="books5")
 
-    async def subscribe_kline(self, symbol: str | List[str], interval: KlineInterval):
+    def subscribe_kline(self, symbol: str | List[str], interval: KlineInterval):
         symbols = []
         if isinstance(symbol, str):
             symbol = [symbol]
@@ -423,10 +422,10 @@ class OkxPublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found in market")
             symbols.append(market.id)
 
-        interval = OkxEnumParser.to_okx_kline_interval(interval)
-        await self._business_ws_client.subscribe_candlesticks(symbols, interval)
+        okx_interval = OkxEnumParser.to_okx_kline_interval(interval)
+        self._business_ws_client.subscribe_candlesticks(symbols, okx_interval)
 
-    async def subscribe_funding_rate(self, symbol: List[str]):
+    def subscribe_funding_rate(self, symbol: List[str]):
         symbols = []
         if isinstance(symbol, str):
             symbol = [symbol]
@@ -437,9 +436,9 @@ class OkxPublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found in market")
             symbols.append(market.id)
 
-        await self._ws_client.subscribe_funding_rate(symbols)
+        self._ws_client.subscribe_funding_rate(symbols)
 
-    async def subscribe_index_price(self, symbol: List[str]):
+    def subscribe_index_price(self, symbol: List[str]):
         symbols = []
         if isinstance(symbol, str):
             symbol = [symbol]
@@ -450,9 +449,9 @@ class OkxPublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found in market")
             symbols.append(market.id)
 
-        await self._ws_client.subscribe_index_price(symbols)
+        self._ws_client.subscribe_index_price(symbols)
 
-    async def subscribe_mark_price(self, symbol: List[str]):
+    def subscribe_mark_price(self, symbol: List[str]):
         symbols = []
         if isinstance(symbol, str):
             symbol = [symbol]
@@ -463,9 +462,9 @@ class OkxPublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found in market")
             symbols.append(market.id)
 
-        await self._ws_client.subscribe_mark_price(symbols)
+        self._ws_client.subscribe_mark_price(symbols)
 
-    async def unsubscribe_trade(self, symbol: str | List[str]):
+    def unsubscribe_trade(self, symbol: str | List[str]):
         symbols = []
         if isinstance(symbol, str):
             symbol = [symbol]
@@ -476,9 +475,9 @@ class OkxPublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found in market")
             symbols.append(market.id)
 
-        await self._ws_client.unsubscribe_trade(symbols)
+        self._ws_client.unsubscribe_trade(symbols)
 
-    async def unsubscribe_bookl1(self, symbol: str | List[str]):
+    def unsubscribe_bookl1(self, symbol: str | List[str]):
         symbols = []
         if isinstance(symbol, str):
             symbol = [symbol]
@@ -489,9 +488,9 @@ class OkxPublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found in market")
             symbols.append(market.id)
 
-        await self._ws_client.unsubscribe_order_book(symbols, channel="bbo-tbt")
+        self._ws_client.unsubscribe_order_book(symbols, channel="bbo-tbt")
 
-    async def unsubscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
+    def unsubscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
         if level != BookLevel.L5:
             raise ValueError("Only L5 book level is supported for OKX")
 
@@ -505,9 +504,9 @@ class OkxPublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found in market")
             symbols.append(market.id)
 
-        await self._ws_client.unsubscribe_order_book(symbols, channel="books5")
+        self._ws_client.unsubscribe_order_book(symbols, channel="books5")
 
-    async def unsubscribe_kline(self, symbol: str | List[str], interval: KlineInterval):
+    def unsubscribe_kline(self, symbol: str | List[str], interval: KlineInterval):
         symbols = []
         if isinstance(symbol, str):
             symbol = [symbol]
@@ -518,10 +517,10 @@ class OkxPublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found in market")
             symbols.append(market.id)
 
-        interval = OkxEnumParser.to_okx_kline_interval(interval)
-        await self._business_ws_client.unsubscribe_candlesticks(symbols, interval)
+        okx_interval = OkxEnumParser.to_okx_kline_interval(interval)
+        self._business_ws_client.unsubscribe_candlesticks(symbols, okx_interval)
 
-    async def unsubscribe_funding_rate(self, symbol: List[str]):
+    def unsubscribe_funding_rate(self, symbol: List[str]):
         symbols = []
         if isinstance(symbol, str):
             symbol = [symbol]
@@ -532,9 +531,9 @@ class OkxPublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found in market")
             symbols.append(market.id)
 
-        await self._ws_client.unsubscribe_funding_rate(symbols)
+        self._ws_client.unsubscribe_funding_rate(symbols)
 
-    async def unsubscribe_index_price(self, symbol: List[str]):
+    def unsubscribe_index_price(self, symbol: List[str]):
         symbols = []
         if isinstance(symbol, str):
             symbol = [symbol]
@@ -545,9 +544,9 @@ class OkxPublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found in market")
             symbols.append(market.id)
 
-        await self._ws_client.unsubscribe_index_price(symbols)
+        self._ws_client.unsubscribe_index_price(symbols)
 
-    async def unsubscribe_mark_price(self, symbol: List[str]):
+    def unsubscribe_mark_price(self, symbol: List[str]):
         symbols = []
         if isinstance(symbol, str):
             symbol = [symbol]
@@ -558,7 +557,7 @@ class OkxPublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found in market")
             symbols.append(market.id)
 
-        await self._ws_client.unsubscribe_mark_price(symbols)
+        self._ws_client.unsubscribe_mark_price(symbols)
 
     def _business_ws_msg_handler(self, raw: bytes):
         # if raw == b"pong":
@@ -838,7 +837,8 @@ class OkxPrivateConnector(PrivateConnector):
         )
 
     async def connect(self):
+        self._oms._ws_client.subscribe_orders()
+        self._oms._ws_client.subscribe_positions()
+        self._oms._ws_client.subscribe_account()
+        await self._oms._ws_client.connect()
         await self._oms._ws_api_client.connect()
-        await self._oms._ws_client.subscribe_orders()
-        await self._oms._ws_client.subscribe_positions()
-        await self._oms._ws_client.subscribe_account()

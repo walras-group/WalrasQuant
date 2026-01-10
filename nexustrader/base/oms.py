@@ -53,6 +53,9 @@ class OrderManagementSystem(ABC):
         self._position_mode_check()
 
     def order_status_update(self, order: Order):
+        if order.oid is None:
+            return
+
         if not self._registry.is_registered(order.oid):
             return
 
@@ -99,7 +102,7 @@ class OrderManagementSystem(ABC):
         Convert the price to the precision of the market
         """
         market = self._market[symbol]
-        price: Decimal = Decimal(str(price))
+        price_decimal: Decimal = Decimal(str(price))
 
         decimal = market.precision.price
 
@@ -111,15 +114,15 @@ class OrderManagementSystem(ABC):
             precision_decimal = Decimal(str(decimal))
 
         if mode == "round":
-            format_price = (price / exp).quantize(
+            format_price = (price_decimal / exp).quantize(
                 precision_decimal, rounding=ROUND_HALF_UP
             ) * exp
         elif mode == "ceil":
-            format_price = (price / exp).quantize(
+            format_price = (price_decimal / exp).quantize(
                 precision_decimal, rounding=ROUND_CEILING
             ) * exp
         elif mode == "floor":
-            format_price = (price / exp).quantize(
+            format_price = (price_decimal / exp).quantize(
                 precision_decimal, rounding=ROUND_FLOOR
             ) * exp
         return format_price

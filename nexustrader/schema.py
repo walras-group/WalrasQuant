@@ -230,7 +230,7 @@ class BatchOrderSubmit(OrderSubmit, kw_only=True):
     type: OrderType
     amount: Decimal
     price: Decimal | None = None  # for market order, the price is None
-    time_in_force: TimeInForce | None = TimeInForce.GTC
+    time_in_force: TimeInForce = TimeInForce.GTC
     reduce_only: bool = False
 
 

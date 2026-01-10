@@ -108,7 +108,6 @@ class AsyncCache:
 
         self._storage_initialized = False
         self._table_prefix = self.safe_table_name(f"{self.strategy_id}_{self.user_id}")
-        self._backend = None
 
         self._position_lock = threading.RLock()  # Lock for position updates
         self._order_lock = threading.RLock()  # Lock for order updates

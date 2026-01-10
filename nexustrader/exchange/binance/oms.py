@@ -2,7 +2,7 @@ import msgspec
 import asyncio
 from decimal import Decimal
 
-from typing import Dict, Any
+from typing import Dict, Any, Mapping
 from nexustrader.constants import (
     PositionSide,
     ExchangeType,
@@ -51,7 +51,7 @@ from nexustrader.core.cache import AsyncCache
 
 class BinanceOrderManagementSystem(OrderManagementSystem):
     _account_type: BinanceAccountType
-    _market: Dict[str, BinanceMarket]
+    _market: Mapping[str, BinanceMarket]
     _market_id: Dict[str, str]
     _api_client: BinanceApiClient
     _ws_client: BinanceWSClient
@@ -249,7 +249,7 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
         except msgspec.DecodeError as e:
             self._log.error(f"Error decoding message: {str(raw)} {e}")
 
-    def _parse_order_trade_update(self, raw: bytes) -> Order:
+    def _parse_order_trade_update(self, raw: bytes):
         res = self._ws_msg_futures_order_update_decoder.decode(raw)
         self._log.debug(f"Order trade update: {res}")
 
@@ -890,15 +890,15 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
         type: OrderType,
         amount: Decimal,
         price: Decimal | None = None,
-        time_in_force: TimeInForce | None = TimeInForce.GTC,
+        time_in_force: TimeInForce = TimeInForce.GTC,
         tp_order_type: OrderType | None = None,
         tp_trigger_price: Decimal | None = None,
         tp_price: Decimal | None = None,
-        tp_trigger_type: TriggerType | None = TriggerType.LAST_PRICE,
+        tp_trigger_type: TriggerType = TriggerType.LAST_PRICE,
         sl_order_type: OrderType | None = None,
         sl_trigger_price: Decimal | None = None,
         sl_price: Decimal | None = None,
-        sl_trigger_type: TriggerType | None = TriggerType.LAST_PRICE,
+        sl_trigger_type: TriggerType = TriggerType.LAST_PRICE,
         **kwargs,
     ):
         tasks = []
@@ -1331,11 +1331,11 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
             self._account_type.is_spot
             or self._account_type.is_isolated_margin_or_margin
         ):
-            res: BinanceSpotAccountInfo = self._api_client.get_api_v3_account()
+            res = self._api_client.get_api_v3_account()
         elif self._account_type.is_linear:
-            res: BinanceFuturesAccountInfo = self._api_client.get_fapi_v2_account()
+            res = self._api_client.get_fapi_v2_account()
         elif self._account_type.is_inverse:
-            res: BinanceFuturesAccountInfo = self._api_client.get_dapi_v1_account()
+            res = self._api_client.get_dapi_v1_account()
 
         if self._account_type.is_portfolio_margin:
             balances = []
@@ -1350,7 +1350,7 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
         self._cache._apply_balance(self._account_type, balances)
 
         if self._account_type.is_linear or self._account_type.is_inverse:
-            for pos in res.positions:
+            for pos in res.positions:  # type: ignore
                 self._apply_position(pos)
 
     def _init_position(self):

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Literal
+from typing import Dict, List, Literal, Mapping
 from decimal import Decimal
 import asyncio
 
@@ -65,7 +65,7 @@ class PublicConnector(ABC):
     def __init__(
         self,
         account_type: AccountType,
-        market: Dict[str, BaseMarket],
+        market: Mapping[str, BaseMarket],
         market_id: Dict[str, str],
         exchange_id: ExchangeType,
         ws_client: WSClient,
@@ -135,27 +135,27 @@ class PublicConnector(ABC):
         pass
 
     @abstractmethod
-    async def subscribe_trade(self, symbol: str | List[str]):
+    def subscribe_trade(self, symbol: str | List[str]):
         """Subscribe to the trade data"""
         pass
 
     @abstractmethod
-    async def unsubscribe_trade(self, symbol: str | List[str]):
+    def unsubscribe_trade(self, symbol: str | List[str]):
         """Unsubscribe from the trade data"""
         pass
 
     @abstractmethod
-    async def subscribe_bookl1(self, symbol: str | List[str]):
+    def subscribe_bookl1(self, symbol: str | List[str]):
         """Subscribe to the bookl1 data"""
         pass
 
     @abstractmethod
-    async def unsubscribe_bookl1(self, symbol: str | List[str]):
+    def unsubscribe_bookl1(self, symbol: str | List[str]):
         """Unsubscribe from the bookl1 data"""
         pass
 
     @abstractmethod
-    async def subscribe_kline(
+    def subscribe_kline(
         self,
         symbol: str | List[str],
         interval: KlineInterval,
@@ -170,7 +170,7 @@ class PublicConnector(ABC):
         pass
 
     @abstractmethod
-    async def unsubscribe_kline(
+    def unsubscribe_kline(
         self,
         symbol: str | List[str],
         interval: KlineInterval,
@@ -178,7 +178,7 @@ class PublicConnector(ABC):
         """Unsubscribe from the kline data"""
         pass
 
-    async def subscribe_kline_aggregator(
+    def subscribe_kline_aggregator(
         self,
         symbol: str,
         interval: KlineInterval,
@@ -191,7 +191,7 @@ class PublicConnector(ABC):
             interval: Kline interval
         """
         # Ensure trade subscription for the symbol
-        await self.subscribe_trade(symbol)
+        self.subscribe_trade(symbol)
 
         # Create and register time kline aggregator
         aggregator = self._create_time_kline_aggregator(
@@ -203,7 +203,7 @@ class PublicConnector(ABC):
             f"Time kline aggregator created for {symbol} with interval {interval}"
         )
 
-    async def unsubscribe_kline_aggregator(
+    def unsubscribe_kline_aggregator(
         self,
         symbol: str,
         interval: KlineInterval,
@@ -228,9 +228,9 @@ class PublicConnector(ABC):
                 )
         if not aggregators:
             self._aggregators.pop(symbol, None)
-            await self.unsubscribe_trade(symbol)
+            self.unsubscribe_trade(symbol)
 
-    async def subscribe_volume_kline_aggregator(
+    def subscribe_volume_kline_aggregator(
         self, symbol: str, volume_threshold: float, volume_type: str
     ):
         """Subscribe to volume-based kline data using VolumeKlineAggregator
@@ -240,7 +240,7 @@ class PublicConnector(ABC):
             volume_threshold: Volume threshold for creating new klines
         """
         # Ensure trade subscription for the symbol
-        await self.subscribe_trade(symbol)
+        self.subscribe_trade(symbol)
 
         # Create and register volume kline aggregator
         aggregator = self._create_volume_kline_aggregator(
@@ -252,7 +252,7 @@ class PublicConnector(ABC):
             f"Volume kline aggregator created for {symbol} with threshold {volume_threshold} and type {volume_type}"
         )
 
-    async def unsubscribe_volume_kline_aggregator(
+    def unsubscribe_volume_kline_aggregator(
         self, symbol: str, volume_threshold: float, volume_type: str
     ):
         """Unsubscribe from volume-based kline data using VolumeKlineAggregator
@@ -274,45 +274,45 @@ class PublicConnector(ABC):
                 )
         if not aggregators:
             self._aggregators.pop(symbol, None)
-            await self.unsubscribe_trade(symbol)
+            self.unsubscribe_trade(symbol)
 
     @abstractmethod
-    async def subscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
+    def subscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
         """Subscribe to the bookl2 data"""
         pass
 
     @abstractmethod
-    async def unsubscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
+    def unsubscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
         """Unsubscribe from the bookl2 data"""
         pass
 
     @abstractmethod
-    async def subscribe_funding_rate(self, symbol: str | List[str]):
+    def subscribe_funding_rate(self, symbol: str | List[str]):
         """Subscribe to the funding rate data"""
         pass
 
     @abstractmethod
-    async def unsubscribe_funding_rate(self, symbol: str | List[str]):
+    def unsubscribe_funding_rate(self, symbol: str | List[str]):
         """Unsubscribe from the funding rate data"""
         pass
 
     @abstractmethod
-    async def subscribe_index_price(self, symbol: str | List[str]):
+    def subscribe_index_price(self, symbol: str | List[str]):
         """Subscribe to the index price data"""
         pass
 
     @abstractmethod
-    async def unsubscribe_index_price(self, symbol: str | List[str]):
+    def unsubscribe_index_price(self, symbol: str | List[str]):
         """Unsubscribe from the index price data"""
         pass
 
     @abstractmethod
-    async def subscribe_mark_price(self, symbol: str | List[str]):
+    def subscribe_mark_price(self, symbol: str | List[str]):
         """Subscribe to the mark price data"""
         pass
 
     @abstractmethod
-    async def unsubscribe_mark_price(self, symbol: str | List[str]):
+    def unsubscribe_mark_price(self, symbol: str | List[str]):
         """Unsubscribe from the mark price data"""
         pass
 
@@ -336,7 +336,7 @@ class PublicConnector(ABC):
         self,
         symbol: str,
         volume_threshold: float,
-        volume_type: str,
+        volume_type: Literal["BUY", "SELL", "DEFAULT"],
     ) -> VolumeKlineAggregator:
         """Create a volume-based kline aggregator."""
 
@@ -360,6 +360,10 @@ class PublicConnector(ABC):
         if aggregators:
             for aggregator in aggregators:
                 aggregator.handle_trade(trade)
+    
+    async def connect(self):
+        """Connect to the exchange"""
+        await self._ws_client.connect()
 
     async def disconnect(self):
         """Disconnect from the exchange"""
@@ -367,7 +371,7 @@ class PublicConnector(ABC):
         for aggregators in self._aggregators.values():
             for aggregator in aggregators:
                 if hasattr(aggregator, "stop"):
-                    aggregator.stop()
+                    aggregator.stop()  # type: ignore
         self._aggregators.clear()
 
         # NOTE: no need to manually disconnect ws_client here
@@ -379,7 +383,7 @@ class PrivateConnector(ABC):
     def __init__(
         self,
         account_type: AccountType,
-        market: Dict[str, BaseMarket],
+        market: Mapping[str, BaseMarket],
         api_client: ApiClient,
         task_manager: TaskManager,
         oms: OrderManagementSystem,
@@ -410,7 +414,7 @@ class PrivateConnector(ABC):
         Convert the price to the precision of the market
         """
         market = self._market[symbol]
-        price: Decimal = Decimal(str(price))
+        price_decimal: Decimal = Decimal(str(price))
 
         decimal = market.precision.price
 
@@ -422,15 +426,15 @@ class PrivateConnector(ABC):
             precision_decimal = Decimal(str(decimal))
 
         if mode == "round":
-            format_price = (price / exp).quantize(
+            format_price = (price_decimal / exp).quantize(
                 precision_decimal, rounding=ROUND_HALF_UP
             ) * exp
         elif mode == "ceil":
-            format_price = (price / exp).quantize(
+            format_price = (price_decimal / exp).quantize(
                 precision_decimal, rounding=ROUND_CEILING
             ) * exp
         elif mode == "floor":
-            format_price = (price / exp).quantize(
+            format_price = (price_decimal / exp).quantize(
                 precision_decimal, rounding=ROUND_FLOOR
             ) * exp
         return format_price

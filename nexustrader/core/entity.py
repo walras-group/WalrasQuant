@@ -2,7 +2,7 @@ import signal
 import asyncio
 import uuid
 import warnings
-from typing import Callable, Coroutine, Any, TypeVar, Union
+from typing import Callable, Coroutine, Any, TypeVar, Union, cast
 from typing import Dict, List
 from dataclasses import dataclass
 from nexustrader.core.nautilius_core import LiveClock, Logger
@@ -32,7 +32,7 @@ class OidGen:
         self._clock = clock
 
     def _generate_shard(self) -> int:
-        uuid_int = uuid.uuid4().int
+        uuid_int = cast(int, uuid.uuid4().int)
         shard = (uuid_int % 9999) + 1
         return shard
 
@@ -134,7 +134,7 @@ class TaskManager:
         self._shutdown_event.set()
         self._log.debug("Shutdown signal received, cleaning up...")
 
-    def create_task(self, coro: asyncio.coroutines, name: str = None) -> asyncio.Task:
+    def create_task(self, coro: Coroutine[Any, Any, Any], name: str | None = None) -> asyncio.Task:
         task = asyncio.create_task(coro, name=name)
         self._tasks[task.get_name()] = task
         task.add_done_callback(self._handle_task_done)

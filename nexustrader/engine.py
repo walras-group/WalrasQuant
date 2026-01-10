@@ -368,16 +368,15 @@ class Engine:
         self._is_built = True
 
     async def _start_connectors(self):
+        for connector in self._public_connectors.values():
+            await connector.connect()
+
         for connector in self._private_connectors.values():
             await connector.connect()
 
     async def _start_ems(self):
         for ems in self._ems.values():
             await ems.start()
-
-    async def _start_oms(self):
-        for oms in self._oms.values():
-            await oms.start()
 
     def _start_scheduler(self):
         self._strategy._scheduler.start()
@@ -406,7 +405,6 @@ class Engine:
 
     async def _start(self):
         await self._sms.start()
-        await self._start_oms()
         await self._start_ems()
         await self._start_connectors()
         if self._custom_signal_recv:

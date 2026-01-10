@@ -70,7 +70,7 @@ class BybitWSClient(WSClient):
         self._account_type = account_type
         self._api_key = api_key
         self._secret = secret
-        self._authed = False
+
         if self.is_private:
             url = account_type.ws_private_url
         else:
@@ -96,7 +96,7 @@ class BybitWSClient(WSClient):
 
     def _generate_signature(self):
         expires = self._clock.timestamp_ms() + 1_000
-        signature = hmac_signature(self._secret, f"GET/realtime{expires}")
+        signature = hmac_signature(self._secret, f"GET/realtime{expires}")  # type: ignore
         return signature, expires
 
     def _get_auth_payload(self):
@@ -104,105 +104,101 @@ class BybitWSClient(WSClient):
         return {"op": "auth", "args": [self._api_key, expires, signature]}
 
     async def _auth(self):
-        if not self._authed:
-            self._send(self._get_auth_payload())
-            self._authed = True
-            await asyncio.sleep(5)
+        self._send(self._get_auth_payload())
+        await asyncio.sleep(5)
 
-    def _send_payload(self, params: List[str], chunk_size: int = 100):
+    def _send_payload(
+        self, params: List[str], chunk_size: int = 100, op: str = "subscribe"
+    ):
         # Split params into chunks of 100 if length exceeds 100
         params_chunks = [
             params[i : i + chunk_size] for i in range(0, len(params), chunk_size)
         ]
 
         for chunk in params_chunks:
-            payload = {"op": "subscribe", "args": chunk}
+            payload = {"op": op, "args": chunk}
             self._send(payload)
 
-    async def _subscribe(self, topics: List[str], auth: bool = False):
+    def _subscribe(self, topics: List[str]):
         topics = [topic for topic in topics if topic not in self._subscriptions]
 
         for topic in topics:
             self._subscriptions.append(topic)
             self._log.debug(f"Subscribing to {topic}...")
 
-        await self.connect()
-        if auth:
-            await self._auth()
         if not topics:
             return
-        self._send_payload(topics)
+        
+        if self.connected:
+            self._send_payload(topics, op="subscribe")
 
-    async def _unsubscribe(self, topics: List[str]):
+    def _unsubscribe(self, topics: List[str]):
         topics = [topic for topic in topics if topic in self._subscriptions]
 
         for topic in topics:
             self._subscriptions.remove(topic)
             self._log.debug(f"Unsubscribing from {topic}...")
 
-        await self.connect()
-        payload = {"op": "unsubscribe", "args": topics}
         if not topics:
             return
-        self._send(payload)
+        self._send_payload(topics, op="unsubscribe")
 
-    async def subscribe_order_book(self, symbols: List[str], depth: int):
+    def subscribe_order_book(self, symbols: List[str], depth: int):
         """subscribe to orderbook"""
         topics = [f"orderbook.{depth}.{symbol}" for symbol in symbols]
-        await self._subscribe(topics)
+        self._subscribe(topics)
 
-    async def subscribe_trade(self, symbols: List[str]):
+    def subscribe_trade(self, symbols: List[str]):
         """subscribe to trade"""
         topics = [f"publicTrade.{symbol}" for symbol in symbols]
-        await self._subscribe(topics)
+        self._subscribe(topics)
 
-    async def subscribe_ticker(self, symbols: List[str]):
+    def subscribe_ticker(self, symbols: List[str]):
         """subscribe to ticker"""
         topics = [f"tickers.{symbol}" for symbol in symbols]
-        await self._subscribe(topics)
+        self._subscribe(topics)
 
-    async def subscribe_kline(self, symbols: List[str], interval: BybitKlineInterval):
+    def subscribe_kline(self, symbols: List[str], interval: BybitKlineInterval):
         """subscribe to kline"""
         topics = [f"kline.{interval.value}.{symbol}" for symbol in symbols]
-        await self._subscribe(topics)
+        self._subscribe(topics)
 
-    async def unsubscribe_order_book(self, symbols: List[str], depth: int):
+    def unsubscribe_order_book(self, symbols: List[str], depth: int):
         """unsubscribe from orderbook"""
         topics = [f"orderbook.{depth}.{symbol}" for symbol in symbols]
-        await self._unsubscribe(topics)
+        self._unsubscribe(topics)
 
-    async def unsubscribe_trade(self, symbols: List[str]):
+    def unsubscribe_trade(self, symbols: List[str]):
         """unsubscribe from trade"""
         topics = [f"publicTrade.{symbol}" for symbol in symbols]
-        await self._unsubscribe(topics)
+        self._unsubscribe(topics)
 
-    async def unsubscribe_ticker(self, symbols: List[str]):
+    def unsubscribe_ticker(self, symbols: List[str]):
         """unsubscribe from ticker"""
         topics = [f"tickers.{symbol}" for symbol in symbols]
-        await self._unsubscribe(topics)
+        self._unsubscribe(topics)
 
-    async def unsubscribe_kline(self, symbols: List[str], interval: BybitKlineInterval):
+    def unsubscribe_kline(self, symbols: List[str], interval: BybitKlineInterval):
         """unsubscribe from kline"""
         topics = [f"kline.{interval.value}.{symbol}" for symbol in symbols]
-        await self._unsubscribe(topics)
+        self._unsubscribe(topics)
 
     async def _resubscribe(self):
         if self.is_private:
-            self._authed = False
             await self._auth()
         self._send_payload(self._subscriptions)
 
-    async def subscribe_order(self, topic: str = "order"):
+    def subscribe_order(self, topic: str = "order"):
         """subscribe to order"""
-        await self._subscribe([topic], auth=True)
+        self._subscribe([topic])
 
-    async def subscribe_position(self, topic: str = "position"):
+    def subscribe_position(self, topic: str = "position"):
         """subscribe to position"""
-        await self._subscribe([topic], auth=True)
+        self._subscribe([topic])
 
-    async def subscribe_wallet(self, topic: str = "wallet"):
+    def subscribe_wallet(self, topic: str = "wallet"):
         """subscribe to wallet"""
-        await self._subscribe([topic], auth=True)
+        self._subscribe([topic])
 
 
 class BybitWSApiClient(WSClient):
@@ -219,7 +215,6 @@ class BybitWSApiClient(WSClient):
         self._api_key = api_key
         self._secret = secret
         self._account_type = account_type
-        self._authed = False
 
         url = account_type.ws_api_url
         self._limiter = BybitRateLimiter(
@@ -247,10 +242,8 @@ class BybitWSApiClient(WSClient):
         return {"op": "auth", "args": [self._api_key, expires, signature]}
 
     async def _auth(self):
-        if not self._authed:
-            self._send(self._get_auth_payload())
-            self._authed = True
-            await asyncio.sleep(5)
+        self._send(self._get_auth_payload())
+        await asyncio.sleep(5)
 
     def _submit(self, reqId: str, op: str, args: list[dict]):
         payload = {
@@ -304,62 +297,5 @@ class BybitWSApiClient(WSClient):
             await self._limiter("10/s").limit(key=op, cost=1)
         self._submit(reqId=f"c{id}", op=op, args=[arg])
 
-    async def connect(self):
-        await super().connect()
-        await self._auth()
-
     async def _resubscribe(self):
-        self._authed = False
         await self._auth()
-
-
-import asyncio  # noqa
-
-
-async def main():
-    from nexustrader.constants import settings
-    from nexustrader.core.entity import TaskManager
-    from nexustrader.core.nautilius_core import LiveClock, setup_nautilus_core
-
-    BYBIT_API_KEY = settings.BYBIT.TESTNET.API_KEY
-    BYBIT_SECRET = settings.BYBIT.TESTNET.SECRET
-
-    log_guard = setup_nautilus_core(  # noqa
-        trader_id="bnc-test",
-        level_stdout="DEBUG",
-    )
-
-    task_manager = TaskManager(
-        loop=asyncio.get_event_loop(),
-    )
-
-    ws_api_client = BybitWSApiClient(
-        account_type=BybitAccountType.UNIFIED_TESTNET,
-        api_key=BYBIT_API_KEY,
-        secret=BYBIT_SECRET,
-        handler=lambda msg: print(msg),
-        task_manager=task_manager,
-        clock=LiveClock(),
-        enable_rate_limit=True,
-    )
-
-    await ws_api_client.connect()
-    # await ws_api_client.create_order(
-    #     id=UUID4().value,
-    #     symbol="BTCUSDT",
-    #     side="Buy",
-    #     orderType="Market",
-    #     qty="0.001",
-    #     category="linear",
-    # )
-    await ws_api_client.cancel_order(
-        id="4ae064b8-7b08-4ba4-a9d9-3022da13d8d5",
-        orderId="7ed63377-d375-4bc7-b6d1-dc9f47c37ca4",
-        symbol="BTCUSDT",
-        category="linear",
-    )
-    await task_manager.wait()
-
-
-if __name__ == "__main__":
-    asyncio.run(main())

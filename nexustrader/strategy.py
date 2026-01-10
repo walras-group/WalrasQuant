@@ -1059,8 +1059,8 @@ class Strategy:
         quote: str | None = None,
         exclude: List[str] | None = None,
     ) -> List[str]:
-        exchange: ExchangeManager = self._exchanges[exchange]
-        return exchange.linear(base, quote, exclude)
+        _exchange: ExchangeManager = self._exchanges[exchange]
+        return _exchange.linear(base, quote, exclude)
 
     def spot_info(
         self,
@@ -1069,8 +1069,8 @@ class Strategy:
         quote: str | None = None,
         exclude: List[str] | None = None,
     ) -> List[str]:
-        exchange: ExchangeManager = self._exchanges[exchange]
-        return exchange.spot(base, quote, exclude)
+        _exchange: ExchangeManager = self._exchanges[exchange]
+        return _exchange.spot(base, quote, exclude)
 
     def future_info(
         self,
@@ -1079,8 +1079,8 @@ class Strategy:
         quote: str | None = None,
         exclude: List[str] | None = None,
     ) -> List[str]:
-        exchange: ExchangeManager = self._exchanges[exchange]
-        return exchange.future(base, quote, exclude)
+        _exchange: ExchangeManager = self._exchanges[exchange]
+        return _exchange.future(base, quote, exclude)
 
     def inverse_info(
         self,
@@ -1089,8 +1089,8 @@ class Strategy:
         quote: str | None = None,
         exclude: List[str] | None = None,
     ) -> List[str]:
-        exchange: ExchangeManager = self._exchanges[exchange]
-        return exchange.inverse(base, quote, exclude)
+        _exchange: ExchangeManager = self._exchanges[exchange]
+        return _exchange.inverse(base, quote, exclude)
 
     def on_start(self):
         pass

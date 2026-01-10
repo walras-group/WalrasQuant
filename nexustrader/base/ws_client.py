@@ -41,7 +41,7 @@ class Listener(WSListener):
         self,
         callback,
         logger,
-        specific_ping_msg=None,
+        specific_ping_msg: bytes | None = None,
         user_pong_callback: Callable[["Listener", WSFrame], bool] | None = None,
         *args,
         **kwargs,
@@ -54,7 +54,7 @@ class Listener(WSListener):
         """
         super().__init__(*args, **kwargs)
         self._log = logger
-        self._specific_ping_msg: bytes = specific_ping_msg
+        self._specific_ping_msg: bytes | None = specific_ping_msg
         self._callback = callback
 
         if user_pong_callback:
@@ -114,11 +114,6 @@ class Listener(WSListener):
         """
         try:
             match frame.msg_type:
-                case WSMsgType.PING:
-                    # Only send pong if auto_pong is disabled
-                    self._log.debug("Received PING frame, sending PONG frame...")
-                    transport.send_pong(frame.get_payload_as_bytes())
-                    return
                 case WSMsgType.TEXT:
                     # Queue raw bytes for handler to decode
                     self._callback(frame.get_payload_as_bytes())
@@ -144,7 +139,7 @@ class WSClient(ABC):
         handler: Callable[..., Any],
         task_manager: TaskManager,
         clock: LiveClock,
-        specific_ping_msg: bytes = None,
+        specific_ping_msg: bytes | None = None,
         reconnect_interval: int = 1,
         ping_idle_timeout: int = 2,
         ping_reply_timeout: int = 1,
@@ -152,7 +147,7 @@ class WSClient(ABC):
             "ping_when_idle", "ping_periodically"
         ] = "ping_when_idle",
         enable_auto_ping: bool = True,
-        enable_auto_pong: bool = False,
+        enable_auto_pong: bool = True,
         user_pong_callback: Callable[["Listener", WSFrame], bool] | None = None,
     ):
         self._clock = clock
@@ -164,8 +159,8 @@ class WSClient(ABC):
         self._enable_auto_pong = enable_auto_pong
         self._enable_auto_ping = enable_auto_ping
         self._user_pong_callback = user_pong_callback
-        self._listener: Listener = None
-        self._transport = None
+        self._listener: WSListener | None = None
+        self._transport: WSTransport | None = None
         self._subscriptions = []
         self._callback = handler
         if auto_ping_strategy == "ping_when_idle":
@@ -175,60 +170,66 @@ class WSClient(ABC):
         self._task_manager = task_manager
         self._log = Logger(name=type(self).__name__)
 
+
     @property
-    def connected(self):
-        return self._transport and self._listener
+    def connected(self) -> bool:
+        return self._transport is not None
 
     async def _connect(self):
         self._log.debug(f"Connecting to Websocket at {self._url}...")
         WSListenerFactory = lambda: Listener(  # noqa: E731
-            self._callback, self._log, self._specific_ping_msg, self._user_pong_callback
+            self._callback,
+            self._log,
+            self._specific_ping_msg,
+            self._user_pong_callback,
         )
-        try:
-            self._transport, self._listener = await ws_connect(
-                WSListenerFactory,
-                self._url,
-                enable_auto_ping=self._enable_auto_ping,
-                auto_ping_idle_timeout=self._ping_idle_timeout,
-                auto_ping_reply_timeout=self._ping_reply_timeout,
-                auto_ping_strategy=self._auto_ping_strategy,
-                enable_auto_pong=self._enable_auto_pong,
-            )
-        except Exception as e:
-            self._log.error(f"Error connecting to websocket: {e}")
-            raise e
+        self._transport, self._listener = await ws_connect(
+            WSListenerFactory,
+            self._url,
+            enable_auto_ping=self._enable_auto_ping,
+            auto_ping_idle_timeout=self._ping_idle_timeout,
+            auto_ping_reply_timeout=self._ping_reply_timeout,
+            auto_ping_strategy=self._auto_ping_strategy,
+            enable_auto_pong=self._enable_auto_pong,
+        )
+        self._log.info(f"Websocket connected successfully to {self._url}.")
 
     async def connect(self):
-        if not self.connected:
-            await self._connect()
-            self._task_manager.create_task(self._connection_handler())
+        self._task_manager.create_task(self._connection_handler())
 
     async def _connection_handler(self):
         while True:
             try:
-                if not self.connected:
-                    await self._connect()
-                    await self._resubscribe()
-                await self._transport.wait_disconnected()
+                await self._connect()
+                await self._resubscribe()
+                await self._transport.wait_disconnected()  # type: ignore
+                self._log.debug("Websocket disconnected.")
+            except asyncio.CancelledError:
+                self._log.info("Websocket connection loop cancelled.")
+                break
             except Exception as e:
                 self._log.error(f"Connection error: {e}")
+            finally:
+                pass
+                # self._clean_up()
 
-            if self.connected:
-                self._log.warning("Websocket reconnecting...")
-                self.disconnect()
+            self._log.warning(
+                f"Websocket reconnecting in {self._reconnect_interval} seconds..."
+            )
             await asyncio.sleep(self._reconnect_interval)
 
+    def _clean_up(self):
+        self._transport, self._listener = None, None
+
     def _send(self, payload: dict):
-        if not self.connected:
+        if not self._transport:
             self._log.warning(f"Websocket not connected. drop msg: {str(payload)}")
             return
         self._transport.send(WSMsgType.TEXT, msgspec.json.encode(payload))
 
     def disconnect(self):
-        if self.connected:
-            self._log.debug("Disconnecting from websocket...")
+        if self._transport:
             self._transport.disconnect()
-            self._transport, self._listener = None, None
 
     @abstractmethod
     async def _resubscribe(self):

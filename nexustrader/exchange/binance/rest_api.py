@@ -824,8 +824,8 @@ class BinanceApiClient(ApiClient):
         self,
         symbol: str,
         interval: str,
-        startTime: int = None,
-        endTime: int = None,
+        startTime: int | None = None,
+        endTime: int | None = None,
         limit: int | None = None,
     ):
         """
@@ -846,7 +846,7 @@ class BinanceApiClient(ApiClient):
 
         self._limiter_sync.fapi_weight_limit(cost)
 
-        data = {
+        data: dict[str, int | str] = {
             "symbol": symbol,
             "interval": interval,
         }
@@ -867,8 +867,8 @@ class BinanceApiClient(ApiClient):
         self,
         symbol: str,
         interval: str,
-        startTime: int = None,
-        endTime: int = None,
+        startTime: int | None = None,
+        endTime: int | None = None,
         limit: int | None = None,
     ):
         """
@@ -907,8 +907,8 @@ class BinanceApiClient(ApiClient):
         self,
         pair: str,
         interval: str,
-        startTime: int = None,
-        endTime: int = None,
+        startTime: int | None = None,
+        endTime: int | None = None,
         limit: int | None = None,
     ):
         base_url = self._get_base_url(BinanceAccountType.USD_M_FUTURE)
@@ -942,8 +942,8 @@ class BinanceApiClient(ApiClient):
         self,
         pair: str,
         interval: str,
-        startTime: int = None,
-        endTime: int = None,
+        startTime: int | None = None,
+        endTime: int | None = None,
         limit: int | None = None,
     ):
         base_url = self._get_base_url(BinanceAccountType.COIN_M_FUTURE)
@@ -977,8 +977,8 @@ class BinanceApiClient(ApiClient):
         self,
         symbol: str,
         interval: str,
-        startTime: int = None,
-        endTime: int = None,
+        startTime: int | None = None,
+        endTime: int | None = None,
         limit: int | None = None,
     ):
         """

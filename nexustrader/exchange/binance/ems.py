@@ -41,10 +41,10 @@ class BinanceExecutionManagementSystem(ExecutionManagementSystem):
             registry=registry,
             is_mock=is_mock,
         )
-        self._binance_spot_account_type: BinanceAccountType = None
-        self._binance_linear_account_type: BinanceAccountType = None
-        self._binance_inverse_account_type: BinanceAccountType = None
-        self._binance_pm_account_type: BinanceAccountType = None
+        self._binance_spot_account_type: BinanceAccountType | None = None
+        self._binance_linear_account_type: BinanceAccountType | None = None
+        self._binance_inverse_account_type: BinanceAccountType | None = None
+        self._binance_pm_account_type: BinanceAccountType | None = None
 
     def _set_account_type(self):
         account_types = self._private_connectors.keys()
@@ -80,12 +80,14 @@ class BinanceExecutionManagementSystem(ExecutionManagementSystem):
     ) -> AccountType:
         if self._binance_pm_account_type:
             return self._binance_pm_account_type
+        
         if instrument_id.is_spot:
             return self._binance_spot_account_type
         elif instrument_id.is_linear:
             return self._binance_linear_account_type
         elif instrument_id.is_inverse:
             return self._binance_inverse_account_type
+            
 
     def _build_order_submit_queues(self):
         for account_type in self._private_connectors.keys():

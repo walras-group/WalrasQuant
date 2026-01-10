@@ -34,14 +34,22 @@ class BybitExecutionManagementSystem(ExecutionManagementSystem):
             registry=registry,
             is_mock=is_mock,
         )
-        self._bybit_account_type: BybitAccountType = None
+        self._bybit_account_type: BybitAccountType | None = None
 
     def _build_order_submit_queues(self):
+        if not self._private_connectors:
+            raise RuntimeError(
+                "No private connectors found for building order submit queues."
+            )
         for account_type in self._private_connectors.keys():
             if isinstance(account_type, BybitAccountType):
                 self._order_submit_queues[account_type] = asyncio.Queue()
 
     def _set_account_type(self):
+        if not self._private_connectors:
+            raise RuntimeError(
+                "No private connectors found for setting account type."
+            )
         account_types = self._private_connectors.keys()
         self._bybit_account_type = (
             BybitAccountType.UNIFIED_TESTNET

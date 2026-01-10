@@ -63,133 +63,125 @@ class HyperLiquidWSClient(WSClient):
             user_pong_callback=user_api_pong_callback,
         )
 
-    async def _subscribe(self, msgs: List[Dict[str, str]]):
+    def _send_msg(self, msg: Dict[str, str], method: str = "subscribe"):
+        self._send(
+            {
+                "method": method,
+                "subscription": msg,
+            }
+        )
+
+    def _subscribe(self, msgs: List[Dict[str, str]]):
         msgs = [msg for msg in msgs if msg not in self._subscriptions]
-        await self.connect()
         for msg in msgs:
             self._subscriptions.append(msg)
             format_msg = ".".join(msg.values())
             self._log.debug(f"Subscribing to {format_msg}...")
-            self._send(
-                {
-                    "method": "subscribe",
-                    "subscription": msg,
-                }
-            )
+            if self.connected:
+                self._send_msg(msg)
 
-    async def _unsubscribe(self, msgs: List[Dict[str, str]]):
+    def _unsubscribe(self, msgs: List[Dict[str, str]]):
         msgs = [msg for msg in msgs if msg in self._subscriptions]
-        await self.connect()
         for msg in msgs:
             self._subscriptions.remove(msg)
             format_msg = ".".join(msg.values())
             self._log.debug(f"Unsubscribing from {format_msg}...")
-            self._send(
-                {
-                    "method": "unsubscribe",
-                    "subscription": msg,
-                }
-            )
+            self._send_msg(msg, method="unsubscribe")
 
     async def _resubscribe(self):
         for msg in self._subscriptions:
-            self._send(
-                {
-                    "method": "subscribe",
-                    "subscription": msg,
-                }
-            )
+            self._send_msg(msg)
 
-    async def subscribe_trades(self, symbols: List[str]):
+    def subscribe_trades(self, symbols: List[str]):
         msgs = [{"type": "trades", "coin": symbol} for symbol in symbols]
-        await self._subscribe(msgs)
+        self._subscribe(msgs)
 
-    async def unsubscribe_trades(self, symbols: List[str]):
+    def unsubscribe_trades(self, symbols: List[str]):
         msgs = [{"type": "trades", "coin": symbol} for symbol in symbols]
-        await self._unsubscribe(msgs)
+        self._unsubscribe(msgs)
 
-    async def subscribe_bbo(self, symbols: List[str]):
+    def subscribe_bbo(self, symbols: List[str]):
         msgs = [{"type": "bbo", "coin": symbol} for symbol in symbols]
-        await self._subscribe(msgs)
+        self._subscribe(msgs)
 
-    async def unsubscribe_bbo(self, symbols: List[str]):
+    def unsubscribe_bbo(self, symbols: List[str]):
         msgs = [{"type": "bbo", "coin": symbol} for symbol in symbols]
-        await self._unsubscribe(msgs)
+        self._unsubscribe(msgs)
 
-    async def subscribe_l2book(self, symbols: List[str]):
+    def subscribe_l2book(self, symbols: List[str]):
         msgs = [{"type": "l2Book", "coin": symbol} for symbol in symbols]
-        await self._subscribe(msgs)
+        self._subscribe(msgs)
 
-    async def unsubscribe_l2book(self, symbols: List[str]):
+    def unsubscribe_l2book(self, symbols: List[str]):
         msgs = [{"type": "l2Book", "coin": symbol} for symbol in symbols]
-        await self._unsubscribe(msgs)
+        self._unsubscribe(msgs)
 
-    async def subscribe_candle(
+    def subscribe_candle(
         self, symbols: List[str], interval: HyperLiquidKlineInterval
     ):
         msgs = [
             {"type": "candle", "coin": symbol, "interval": interval.value}
             for symbol in symbols
         ]
-        await self._subscribe(msgs)
+        self._subscribe(msgs)
 
-    async def unsubscribe_candle(
+    def unsubscribe_candle(
         self, symbols: List[str], interval: HyperLiquidKlineInterval
     ):
         msgs = [
             {"type": "candle", "coin": symbol, "interval": interval.value}
             for symbol in symbols
         ]
-        await self._unsubscribe(msgs)
+        self._unsubscribe(msgs)
 
-    async def subscribe_order_updates(self):
+    def subscribe_order_updates(self):
         msg = {
             "type": "orderUpdates",
             "user": self._api_key,
         }
-        await self._subscribe([msg])
+        self._subscribe([msg])
 
-    async def subscribe_user_events(self):
+    def subscribe_user_events(self):
         msg = {
             "type": "userEvents",
             "user": self._api_key,
         }
-        await self._subscribe([msg])
+        self._subscribe([msg])
 
-    async def subscribe_user_fills(self):
+    def subscribe_user_fills(self):
         msg = {
             "type": "userFills",
             "user": self._api_key,
         }
-        await self._subscribe([msg])
+        self._subscribe([msg])
 
-    async def subscribe_user_fundings(self):
+    def subscribe_user_fundings(self):
         msg = {
             "type": "userFundings",
             "user": self._api_key,
         }
-        await self._subscribe([msg])
+        self._subscribe([msg])
 
-    async def subscribe_user_non_funding_ledger_updates(self):
+    def subscribe_user_non_funding_ledger_updates(self):
         msg = {
             "type": "userNonFundingLedgerUpdates",
             "user": self._api_key,
         }
-        await self._subscribe([msg])
+        self._subscribe([msg])
 
-    async def subscribe_web_data2(self):
+    def subscribe_web_data2(self):
         msg = {
             "type": "webData2",
             "user": self._api_key,
         }
-        await self._subscribe([msg])
+        self._subscribe([msg])
 
-    async def subscribe_notification(self):
+    def subscribe_notification(self):
         msg = {
             "type": "notification",
             "user": self._api_key,
         }
-        await self._subscribe([msg])
+        self._subscribe([msg])
 
 
 class HyperLiquidWSApiClient(WSClient):
@@ -233,7 +225,7 @@ class HyperLiquidWSApiClient(WSClient):
             user_pong_callback=user_api_pong_callback,
         )
 
-    def _resubscribe(self):
+    async def _resubscribe(self):
         pass
 
     def _get_rate_limit_cost(self, length: int, cost: int = 1) -> int:
@@ -260,7 +252,7 @@ class HyperLiquidWSApiClient(WSClient):
         return {"source": "b" if self._testnet else "a", "connectionId": hash_bytes}
 
     def _action_hash(
-        self, action: Dict[str, Any], nonce: int, vault_address: str = None
+        self, action: Dict[str, Any], nonce: int, vault_address: str | None = None
     ) -> bytes:
         """Generate action hash for signature"""
         data = msgspec.msgpack.encode(action)
@@ -275,7 +267,7 @@ class HyperLiquidWSApiClient(WSClient):
         return keccak.new(digest_bits=256, data=data).digest()
 
     def _sign_l1_action(
-        self, action: Dict[str, Any], nonce: int, vault_address: str = None
+        self, action: Dict[str, Any], nonce: int, vault_address: str | None = None
     ) -> Dict[str, Any]:
         """Sign L1 action for authentication"""
         hash_bytes = self._action_hash(action, nonce, vault_address)

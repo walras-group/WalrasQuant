@@ -60,6 +60,7 @@ class BitgetPublicConnector(PublicConnector):
     _api_client: BitgetApiClient
     _ws_client: BitgetWSClient
     _account_type: BitgetAccountType
+    _market: Dict[str, BitgetMarket]
 
     def __init__(
         self,
@@ -215,19 +216,20 @@ class BitgetPublicConnector(PublicConnector):
             msg = self._ws_msg_general_decoder.decode(raw)
             if msg.is_event_data:
                 self._handle_event_data(msg)
-            elif msg.arg.topic == "books1":
-                self._handle_books1_data(raw, msg.arg)
-            elif msg.arg.topic == "publicTrade":
-                self._handle_trade_data(raw, msg.arg)
-            elif msg.arg.topic == "kline":
-                self._handle_candle_data(raw, msg.arg)
+            elif msg.arg is not None:
+                if msg.arg.topic == "books1":
+                    self._handle_books1_data(raw, msg.arg)
+                elif msg.arg.topic == "publicTrade":
+                    self._handle_trade_data(raw, msg.arg)
+                elif msg.arg.topic == "kline":
+                    self._handle_candle_data(raw, msg.arg)
 
             # print(f"Received WebSocket message: {raw}")
         except msgspec.DecodeError as e:
             self._log.error(f"Error decoding message: {str(raw)} {e}")
 
     def _handle_event_data(self, msg: BitgetWsUtaGeneralMsg):
-        if msg.event == "subscribe":
+        if msg.event == "subscribe" and msg.arg is not None:
             arg = msg.arg
             self._log.debug(f"Subscribed to {arg.message}")
         elif msg.event == "error":
@@ -295,7 +297,7 @@ class BitgetPublicConnector(PublicConnector):
             self._msgbus.publish(topic="bookl1", msg=bookl1)
             # self._log.debug(f"BookL1 update: {str(bookl1)}")
 
-    async def subscribe_bookl1(self, symbol: str | List[str]):
+    def subscribe_bookl1(self, symbol: str | List[str]):
         symbol = symbol if isinstance(symbol, list) else [symbol]
         symbols_by_inst_type = {}
 
@@ -309,9 +311,9 @@ class BitgetPublicConnector(PublicConnector):
             symbols_by_inst_type[inst_type].append(market.id)
 
         for inst_type, symbols in symbols_by_inst_type.items():
-            await self._ws_client.subscribe_depth_v3(symbols, inst_type, "books1")
+            self._ws_client.subscribe_depth_v3(symbols, inst_type, "books1")
 
-    async def unsubscribe_bookl1(self, symbol: str | List[str]):
+    def unsubscribe_bookl1(self, symbol: str | List[str]):
         symbol = symbol if isinstance(symbol, list) else [symbol]
         symbols_by_inst_type = {}
 
@@ -325,9 +327,9 @@ class BitgetPublicConnector(PublicConnector):
             symbols_by_inst_type[inst_type].append(market.id)
 
         for inst_type, symbols in symbols_by_inst_type.items():
-            await self._ws_client.unsubscribe_depth_v3(symbols, inst_type, "books1")
+            self._ws_client.unsubscribe_depth_v3(symbols, inst_type, "books1")
 
-    async def subscribe_trade(self, symbol):
+    def subscribe_trade(self, symbol):
         symbol = symbol if isinstance(symbol, list) else [symbol]
         symbols_by_inst_type = {}
 
@@ -341,9 +343,9 @@ class BitgetPublicConnector(PublicConnector):
             symbols_by_inst_type[inst_type].append(market.id)
 
         for inst_type, symbols in symbols_by_inst_type.items():
-            await self._ws_client.subscribe_trades_v3(symbols, inst_type)
+            self._ws_client.subscribe_trades_v3(symbols, inst_type)
 
-    async def unsubscribe_trade(self, symbol):
+    def unsubscribe_trade(self, symbol):
         symbol = symbol if isinstance(symbol, list) else [symbol]
         symbols_by_inst_type = {}
 
@@ -357,9 +359,9 @@ class BitgetPublicConnector(PublicConnector):
             symbols_by_inst_type[inst_type].append(market.id)
 
         for inst_type, symbols in symbols_by_inst_type.items():
-            await self._ws_client.unsubscribe_trades_v3(symbols, inst_type)
+            self._ws_client.unsubscribe_trades_v3(symbols, inst_type)
 
-    async def subscribe_kline(self, symbol: str | List[str], interval: KlineInterval):
+    def subscribe_kline(self, symbol: str | List[str], interval: KlineInterval):
         """Subscribe to the kline data"""
         symbol = symbol if isinstance(symbol, list) else [symbol]
         bitget_interval = BitgetEnumParser.to_bitget_kline_interval(interval)
@@ -375,11 +377,11 @@ class BitgetPublicConnector(PublicConnector):
             symbols_by_inst_type[inst_type].append(market.id)
 
         for inst_type, symbols in symbols_by_inst_type.items():
-            await self._ws_client.subscribe_candlestick_v3(
+            self._ws_client.subscribe_candlestick_v3(
                 symbols, inst_type, bitget_interval
             )
 
-    async def unsubscribe_kline(self, symbol: str | List[str], interval: KlineInterval):
+    def unsubscribe_kline(self, symbol: str | List[str], interval: KlineInterval):
         """Unsubscribe from the kline data"""
         symbol = symbol if isinstance(symbol, list) else [symbol]
         bitget_interval = BitgetEnumParser.to_bitget_kline_interval(interval)
@@ -395,39 +397,39 @@ class BitgetPublicConnector(PublicConnector):
             symbols_by_inst_type[inst_type].append(market.id)
 
         for inst_type, symbols in symbols_by_inst_type.items():
-            await self._ws_client.unsubscribe_candlestick_v3(
+            self._ws_client.unsubscribe_candlestick_v3(
                 symbols, inst_type, bitget_interval
             )
 
-    async def subscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
+    def subscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
         """Subscribe to the bookl2 data"""
         raise NotImplementedError
 
-    async def unsubscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
+    def unsubscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
         """Unsubscribe from the bookl2 data"""
         raise NotImplementedError
 
-    async def subscribe_funding_rate(self, symbol: str | List[str]):
+    def subscribe_funding_rate(self, symbol: str | List[str]):
         """Subscribe to the funding rate data"""
         raise NotImplementedError
 
-    async def unsubscribe_funding_rate(self, symbol: str | List[str]):
+    def unsubscribe_funding_rate(self, symbol: str | List[str]):
         """Unsubscribe from the funding rate data"""
         raise NotImplementedError
 
-    async def subscribe_index_price(self, symbol: str | List[str]):
+    def subscribe_index_price(self, symbol: str | List[str]):
         """Subscribe to the index price data"""
         raise NotImplementedError
 
-    async def unsubscribe_index_price(self, symbol: str | List[str]):
+    def unsubscribe_index_price(self, symbol: str | List[str]):
         """Unsubscribe from the index price data"""
         raise NotImplementedError
 
-    async def subscribe_mark_price(self, symbol: str | List[str]):
+    def subscribe_mark_price(self, symbol: str | List[str]):
         """Subscribe to the mark price data"""
         raise NotImplementedError
 
-    async def unsubscribe_mark_price(self, symbol: str | List[str]):
+    def unsubscribe_mark_price(self, symbol: str | List[str]):
         """Unsubscribe from the mark price data"""
         raise NotImplementedError
 
@@ -494,24 +496,26 @@ class BitgetPrivateConnector(PrivateConnector):
         )
 
     async def connect(self):
-        await self._oms._ws_api_client.connect()
         if self._account_type.is_uta:
-            await self._oms._ws_client.subscribe_v3_order()
-            await self._oms._ws_client.subscribe_v3_position()
-            await self._oms._ws_client.subscribe_v3_account()
+            self._oms._ws_client.subscribe_v3_order()
+            self._oms._ws_client.subscribe_v3_position()
+            self._oms._ws_client.subscribe_v3_account()
         elif self._account_type.is_future:
-            await self._oms._ws_client.subscribe_orders(
+            self._oms._ws_client.subscribe_orders(
                 inst_types=["USDT-FUTURES", "USDC-FUTURES", "COIN-FUTURES"]
             )
-            await self._oms._ws_client.subscribe_positions(
+            self._oms._ws_client.subscribe_positions(
                 inst_types=["USDT-FUTURES", "USDC-FUTURES", "COIN-FUTURES"]
             )
-            await self._oms._ws_client.subscribe_account(
+            self._oms._ws_client.subscribe_account(
                 inst_types=["USDT-FUTURES", "USDC-FUTURES", "COIN-FUTURES"]
             )
         elif self._account_type.is_spot:
-            await self._oms._ws_client.subscribe_orders(inst_types=["SPOT"])
-            await self._oms._ws_client.subscribe_account(inst_types=["SPOT"])
+            self._oms._ws_client.subscribe_orders(inst_types=["SPOT"])
+            self._oms._ws_client.subscribe_account(inst_types=["SPOT"])
+        await self._oms._ws_client.connect()
+        await self._oms._ws_api_client.connect()
+
 
 
 # async def main():

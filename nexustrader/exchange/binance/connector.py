@@ -147,7 +147,7 @@ class BinancePublicConnector(PublicConnector):
             last_price=float(ticker_response.lastPrice),
             volume=float(ticker_response.volume),
             volumeCcy=float(
-                ticker_response.quoteVolume or ticker_response.baseVolume or 0.0
+                ticker_response.quoteVolume or ticker_response.baseVolume or 0.0 # type: ignore
             ),
             timestamp=self._clock.timestamp_ms(),
         )
@@ -176,7 +176,7 @@ class BinancePublicConnector(PublicConnector):
                 last_price=float(ticker_response.lastPrice),
                 volume=float(ticker_response.volume),
                 volumeCcy=float(
-                    ticker_response.quoteVolume or ticker_response.baseVolume or 0.0
+                    ticker_response.quoteVolume or ticker_response.baseVolume or 0.0 # type: ignore
                 ),
                 timestamp=self._clock.timestamp_ms(),
             )
@@ -322,7 +322,7 @@ class BinancePublicConnector(PublicConnector):
         )
         return kline_list
 
-    async def subscribe_funding_rate(self, symbol: str | List[str]):
+    def subscribe_funding_rate(self, symbol: str | List[str]):
         symbols = []
         if isinstance(symbol, str):
             symbol = [symbol]
@@ -333,11 +333,11 @@ class BinancePublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found")
             symbols.append(market.id)
 
-        await self._ws_client.subscribe_mark_price(
+        self._ws_client.subscribe_mark_price(
             symbols
         )  # NOTE: funding rate is in mark price
 
-    async def subscribe_index_price(self, symbol: str | List[str]):
+    def subscribe_index_price(self, symbol: str | List[str]):
         symbols = []
         if isinstance(symbol, str):
             symbol = [symbol]
@@ -348,11 +348,11 @@ class BinancePublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found")
             symbols.append(market.id)
 
-        await self._ws_client.subscribe_mark_price(
+        self._ws_client.subscribe_mark_price(
             symbols
         )  # NOTE: index price is in mark price
 
-    async def subscribe_mark_price(self, symbol: str | List[str]):
+    def subscribe_mark_price(self, symbol: str | List[str]):
         symbols = []
         if isinstance(symbol, str):
             symbol = [symbol]
@@ -363,9 +363,9 @@ class BinancePublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found")
             symbols.append(market.id)
 
-        await self._ws_client.subscribe_mark_price(symbols)
+        self._ws_client.subscribe_mark_price(symbols)
 
-    async def subscribe_trade(self, symbol: str | List[str]):
+    def subscribe_trade(self, symbol: str | List[str]):
         symbols = []
         if isinstance(symbol, str):
             symbol = [symbol]
@@ -376,9 +376,9 @@ class BinancePublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found")
             symbols.append(market.id)
 
-        await self._ws_client.subscribe_trade(symbols)
+        self._ws_client.subscribe_trade(symbols)
 
-    async def subscribe_bookl1(self, symbol: str | List[str]):
+    def subscribe_bookl1(self, symbol: str | List[str]):
         symbols = []
         if isinstance(symbol, str):
             symbol = [symbol]
@@ -388,9 +388,9 @@ class BinancePublicConnector(PublicConnector):
             if market is None:
                 raise ValueError(f"Symbol {s} not found")
             symbols.append(market.id)
-        await self._ws_client.subscribe_book_ticker(symbols)
+        self._ws_client.subscribe_book_ticker(symbols)
 
-    async def subscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
+    def subscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
         symbols = []
         if isinstance(symbol, str):
             symbol = [symbol]
@@ -400,62 +400,10 @@ class BinancePublicConnector(PublicConnector):
             if market is None:
                 raise ValueError(f"Symbol {s} not found")
             symbols.append(market.id)
-        await self._ws_client.subscribe_partial_book_depth(symbols, int(level.value))
+        self._ws_client.subscribe_partial_book_depth(symbols, int(level.value))
 
-    async def subscribe_kline(self, symbol: str | List[str], interval: KlineInterval):
-        interval = BinanceEnumParser.to_binance_kline_interval(interval)
-
-        symbols = []
-        if isinstance(symbol, str):
-            symbol = [symbol]
-
-        for s in symbol:
-            market = self._market.get(s)
-            if market is None:
-                raise ValueError(f"Symbol {s} not found")
-            symbols.append(market.id)
-
-        await self._ws_client.subscribe_kline(symbols, interval)
-
-    async def unsubscribe_trade(self, symbol: str | List[str]):
-        symbols = []
-        if isinstance(symbol, str):
-            symbol = [symbol]
-
-        for s in symbol:
-            market = self._market.get(s)
-            if market is None:
-                raise ValueError(f"Symbol {s} not found")
-            symbols.append(market.id)
-
-        await self._ws_client.unsubscribe_trade(symbols)
-
-    async def unsubscribe_bookl1(self, symbol: str | List[str]):
-        symbols = []
-        if isinstance(symbol, str):
-            symbol = [symbol]
-
-        for s in symbol:
-            market = self._market.get(s)
-            if market is None:
-                raise ValueError(f"Symbol {s} not found")
-            symbols.append(market.id)
-        await self._ws_client.unsubscribe_book_ticker(symbols)
-
-    async def unsubscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
-        symbols = []
-        if isinstance(symbol, str):
-            symbol = [symbol]
-
-        for s in symbol:
-            market = self._market.get(s)
-            if market is None:
-                raise ValueError(f"Symbol {s} not found")
-            symbols.append(market.id)
-        await self._ws_client.unsubscribe_partial_book_depth(symbols, int(level.value))
-
-    async def unsubscribe_kline(self, symbol: str | List[str], interval: KlineInterval):
-        interval = BinanceEnumParser.to_binance_kline_interval(interval)
+    def subscribe_kline(self, symbol: str | List[str], interval: KlineInterval):
+        bnc_interval = BinanceEnumParser.to_binance_kline_interval(interval)
 
         symbols = []
         if isinstance(symbol, str):
@@ -467,9 +415,9 @@ class BinancePublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found")
             symbols.append(market.id)
 
-        await self._ws_client.unsubscribe_kline(symbols, interval)
+        self._ws_client.subscribe_kline(symbols, bnc_interval)
 
-    async def unsubscribe_funding_rate(self, symbol: str | List[str]):
+    def unsubscribe_trade(self, symbol: str | List[str]):
         symbols = []
         if isinstance(symbol, str):
             symbol = [symbol]
@@ -480,11 +428,63 @@ class BinancePublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found")
             symbols.append(market.id)
 
-        await self._ws_client.unsubscribe_mark_price(
+        self._ws_client.unsubscribe_trade(symbols)
+
+    def unsubscribe_bookl1(self, symbol: str | List[str]):
+        symbols = []
+        if isinstance(symbol, str):
+            symbol = [symbol]
+
+        for s in symbol:
+            market = self._market.get(s)
+            if market is None:
+                raise ValueError(f"Symbol {s} not found")
+            symbols.append(market.id)
+        self._ws_client.unsubscribe_book_ticker(symbols)
+
+    def unsubscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
+        symbols = []
+        if isinstance(symbol, str):
+            symbol = [symbol]
+
+        for s in symbol:
+            market = self._market.get(s)
+            if market is None:
+                raise ValueError(f"Symbol {s} not found")
+            symbols.append(market.id)
+        self._ws_client.unsubscribe_partial_book_depth(symbols, int(level.value))
+
+    def unsubscribe_kline(self, symbol: str | List[str], interval: KlineInterval):
+        bnc_interval = BinanceEnumParser.to_binance_kline_interval(interval)
+
+        symbols = []
+        if isinstance(symbol, str):
+            symbol = [symbol]
+
+        for s in symbol:
+            market = self._market.get(s)
+            if market is None:
+                raise ValueError(f"Symbol {s} not found")
+            symbols.append(market.id)
+
+        self._ws_client.unsubscribe_kline(symbols, bnc_interval)
+
+    def unsubscribe_funding_rate(self, symbol: str | List[str]):
+        symbols = []
+        if isinstance(symbol, str):
+            symbol = [symbol]
+
+        for s in symbol:
+            market = self._market.get(s)
+            if market is None:
+                raise ValueError(f"Symbol {s} not found")
+            symbols.append(market.id)
+
+        self._ws_client.unsubscribe_mark_price(
             symbols
         )  # NOTE: funding rate is in mark price
 
-    async def unsubscribe_index_price(self, symbol: str | List[str]):
+    def unsubscribe_index_price(self, symbol: str | List[str]):
         symbols = []
         if isinstance(symbol, str):
             symbol = [symbol]
@@ -495,11 +495,11 @@ class BinancePublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found")
             symbols.append(market.id)
 
-        await self._ws_client.unsubscribe_mark_price(
+        self._ws_client.unsubscribe_mark_price(
             symbols
         )  # NOTE: index price is in mark price
 
-    async def unsubscribe_mark_price(self, symbol: str | List[str]):
+    def unsubscribe_mark_price(self, symbol: str | List[str]):
         symbols = []
         if isinstance(symbol, str):
             symbol = [symbol]
@@ -510,7 +510,7 @@ class BinancePublicConnector(PublicConnector):
                 raise ValueError(f"Symbol {s} not found")
             symbols.append(market.id)
 
-        await self._ws_client.unsubscribe_mark_price(symbols)
+        self._ws_client.unsubscribe_mark_price(symbols)
 
     def _ws_msg_handler(self, raw: bytes):
         try:
@@ -623,7 +623,7 @@ class BinancePublicConnector(PublicConnector):
             confirm=confirm,
         )
 
-    def _parse_kline(self, raw: bytes) -> Kline:
+    def _parse_kline(self, raw: bytes):
         res = self._ws_kline_decoder.decode(raw).data
         id = res.s + self.market_type
         symbol = self._market_id[id]
@@ -646,7 +646,7 @@ class BinancePublicConnector(PublicConnector):
         )
         self._msgbus.publish(topic="kline", msg=ticker)
 
-    def _parse_trade(self, raw: bytes) -> Trade:
+    def _parse_trade(self, raw: bytes):
         res = self._ws_trade_decoder.decode(raw).data
 
         id = res.s + self.market_type
@@ -662,7 +662,7 @@ class BinancePublicConnector(PublicConnector):
         )
         self._msgbus.publish(topic="trade", msg=trade)
 
-    def _parse_spot_book_ticker(self, raw: bytes) -> BookL1:
+    def _parse_spot_book_ticker(self, raw: bytes):
         res = self._ws_spot_book_ticker_decoder.decode(raw).data
         id = res.s + self.market_type
         symbol = self._market_id[id]
@@ -678,7 +678,7 @@ class BinancePublicConnector(PublicConnector):
         )
         self._msgbus.publish(topic="bookl1", msg=bookl1)
 
-    def _parse_futures_book_ticker(self, raw: bytes) -> BookL1:
+    def _parse_futures_book_ticker(self, raw: bytes):
         res = self._ws_futures_book_ticker_decoder.decode(raw).data
         id = res.s + self.market_type
         symbol = self._market_id[id]
@@ -824,15 +824,16 @@ class BinancePrivateConnector(PrivateConnector):
                     break
 
     async def connect(self):
-        if self._oms._ws_api_client:
-            await self._oms._ws_api_client.connect()
-
         listen_key = await self._start_user_data_stream()
 
         if listen_key:
             self._task_manager.create_task(
                 self._keep_alive_user_data_stream(listen_key)
             )
-            await self._oms._ws_client.subscribe_user_data_stream(listen_key)
+            self._oms._ws_client.subscribe_user_data_stream(listen_key)
         else:
             raise RuntimeError("Failed to start user data stream")
+
+        await self._oms._ws_client.connect()
+        if self._oms._ws_api_client:
+            await self._oms._ws_api_client.connect()

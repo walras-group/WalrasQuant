@@ -13,6 +13,7 @@ from nexustrader.schema import (
     Order,
     Position,
     BatchOrderSubmit,
+    BaseMarket,
 )
 from nexustrader.constants import (
     OrderSide,
@@ -27,7 +28,6 @@ from nexustrader.exchange.bybit.schema import (
     BybitWsMessageGeneral,
     BybitWsApiGeneralMsg,
     BybitWsOrderMsg,
-    BybitMarket,
     BybitWsPositionMsg,
     BybitWsAccountWalletMsg,
     BybitWalletBalanceResponse,
@@ -48,7 +48,7 @@ from nexustrader.exchange.bybit.constants import (
 class BybitOrderManagementSystem(OrderManagementSystem):
     _ws_client: BybitWSClient
     _account_type: BybitAccountType
-    _market: Dict[str, BybitMarket]
+    _market: Dict[str, BaseMarket]
     _market_id: Dict[str, str]
     _api_client: BybitApiClient
 
@@ -57,7 +57,7 @@ class BybitOrderManagementSystem(OrderManagementSystem):
         account_type: BybitAccountType,
         api_key: str,
         secret: str,
-        market: Dict[str, BybitMarket],
+        market: Dict[str, BaseMarket],
         market_id: Dict[str, str],
         registry: OrderRegistry,
         cache: AsyncCache,
@@ -241,7 +241,7 @@ class BybitOrderManagementSystem(OrderManagementSystem):
         except msgspec.DecodeError as e:
             self._log.error(f"Error decoding message: {str(raw)} {e}")
 
-    def _get_category(self, market: BybitMarket):
+    def _get_category(self, market: BaseMarket):
         if market.spot:
             return "spot"
         elif market.linear:
@@ -394,15 +394,15 @@ class BybitOrderManagementSystem(OrderManagementSystem):
         type: OrderType,
         amount: Decimal,
         price: Decimal | None = None,
-        time_in_force: TimeInForce | None = TimeInForce.GTC,
+        time_in_force: TimeInForce = TimeInForce.GTC,
         tp_order_type: OrderType | None = None,
         tp_trigger_price: Decimal | None = None,
         tp_price: Decimal | None = None,
-        tp_trigger_type: TriggerType | None = TriggerType.LAST_PRICE,
+        tp_trigger_type: TriggerType = TriggerType.LAST_PRICE,
         sl_order_type: OrderType | None = None,
         sl_trigger_price: Decimal | None = None,
         sl_price: Decimal | None = None,
-        sl_trigger_type: TriggerType | None = TriggerType.LAST_PRICE,
+        sl_trigger_type: TriggerType = TriggerType.LAST_PRICE,
         **kwargs,
     ) -> Order:
         """Create a take profit and stop loss order"""

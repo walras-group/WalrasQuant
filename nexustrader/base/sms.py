@@ -5,7 +5,7 @@ from collections import defaultdict
 from nexustrader.schema import SubscriptionSubmit, UnsubscriptionSubmit, InstrumentId
 from nexustrader.core.entity import TaskManager, DataReady
 from nexustrader.core.nautilius_core import Logger, LiveClock
-from nexustrader.constants import AccountType, DataType, KlineInterval
+from nexustrader.constants import AccountType, DataType, KlineInterval, ExchangeType
 from nexustrader.base.connector import PublicConnector, ExchangeManager
 from nexustrader.error import SubscriptionError
 
@@ -13,7 +13,7 @@ from nexustrader.error import SubscriptionError
 class SubscriptionManagementSystem:
     def __init__(
         self,
-        exchanges: Dict[str, ExchangeManager],
+        exchanges: Dict[ExchangeType, ExchangeManager],
         public_connectors: Dict[AccountType, PublicConnector],
         task_manager: TaskManager,
         clock: LiveClock,
@@ -131,11 +131,11 @@ class SubscriptionManagementSystem:
         self._unsubscribe_queue.put_nowait(unsubscription)
         self._log.debug(f"Unsubscription queued: {data_type} for {symbols}")
 
-    async def _subscribe_trade(
+    def _subscribe_trade(
         self, subscription: SubscriptionSubmit, account_type: AccountType
     ):
         """Subscribe to trade data"""
-        await self._public_connectors[account_type].subscribe_trade(
+        self._public_connectors[account_type].subscribe_trade(
             subscription.symbols
         )
 
@@ -149,11 +149,11 @@ class SubscriptionManagementSystem:
                 permanently_ready=subscription.ready,
             )
 
-    async def _subscribe_bookl1(
+    def _subscribe_bookl1(
         self, subscription: SubscriptionSubmit, account_type: AccountType
     ):
         """Subscribe to bookl1 data"""
-        await self._public_connectors[account_type].subscribe_bookl1(
+        self._public_connectors[account_type].subscribe_bookl1(
             subscription.symbols
         )
 
@@ -169,14 +169,14 @@ class SubscriptionManagementSystem:
         else:
             self._subscriptions_ready[DataType.BOOKL1].add_symbols(subscription.symbols)
 
-    async def _subscribe_bookl2(
+    def _subscribe_bookl2(
         self, subscription: SubscriptionSubmit, account_type: AccountType
     ):
         """Subscribe to bookl2 data"""
         level = subscription.params.get("level")
         if level is None:
             raise ValueError("level is required for BOOKL2 subscription")
-        await self._public_connectors[account_type].subscribe_bookl2(
+        self._public_connectors[account_type].subscribe_bookl2(
             subscription.symbols, level
         )
 
@@ -192,11 +192,11 @@ class SubscriptionManagementSystem:
         else:
             self._subscriptions_ready[DataType.BOOKL2].add_symbols(subscription.symbols)
 
-    async def _subscribe_kline(
+    def _subscribe_kline(
         self, subscription: SubscriptionSubmit, account_type: AccountType
     ):
         """Subscribe to kline data"""
-        interval: KlineInterval = subscription.params.get("interval")
+        interval: KlineInterval = subscription.params.get("interval") # type: ignore
         if interval is None:
             raise ValueError("interval is required for KLINE subscription")
 
@@ -205,11 +205,11 @@ class SubscriptionManagementSystem:
 
         if use_aggregator:
             for symbol in subscription.symbols:
-                await self._public_connectors[account_type].subscribe_kline_aggregator(
+                self._public_connectors[account_type].subscribe_kline_aggregator(
                     symbol, interval, build_with_no_updates
                 )
         else:
-            await self._public_connectors[account_type].subscribe_kline(
+            self._public_connectors[account_type].subscribe_kline(
                 subscription.symbols, interval
             )
 
@@ -225,7 +225,7 @@ class SubscriptionManagementSystem:
         else:
             self._subscriptions_ready[interval.value].add_symbols(subscription.symbols)
 
-    async def _subscribe_volume_kline(
+    def _subscribe_volume_kline(
         self, subscription: SubscriptionSubmit, account_type: AccountType
     ):
         """Subscribe to volume kline data"""
@@ -238,7 +238,7 @@ class SubscriptionManagementSystem:
         volume_type = subscription.params.get("volume_type", "DEFAULT")
 
         for symbol in subscription.symbols:
-            await self._public_connectors[
+            self._public_connectors[
                 account_type
             ].subscribe_volume_kline_aggregator(symbol, volume_threshold, volume_type)
 
@@ -255,8 +255,8 @@ class SubscriptionManagementSystem:
                 permanently_ready=subscription.ready,
             )
 
-    async def _unsubscribe_volume_kline(
-        self, subscription: SubscriptionSubmit, account_type: AccountType
+    def _unsubscribe_volume_kline(
+        self, subscription: UnsubscriptionSubmit, account_type: AccountType
     ):
         """Unsubscribe from volume kline data"""
         volume_threshold = subscription.params.get("volume_threshold")
@@ -268,15 +268,15 @@ class SubscriptionManagementSystem:
         volume_type = subscription.params.get("volume_type", "DEFAULT")
 
         for symbol in subscription.symbols:
-            await self._public_connectors[
+            self._public_connectors[
                 account_type
             ].unsubscribe_volume_kline_aggregator(symbol, volume_threshold, volume_type)
 
-    async def _subscribe_funding_rate(
+    def _subscribe_funding_rate(
         self, subscription: SubscriptionSubmit, account_type: AccountType
     ):
         """Subscribe to funding rate data"""
-        await self._public_connectors[account_type].subscribe_funding_rate(
+        self._public_connectors[account_type].subscribe_funding_rate(
             subscription.symbols
         )
 
@@ -294,11 +294,11 @@ class SubscriptionManagementSystem:
                 subscription.symbols
             )
 
-    async def _subscribe_index_price(
+    def _subscribe_index_price(
         self, subscription: SubscriptionSubmit, account_type: AccountType
     ):
         """Subscribe to index price data"""
-        await self._public_connectors[account_type].subscribe_index_price(
+        self._public_connectors[account_type].subscribe_index_price(
             subscription.symbols
         )
 
@@ -316,11 +316,11 @@ class SubscriptionManagementSystem:
                 subscription.symbols
             )
 
-    async def _subscribe_mark_price(
+    def _subscribe_mark_price(
         self, subscription: SubscriptionSubmit, account_type: AccountType
     ):
         """Subscribe to mark price data"""
-        await self._public_connectors[account_type].subscribe_mark_price(
+        self._public_connectors[account_type].subscribe_mark_price(
             subscription.symbols
         )
 
@@ -338,23 +338,23 @@ class SubscriptionManagementSystem:
                 subscription.symbols
             )
 
-    async def _unsubscribe_trade(
+    def _unsubscribe_trade(
         self, unsubscription: UnsubscriptionSubmit, account_type: AccountType
     ):
         """Unsubscribe from trade data"""
-        await self._public_connectors[account_type].unsubscribe_trade(
+        self._public_connectors[account_type].unsubscribe_trade(
             unsubscription.symbols
         )
 
-    async def _unsubscribe_bookl1(
+    def _unsubscribe_bookl1(
         self, unsubscription: UnsubscriptionSubmit, account_type: AccountType
     ):
         """Unsubscribe from bookl1 data"""
-        await self._public_connectors[account_type].unsubscribe_bookl1(
+        self._public_connectors[account_type].unsubscribe_bookl1(
             unsubscription.symbols
         )
 
-    async def _unsubscribe_bookl2(
+    def _unsubscribe_bookl2(
         self, unsubscription: UnsubscriptionSubmit, account_type: AccountType
     ):
         """Unsubscribe from bookl2 data"""
@@ -362,11 +362,11 @@ class SubscriptionManagementSystem:
         if level is None:
             raise ValueError("level is required for BOOKL2 unsubscription")
 
-        await self._public_connectors[account_type].unsubscribe_bookl2(
+        self._public_connectors[account_type].unsubscribe_bookl2(
             unsubscription.symbols, level
         )
 
-    async def _unsubscribe_kline(
+    def _unsubscribe_kline(
         self, unsubscription: UnsubscriptionSubmit, account_type: AccountType
     ):
         """Unsubscribe from kline data"""
@@ -377,35 +377,35 @@ class SubscriptionManagementSystem:
         use_aggregator = unsubscription.params.get("use_aggregator", False)
         if use_aggregator:
             for symbol in unsubscription.symbols:
-                await self._public_connectors[
+                self._public_connectors[
                     account_type
                 ].unsubscribe_kline_aggregator(symbol, interval)
         else:
-            await self._public_connectors[account_type].unsubscribe_kline(
+            self._public_connectors[account_type].unsubscribe_kline(
                 unsubscription.symbols, interval
             )
 
-    async def _unsubscribe_mark_price(
+    def _unsubscribe_mark_price(
         self, unsubscription: UnsubscriptionSubmit, account_type: AccountType
     ):
         """Unsubscribe from mark price data"""
-        await self._public_connectors[account_type].unsubscribe_mark_price(
+        self._public_connectors[account_type].unsubscribe_mark_price(
             unsubscription.symbols
         )
 
-    async def _unsubscribe_funding_rate(
+    def _unsubscribe_funding_rate(
         self, unsubscription: UnsubscriptionSubmit, account_type: AccountType
     ):
         """Unsubscribe from funding rate data"""
-        await self._public_connectors[account_type].unsubscribe_funding_rate(
+        self._public_connectors[account_type].unsubscribe_funding_rate(
             unsubscription.symbols
         )
 
-    async def _unsubscribe_index_price(
+    def _unsubscribe_index_price(
         self, unsubscription: UnsubscriptionSubmit, account_type: AccountType
     ):
         """Unsubscribe from index price data"""
-        await self._public_connectors[account_type].unsubscribe_index_price(
+        self._public_connectors[account_type].unsubscribe_index_price(
             unsubscription.symbols
         )
 
@@ -438,27 +438,27 @@ class SubscriptionManagementSystem:
 
                 match subscription.data_type:
                     case DataType.TRADE:
-                        await self._subscribe_trade(account_subscription, account_type)
+                        self._subscribe_trade(account_subscription, account_type)
                     case DataType.BOOKL1:
-                        await self._subscribe_bookl1(account_subscription, account_type)
+                        self._subscribe_bookl1(account_subscription, account_type)
                     case DataType.BOOKL2:
-                        await self._subscribe_bookl2(account_subscription, account_type)
+                        self._subscribe_bookl2(account_subscription, account_type)
                     case DataType.KLINE:
-                        await self._subscribe_kline(account_subscription, account_type)
+                        self._subscribe_kline(account_subscription, account_type)
                     case DataType.VOLUME_KLINE:
-                        await self._subscribe_volume_kline(
+                        self._subscribe_volume_kline(
                             account_subscription, account_type
                         )
                     case DataType.FUNDING_RATE:
-                        await self._subscribe_funding_rate(
+                        self._subscribe_funding_rate(
                             account_subscription, account_type
                         )
                     case DataType.INDEX_PRICE:
-                        await self._subscribe_index_price(
+                        self._subscribe_index_price(
                             account_subscription, account_type
                         )
                     case DataType.MARK_PRICE:
-                        await self._subscribe_mark_price(
+                        self._subscribe_mark_price(
                             account_subscription, account_type
                         )
             self._subscribe_queue.task_done()
@@ -488,35 +488,35 @@ class SubscriptionManagementSystem:
                 )
                 match unsubscription.data_type:
                     case DataType.TRADE:
-                        await self._unsubscribe_trade(
+                        self._unsubscribe_trade(
                             account_unsubscription, account_type
                         )
                     case DataType.BOOKL1:
-                        await self._unsubscribe_bookl1(
+                        self._unsubscribe_bookl1(
                             account_unsubscription, account_type
                         )
                     case DataType.BOOKL2:
-                        await self._unsubscribe_bookl2(
+                        self._unsubscribe_bookl2(
                             account_unsubscription, account_type
                         )
                     case DataType.KLINE:
-                        await self._unsubscribe_kline(
+                        self._unsubscribe_kline(
                             account_unsubscription, account_type
                         )
                     case DataType.MARK_PRICE:
-                        await self._unsubscribe_mark_price(
+                        self._unsubscribe_mark_price(
                             account_unsubscription, account_type
                         )
                     case DataType.FUNDING_RATE:
-                        await self._unsubscribe_funding_rate(
+                        self._unsubscribe_funding_rate(
                             account_unsubscription, account_type
                         )
                     case DataType.INDEX_PRICE:
-                        await self._unsubscribe_index_price(
+                        self._unsubscribe_index_price(
                             account_unsubscription, account_type
                         )
                     case DataType.VOLUME_KLINE:
-                        await self._unsubscribe_volume_kline(
+                        self._unsubscribe_volume_kline(
                             account_unsubscription, account_type
                         )
 

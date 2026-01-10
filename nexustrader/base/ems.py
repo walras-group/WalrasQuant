@@ -1,6 +1,6 @@
 import asyncio
 from abc import ABC, abstractmethod
-from typing import Dict, List, Tuple
+from typing import Mapping, List, Dict
 from typing import Literal
 from decimal import Decimal
 from decimal import ROUND_HALF_UP, ROUND_CEILING, ROUND_FLOOR
@@ -37,7 +37,7 @@ from nexustrader.base.connector import PrivateConnector
 class ExecutionManagementSystem(ABC):
     def __init__(
         self,
-        market: Dict[str, BaseMarket],
+        market: Mapping[str, BaseMarket],
         cache: AsyncCache,
         msgbus: MessageBus,
         clock: LiveClock,
@@ -54,7 +54,7 @@ class ExecutionManagementSystem(ABC):
         self._registry = registry
         self._clock = clock
         self._order_submit_queues: Dict[
-            AccountType, asyncio.Queue[(OrderSubmit, SubmitType)]
+            AccountType, asyncio.Queue[tuple[OrderSubmit, SubmitType]]
         ] = {}
         self._private_connectors: Dict[AccountType, PrivateConnector] | None = None
         self._is_mock = is_mock
@@ -74,7 +74,7 @@ class ExecutionManagementSystem(ABC):
         Convert the amount to the precision of the market
         """
         market = self._market[symbol]
-        amount: Decimal = Decimal(str(amount))
+        amount_decimal: Decimal = Decimal(str(amount))
         precision = market.precision.amount
 
         if precision >= 1:
@@ -85,15 +85,15 @@ class ExecutionManagementSystem(ABC):
             precision_decimal = Decimal(str(precision))
 
         if mode == "round":
-            format_amount = (amount / exp).quantize(
+            format_amount = (amount_decimal / exp).quantize(
                 precision_decimal, rounding=ROUND_HALF_UP
             ) * exp
         elif mode == "ceil":
-            format_amount = (amount / exp).quantize(
+            format_amount = (amount_decimal / exp).quantize(
                 precision_decimal, rounding=ROUND_CEILING
             ) * exp
         elif mode == "floor":
-            format_amount = (amount / exp).quantize(
+            format_amount = (amount_decimal / exp).quantize(
                 precision_decimal, rounding=ROUND_FLOOR
             ) * exp
         return format_amount
@@ -108,7 +108,7 @@ class ExecutionManagementSystem(ABC):
         Convert the price to the precision of the market
         """
         market = self._market[symbol]
-        price: Decimal = Decimal(str(price))
+        price_decimal: Decimal = Decimal(str(price))
 
         decimal = market.precision.price
 
@@ -120,15 +120,15 @@ class ExecutionManagementSystem(ABC):
             precision_decimal = Decimal(str(decimal))
 
         if mode == "round":
-            format_price = (price / exp).quantize(
+            format_price = (price_decimal / exp).quantize(
                 precision_decimal, rounding=ROUND_HALF_UP
             ) * exp
         elif mode == "ceil":
-            format_price = (price / exp).quantize(
+            format_price = (price_decimal / exp).quantize(
                 precision_decimal, rounding=ROUND_CEILING
             ) * exp
         elif mode == "floor":
-            format_price = (price / exp).quantize(
+            format_price = (price_decimal / exp).quantize(
                 precision_decimal, rounding=ROUND_FLOOR
             ) * exp
         return format_price
@@ -586,7 +586,7 @@ class ExecutionManagementSystem(ABC):
         )
 
     async def _handle_submit_order(
-        self, account_type: AccountType, queue: asyncio.Queue[(OrderSubmit, SubmitType)]
+        self, account_type: AccountType, queue: asyncio.Queue[tuple[OrderSubmit, SubmitType]]
     ):
         """
         Handle the order submit
