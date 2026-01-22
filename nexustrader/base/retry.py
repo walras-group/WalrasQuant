@@ -1,5 +1,6 @@
 import asyncio
-from nexustrader.core.nautilius_core import Logger
+import nexuslog as logging
+
 from typing import Callable, Awaitable, Generic, TypeVar
 from random import randint
 
@@ -88,7 +89,7 @@ class RetryManager(Generic[T]):
         self.exc_types = exc_types
         self.retry_check = retry_check
         self.cancel_event = asyncio.Event()
-        self._log = Logger(name=type(self).__name__)
+        self._log = logging.getLogger(name=type(self).__name__)
 
         self.name: str | None = None
         self.details: list[object] | None = None

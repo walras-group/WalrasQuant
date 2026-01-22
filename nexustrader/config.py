@@ -7,72 +7,25 @@ from zmq.asyncio import Socket
 
 @dataclass
 class LogConfig:
-    """LogConfig for NexusTrader logging system.
+    """LogConfig for NexusTrader logging system using nexuslog.
+
+    Maps directly to nexuslog.basicConfig() parameters.
 
     Attributes:
-        level_stdout: The minimum log level to write to stdout (default INFO)
-        level_file: The minimum log level to write to a file (default OFF)
-        directory: Path to log file directory (uses current directory if None)
-        file_name: Custom log file name (with .log or .json suffix)
-        file_format: Log file format, 'JSON' for JSON format, None for plain text
-        colors: Whether to use ANSI color codes in log output
-        print_config: Whether to print logging config on initialization
-        component_levels: Per-component log level filters
-        max_file_size: Maximum size of log files in bytes before rotation (0 disables rotation)
-        max_backup_count: Maximum number of backup log files to keep when rotating
+        filename: Optional file path for log output. If None, logs to stdout.
+        level: Minimum log level to record. Options: TRACE, DEBUG, INFO, WARNING, ERROR
+        unix_ts: If True, emit unix timestamps instead of formatted local time.
     """
 
-    level_stdout: Literal["DEBUG", "INFO", "WARNING", "ERROR", "OFF", "TRACE"] = "INFO"
-    level_file: Literal["DEBUG", "INFO", "WARNING", "ERROR", "OFF", "TRACE"] = "OFF"
-    directory: str | None = None
-    file_name: str | None = None
-    file_format: str | None = None
-    colors: bool = False
-    print_config: bool = False  # Changed to match default in documentation
-    component_levels: Dict[str, str] = field(default_factory=dict)
-    max_file_size: int = 0
-    max_backup_count: int = 5
-    bypass: bool = False  # Added missing field
-    auto_flush_sec: int = (
-        0  # Auto flush interval in seconds, 0 means disabled, minimum 5 seconds
-    )
-    log_components_only: bool | None = None
+    filename: str | None = None
+    level: Literal["TRACE", "DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
+    unix_ts: bool = False
 
     def __post_init__(self):
-        if self.level_stdout not in [
-            "DEBUG",
-            "INFO",
-            "WARNING",
-            "ERROR",
-            "OFF",
-            "TRACE",
-        ]:
+        if self.level not in ["TRACE", "DEBUG", "INFO", "WARNING", "ERROR"]:
             raise ValueError(
-                f"Invalid level_stdout: {self.level_stdout}. Must be one of DEBUG, INFO, WARNING, ERROR, OFF, TRACE."
+                f"Invalid level: {self.level}. Must be one of TRACE, DEBUG, INFO, WARNING, ERROR."
             )
-        if self.level_file not in ["DEBUG", "INFO", "WARNING", "ERROR", "OFF", "TRACE"]:
-            raise ValueError(
-                f"Invalid level_file: {self.level_file}. Must be one of DEBUG, INFO, WARNING, ERROR, OFF, TRACE."
-            )
-
-        # If file logging is disabled, set auto_flush_sec to 0
-        if self.level_file == "OFF":
-            self.auto_flush_sec = 0
-
-        if self.file_format is not None and self.file_format != "JSON":
-            raise ValueError("file_format must be None or 'JSON'")
-
-        if self.max_file_size < 0:
-            raise ValueError("max_file_size must be non-negative")
-
-        if self.max_backup_count < 0:
-            raise ValueError("max_backup_count must be non-negative")
-
-        if self.auto_flush_sec < 0:
-            raise ValueError("auto_flush_sec must be non-negative")
-
-        if self.auto_flush_sec > 0 and self.auto_flush_sec < 5:
-            raise ValueError("auto_flush_sec must be at least 5 seconds when enabled")
 
 
 @dataclass

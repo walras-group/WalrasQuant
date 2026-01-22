@@ -1124,6 +1124,29 @@ wheels = [
 ]
 
 [[package]]
+name = "nexuslog"
+version = "0.4.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/67/ce/bc8bf477895a1af1081bd12c71827071554601d3aa2a31e40f5f0857b566/nexuslog-0.4.1.tar.gz", hash = "sha256:c5e335cfc4cbc0b58f9ed1ce5c6b7d2955f9ec9043d37d42679f6eb43f0f830f", size = 14674, upload-time = "2026-01-22T05:25:34.962Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d4/c3/4fb5843baa6bd3a2d4e1dfd0f39d1facf236f7a1d0ea4b1823502ab522c9/nexuslog-0.4.1-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:1b4c02df10246f105f0292dc8e8277e8e60f8947219e249fbbbcf6edf4986cb8", size = 357625, upload-time = "2026-01-22T05:25:16.481Z" },
+    { url = "https://files.pythonhosted.org/packages/6a/ff/4e6435497c0f5a4d444e30915bd0a6b50b5ca9aec9cb179c64a0670dcc87/nexuslog-0.4.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:68c46ca27b18ec4e319c7edc6883809e90495028175bd714b4c66f55823a3654", size = 353113, upload-time = "2026-01-22T05:25:17.909Z" },
+    { url = "https://files.pythonhosted.org/packages/77/5f/0c81f62482f2e41ce2b872799dacc3a63edd440fee12105492a8d85be579/nexuslog-0.4.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1cbcf409715d06a1c15fb946450a03e440d670882a2d8f6cfc17f5bdc968938e", size = 398811, upload-time = "2026-01-22T05:25:19.097Z" },
+    { url = "https://files.pythonhosted.org/packages/81/bc/6941230000fd26af58d86c8099a57031b01bfd60e6dcd348e2acd0d02451/nexuslog-0.4.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6d2f7191cc6461bc1638b93e16f9ee15fc1f22cd8e7ca1af25b76d135c997220", size = 400564, upload-time = "2026-01-22T05:25:20.522Z" },
+    { url = "https://files.pythonhosted.org/packages/9d/ef/26d75165c730cc9b6d4ee3b0e4154dca33bb1fae7f40a5c779b5635729f9/nexuslog-0.4.1-cp311-cp311-win_amd64.whl", hash = "sha256:213804a29d9c1c26b9ccdb6e17c216af8a7e416423870f46e8147bc9c4ac6cc8", size = 220186, upload-time = "2026-01-22T05:25:21.679Z" },
+    { url = "https://files.pythonhosted.org/packages/34/d4/c0033f4c393f2aaa79b6b703b96cdf056c94c5be74880e3a10fd68446c42/nexuslog-0.4.1-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:7be984c7dade3426fade37bad3398510aaf6772d75a6b5d691c47e27defb236e", size = 356376, upload-time = "2026-01-22T05:25:22.948Z" },
+    { url = "https://files.pythonhosted.org/packages/7d/5e/71f6894e9a56824d6e1ec6bda273a1360119f744300bb2683a813ae3339a/nexuslog-0.4.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:63dbac87383881d3b900cb1c83f699dac6d10dd9b6582abaadbf6f5589d6c865", size = 351269, upload-time = "2026-01-22T05:25:24.326Z" },
+    { url = "https://files.pythonhosted.org/packages/69/60/9ec8e91c9b3b8dfb0464a340c8a4587ee6e2191c399430be5817ce64cac5/nexuslog-0.4.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:28f8ea2186252eb77f0fb5308b0cbc653ec463e0632190201c90770392578403", size = 396501, upload-time = "2026-01-22T05:25:25.525Z" },
+    { url = "https://files.pythonhosted.org/packages/57/3a/84d38d96dbf9b9e551f0e6e57df4295db200a2249126a8aefbe3e267f362/nexuslog-0.4.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a571e3878f6444a80abb86376f17e5d30f3ef69cea6109aeeaaf62651a546ebb", size = 397669, upload-time = "2026-01-22T05:25:26.789Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/94/f734494b11a95bdc64fc0579a1d17542b81cd2b8f80b511d7c3fe5096b51/nexuslog-0.4.1-cp312-cp312-win_amd64.whl", hash = "sha256:c7dad77aed3b75d79ba3f065b364b01ed77a80460415434e86b5f9153ef0e292", size = 218675, upload-time = "2026-01-22T05:25:28.254Z" },
+    { url = "https://files.pythonhosted.org/packages/c7/c6/105758d72b7af7b4808df402592bbeb4399216e98cc9e5b0362991abf562/nexuslog-0.4.1-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:abe95abfeb87e4c3ddcdb13c057df2715ae2f8e4e4ca28c5507d829ecfcf441a", size = 356059, upload-time = "2026-01-22T05:25:29.405Z" },
+    { url = "https://files.pythonhosted.org/packages/e7/37/5acdc85205934eb65460c523f37f7f35a08f36a19581ac0ca1db515ac4f3/nexuslog-0.4.1-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:d3b7f87806f54e52043bac6315eb5905401946e21208b826345e1627bdfcd6c7", size = 350878, upload-time = "2026-01-22T05:25:30.36Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/4a/210952fbc25f46987d2fe45ec37ff14bc8b0e8bc2f6228965dbe7d065827/nexuslog-0.4.1-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:627758861b944c058dfd8536e3eca1ecae6d382f37b1eebe8e46eb8312af6732", size = 396026, upload-time = "2026-01-22T05:25:31.474Z" },
+    { url = "https://files.pythonhosted.org/packages/94/a0/2fc628c04823d3246f7acc76d111418c2e69a09564bc04920a1a46774942/nexuslog-0.4.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e83ddce4e5a6193c0ad8af8c042c3c6c5790718b13791c048700f644724a49b3", size = 397235, upload-time = "2026-01-22T05:25:32.598Z" },
+    { url = "https://files.pythonhosted.org/packages/2a/05/782a82c05b4da10f4362f9af5f90e2bacfd0a015001cef02c2074a56eecc/nexuslog-0.4.1-cp313-cp313-win_amd64.whl", hash = "sha256:c363cc7e643357d7473b164d236a31767812828f1f5cf370d707e35a298c7ed3", size = 218260, upload-time = "2026-01-22T05:25:33.943Z" },
+]
+
+[[package]]
 name = "nexustrader"
 version = "0.2.37"
 source = { editable = "." }
@@ -1142,6 +1165,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "msgspec" },
     { name = "nautilus-trader" },
+    { name = "nexuslog" },
     { name = "numpy" },
     { name = "pathlib" },
     { name = "picows" },
@@ -1181,6 +1205,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.117.1" },
     { name = "msgspec", specifier = ">=0.19.0,<0.20.0" },
     { name = "nautilus-trader", specifier = ">=1.220.0" },
+    { name = "nexuslog", specifier = ">=0.4.1" },
     { name = "numpy", specifier = ">=1.26.4,<2.2.1" },
     { name = "pathlib", specifier = ">=1.0.1,<2.0.0" },
     { name = "picows", specifier = ">=1.10.2" },

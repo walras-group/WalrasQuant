@@ -81,7 +81,7 @@ config = Config(
     user_id="user_test",
     strategy=Demo(),
     log_config=LogConfig(
-        "INFO"
+        level="INFO"
     ),
     basic_config={
         ExchangeType.OKX: BasicConfig(

@@ -17,55 +17,56 @@ from nautilus_trader.core.nautilus_pyo3 import (
     rsa_signature,  # noqa
     ed25519_signature,  # noqa
 )
-from nautilus_trader.common.component import Logger, set_logging_pyo3  # noqa
+import nexuslog as logging
 
 
 def setup_nautilus_core(
     trader_id: str,
-    level_stdout: str,
-    level_file: str | None = None,
-    component_levels: dict[str, str] | None = None,
-    directory: str | None = None,
-    file_name: str | None = None,
-    file_format: str | None = None,
-    file_rotate: tuple[int, int] | None = None,
-    is_colored: bool | None = None,
-    is_bypassed: bool | None = None,
-    print_config: bool | None = None,
-    log_components_only: bool | None = None,
+    filename: str | None = None,
+    level: str = "INFO",
+    unix_ts: bool = False,
 ):
     """
-    Setup logging for the application.
+    Setup logging for the application using nexuslog and initialize MessageBus and Clock.
+
+    Args:
+        trader_id: Unique identifier for the trader
+        filename: Optional file path for log output. If None, logs to stdout.
+        level: Minimum log level to record (TRACE, DEBUG, INFO, WARNING, ERROR)
+        unix_ts: If True, emit unix timestamps instead of formatted local time.
+
+    Returns:
+        tuple: (msgbus, clock) - MessageBus and LiveClock instances
     """
     clock = LiveClock()
     msgbus = MessageBus(
         trader_id=TraderId(trader_id),
         clock=clock,
     )
-    set_logging_pyo3(True)
 
-    instance_id = nautilus_pyo3.UUID4().value
-    log_guard = nautilus_pyo3.init_logging(
-        trader_id=nautilus_pyo3.TraderId(trader_id),
-        instance_id=nautilus_pyo3.UUID4.from_str(instance_id),
-        level_stdout=nautilus_pyo3.LogLevel(level_stdout),
-        level_file=nautilus_pyo3.LogLevel(level_file) if level_file else None,
-        directory=directory,
-        file_name=file_name,
-        file_format=file_format,
-        is_colored=is_colored,
-        print_config=print_config,
-        component_levels=component_levels,
-        file_rotate=file_rotate,
-        is_bypassed=is_bypassed,
-        log_components_only=log_components_only,
+    # Map log levels from string to nexuslog levels
+    level_map = {
+        "TRACE": logging.TRACE,
+        "DEBUG": logging.DEBUG,
+        "INFO": logging.INFO,
+        "WARNING": logging.WARNING,
+        "ERROR": logging.ERROR,
+    }
+
+    log_level = level_map.get(level, logging.INFO)
+
+    # Configure nexuslog using basicConfig
+    logging.basicConfig(
+        filename=filename,
+        level=log_level,
+        unix_ts=unix_ts,
     )
 
-    return log_guard, msgbus, clock
+    return msgbus, clock
 
 
 def usage():
-    import time
+    import nexuslog as logging
 
     print(UUID4().value)
     print(UUID4().value)
@@ -87,27 +88,13 @@ def usage():
 
     print(clock.utc_now().isoformat(timespec="milliseconds").replace("+00:00", "Z"))
 
-    def handler1(msg):
-        print(f"[{clock.timestamp_ns()}] Received message: {msg} - handler1")
-
-    def handler2(msg):
-        print(f"[{clock.timestamp_ns()}] Received message: {msg} - handler2")
-
-    def handler3(msg):
-        print(f"[{clock.timestamp_ns()}] Received message: {msg} - handler3")
-
-    log_guard, msgbus, clock = setup_nautilus_core(
+    msgbus, clock = setup_nautilus_core(
         trader_id="TESTER-001",
-        level_stdout="DEBUG",
-        component_levels={
-            "logger1": "DEBUG",
-            "logger2": "INFO",
-        },
-        log_components_only=True,
+        level="DEBUG",
     )
 
-    log1 = Logger("logger1")
-    log2 = Logger("logger2")
+    log1 = logging.getLogger("logger1")
+    log2 = logging.getLogger("logger2")
     log1.debug("This is a debug msg")
     log1.info("This is a info msg")
     log2.debug("This is a debug msg")

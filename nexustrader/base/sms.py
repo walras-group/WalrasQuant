@@ -1,10 +1,11 @@
 import asyncio
 from typing import Dict, List, Union
 from collections import defaultdict
+import nexuslog as logging
 
 from nexustrader.schema import SubscriptionSubmit, UnsubscriptionSubmit, InstrumentId
 from nexustrader.core.entity import TaskManager, DataReady
-from nexustrader.core.nautilius_core import Logger, LiveClock
+from nexustrader.core.nautilius_core import LiveClock
 from nexustrader.constants import AccountType, DataType, KlineInterval, ExchangeType
 from nexustrader.base.connector import PublicConnector, ExchangeManager
 from nexustrader.error import SubscriptionError
@@ -18,7 +19,7 @@ class SubscriptionManagementSystem:
         task_manager: TaskManager,
         clock: LiveClock,
     ):
-        self._log = Logger(name=type(self).__name__)
+        self._log = logging.getLogger(name=type(self).__name__)
 
         self._exchanges = exchanges
         self._public_connectors = public_connectors

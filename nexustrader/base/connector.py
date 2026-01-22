@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Literal, Mapping
 from decimal import Decimal
 import asyncio
+import nexuslog as logging
 
 from decimal import ROUND_HALF_UP, ROUND_CEILING, ROUND_FLOOR
 from nexustrader.base.oms import OrderManagementSystem
@@ -35,7 +36,7 @@ from nexustrader.constants import (
     BookLevel,
     OrderStatus,
 )
-from nexustrader.core.nautilius_core import LiveClock, MessageBus, UUID4, Logger
+from nexustrader.core.nautilius_core import LiveClock, MessageBus, UUID4
 
 
 class ApiProxy:
@@ -74,7 +75,7 @@ class PublicConnector(ABC):
         api_client: ApiClient,
         task_manager: TaskManager,
     ):
-        self._log = Logger(name=type(self).__name__)
+        self._log = logging.getLogger(name=type(self).__name__)
         self._account_type = account_type
         self._market = market
         self._market_id = market_id
@@ -392,7 +393,7 @@ class PrivateConnector(ABC):
         task_manager: TaskManager,
         oms: OrderManagementSystem,
     ):
-        self._log = Logger(name=type(self).__name__)
+        self._log = logging.getLogger(name=type(self).__name__)
         self._account_type = account_type
         self._market = market
         self._api_client = api_client
@@ -498,7 +499,7 @@ class MockLinearConnector:
         self._clock = clock
         self._task_manager = task_manager
         self._leverage = leverage
-        self._log = Logger(name=type(self).__name__)
+        self._log = logging.getLogger(name=type(self).__name__)
 
     async def _init_position(self):
         for _, position in self._cache._get_all_positions_from_db(

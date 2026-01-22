@@ -73,7 +73,7 @@ config = Config(
     strategy_id="buy_and_sell_bitget",
     user_id="user_test",
     strategy=Demo(),
-    log_config=LogConfig("INFO"),
+    log_config=LogConfig(level="INFO"),
     basic_config={
         ExchangeType.BITGET: BasicConfig(
             api_key=API_KEY,

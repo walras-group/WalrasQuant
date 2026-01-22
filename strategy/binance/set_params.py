@@ -47,7 +47,7 @@ config = Config(
     strategy_id="set_params",
     user_id="test_user",
     strategy=Demo(),
-    log_config=LogConfig(level_stdout="INFO"),
+    log_config=LogConfig(level="INFO"),
     basic_config={
         ExchangeType.BINANCE: BasicConfig(
             testnet=False,

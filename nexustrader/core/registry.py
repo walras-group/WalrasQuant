@@ -1,11 +1,12 @@
 from typing import Optional, Dict
+import nexuslog as logging
+
 from nexustrader.schema import Order
-from nexustrader.core.nautilius_core import Logger
 
 
 class OrderRegistry:
     def __init__(self):
-        self._log = Logger(name=type(self).__name__)
+        self._log = logging.getLogger(name=type(self).__name__)
         self._tmp_order: Dict[str, Order] = {}
         self._oids: set[str] = set()
 

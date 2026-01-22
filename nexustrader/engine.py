@@ -1,8 +1,8 @@
 import asyncio
 import platform
+import nexuslog as logging
 from typing import Dict
 from collections import defaultdict
-import threading
 from nexustrader.constants import AccountType, ExchangeType
 from nexustrader.config import Config, WebConfig
 from nexustrader.strategy import Strategy
@@ -22,11 +22,7 @@ from nexustrader.exchange.registry import get_factory
 from nexustrader.exchange.base_factory import BuildContext
 
 from nexustrader.core.entity import TaskManager, ZeroMQSignalRecv
-from nexustrader.core.nautilius_core import (
-    nautilus_pyo3,
-    Logger,
-    setup_nautilus_core,
-)
+from nexustrader.core.nautilius_core import setup_nautilus_core
 from nexustrader.schema import InstrumentId
 from nexustrader.web.app import StrategyFastAPI
 from nexustrader.web.server import StrategyWebServer
@@ -49,8 +45,6 @@ class Engine:
         self.set_loop_policy()
         self._loop = asyncio.new_event_loop()
         self._task_manager = TaskManager(self._loop)
-        self._auto_flush_thread = None
-        self._auto_flush_stop_event = threading.Event()
 
         self._exchanges: Dict[ExchangeType, ExchangeManager] = {}
         self._public_connectors: Dict[AccountType, PublicConnector] = {}
@@ -60,31 +54,16 @@ class Engine:
 
         self._custom_signal_recv = None
 
-        # Initialize logging with global reference
-        self._log_guard, self._msgbus, self._clock = setup_nautilus_core(
+        # Initialize nautilus core components and configure nexuslog
+        self._msgbus, self._clock = setup_nautilus_core(
             trader_id=trader_id,
-            level_stdout=self._config.log_config.level_stdout,
-            level_file=self._config.log_config.level_file,
-            directory=self._config.log_config.directory,
-            file_name=self._config.log_config.file_name,
-            file_format=self._config.log_config.file_format,
-            is_colored=self._config.log_config.colors,
-            print_config=self._config.log_config.print_config,
-            component_levels=self._config.log_config.component_levels,
-            file_rotate=(
-                (
-                    self._config.log_config.max_file_size,
-                    self._config.log_config.max_backup_count,
-                )
-                if self._config.log_config.max_file_size > 0
-                else None
-            ),
-            is_bypassed=self._config.log_config.bypass,
-            log_components_only=self._config.log_config.log_components_only,
+            filename=self._config.log_config.filename,
+            level=self._config.log_config.level,
+            unix_ts=self._config.log_config.unix_ts,
         )
 
         # Create logger instance for Engine
-        self._log = Logger(type(self).__name__)
+        self._log = logging.getLogger(type(self).__name__)
 
         self._cache: AsyncCache = AsyncCache(
             strategy_id=config.strategy_id,
@@ -392,27 +371,6 @@ class Engine:
         self._strategy._scheduler.start()
         self._scheduler_started = True
 
-    def _start_auto_flush_thread(self):
-        if self._config.log_config.auto_flush_sec > 0:
-            self._log.debug(
-                f"Starting auto flush thread with interval: {self._config.log_config.auto_flush_sec}s"
-            )
-            self._auto_flush_thread = threading.Thread(
-                target=self._auto_flush_worker, daemon=True
-            )
-            self._auto_flush_thread.start()
-        else:
-            self._log.debug("Auto flush disabled (auto_flush_sec = 0)")
-
-    def _auto_flush_worker(self):
-        self._log.debug("Auto flush worker thread started")
-        while not self._auto_flush_stop_event.wait(
-            self._config.log_config.auto_flush_sec
-        ):
-            self._log.debug("Performing auto logger flush")
-            nautilus_pyo3.logger_flush()
-        self._log.debug("Auto flush worker thread stopped")
-
     async def _start(self):
         await self._sms.start()
         await self._start_ems()
@@ -421,7 +379,6 @@ class Engine:
             await self._custom_signal_recv.start()
         self._strategy._on_start()
         self._start_scheduler()
-        self._start_auto_flush_thread()
         await self._task_manager.wait()
 
     async def _cancel_all_open_orders(self):
@@ -488,16 +445,6 @@ class Engine:
                 # Suppress expected shutdown exceptions
                 pass
 
-        # Stop auto flush thread
-        if self._auto_flush_thread and self._auto_flush_thread.is_alive():
-            self._log.debug("Stopping auto flush thread")
-            self._auto_flush_stop_event.set()
-            self._auto_flush_thread.join(timeout=0.1)
-            if self._auto_flush_thread.is_alive():
-                self._log.warning("Auto flush thread did not stop within timeout")
-            else:
-                self._log.debug("Auto flush thread stopped successfully")
-
         for connector in self._public_connectors.values():
             await connector.disconnect()
         for connector in self._private_connectors.values():
@@ -556,13 +503,5 @@ class Engine:
             if self._web_app:
                 self._web_app.unbind_strategy()
 
-            # As a safety net, make sure the auto flush thread is stopped
-            try:
-                if self._auto_flush_thread and self._auto_flush_thread.is_alive():
-                    self._auto_flush_stop_event.set()
-                    self._auto_flush_thread.join(timeout=0.2)
-            except Exception:
-                pass
-
             self._close_event_loop()
-            nautilus_pyo3.logger_flush()
+            logging.shutdown()

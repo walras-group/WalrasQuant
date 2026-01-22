@@ -18,6 +18,7 @@ result.json
 clear.sh
 *.key
 .idea/
+logs/
 .DS_Store
 md_source/
 nautilus_trader/

@@ -1,7 +1,8 @@
 from abc import ABC
+import nexuslog as logging
 from typing import Optional
 from curl_cffi import requests
-from nexustrader.core.nautilius_core import LiveClock, Logger
+from nexustrader.core.nautilius_core import LiveClock
 from nexustrader.constants import RateLimiter, RateLimiterSync
 from nexustrader.base.retry import RetryManager
 
@@ -20,7 +21,7 @@ class ApiClient(ABC):
         self._api_key = api_key
         self._secret = secret
         self._timeout = timeout
-        self._log = Logger(name=type(self).__name__)
+        self._log = logging.getLogger(name=type(self).__name__)
         self._session: Optional[requests.AsyncSession] = None
         self._sync_session: Optional[requests.Session] = None
         self._clock = clock

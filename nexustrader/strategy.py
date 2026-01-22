@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Callable, Literal, Optional, Any
 from decimal import Decimal
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+import nexuslog as logging
 from nexustrader.base import ExchangeManager
 from nexustrader.indicator import IndicatorManager, Indicator, IndicatorProxy
 from nexustrader.core.entity import TaskManager, is_redis_available
@@ -18,7 +19,7 @@ from nexustrader.base import (
     SubscriptionManagementSystem,
 )
 from nexustrader.core.entity import OidGen
-from nexustrader.core.nautilius_core import MessageBus, LiveClock, Logger
+from nexustrader.core.nautilius_core import MessageBus, LiveClock
 from nexustrader.schema import (
     BookL1,
     Trade,
@@ -62,7 +63,7 @@ from nexustrader.constants import (
 
 class Strategy:
     def __init__(self):
-        self.log = Logger(name=type(self).__name__)
+        self.log = logging.getLogger(name=type(self).__name__)
 
         # Track which symbols use aggregator: {(interval, symbol): use_aggregator}
         self._kline_use_aggregator: list = []

@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List, Literal
 from decimal import Decimal
+import nexuslog as logging
+
 from decimal import ROUND_HALF_UP, ROUND_CEILING, ROUND_FLOOR
 from nexustrader.constants import AccountType, ExchangeType
 from nexustrader.core.cache import AsyncCache
-from nexustrader.core.nautilius_core import Logger, LiveClock, MessageBus
+from nexustrader.core.nautilius_core import LiveClock, MessageBus
 from nexustrader.core.registry import OrderRegistry
 from nexustrader.base.api_client import ApiClient
 from nexustrader.base.ws_client import WSClient
@@ -36,7 +38,7 @@ class OrderManagementSystem(ABC):
         clock: LiveClock,
         msgbus: MessageBus,
     ):
-        self._log = Logger(name=type(self).__name__)
+        self._log = logging.getLogger(name=type(self).__name__)
         self._market = market
         self._market_id = market_id
         self._registry = registry

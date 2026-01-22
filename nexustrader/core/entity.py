@@ -2,10 +2,12 @@ import signal
 import asyncio
 import uuid
 import warnings
+import nexuslog as logging
+
 from typing import Callable, Coroutine, Any, TypeVar, Union, cast
 from typing import Dict, List
 from dataclasses import dataclass
-from nexustrader.core.nautilius_core import LiveClock, Logger
+from nexustrader.core.nautilius_core import LiveClock
 from nexustrader.schema import (
     Kline,
     BookL1,
@@ -113,7 +115,7 @@ class TaskManager:
         enable_signal_handlers: bool = True,
         cancel_timeout: float | None = 5.0,
     ):
-        self._log = Logger(name=type(self).__name__)
+        self._log = logging.getLogger(name=type(self).__name__)
         self._tasks: Dict[str, asyncio.Task] = {}
         self._shutdown_event = asyncio.Event()
         self._loop = loop
@@ -350,7 +352,7 @@ class DataReady:
             symbols: symbols list need to monitor
             timeout: timeout in seconds
         """
-        self._log = Logger(name=type(self).__name__)
+        self._log = logging.getLogger(name=type(self).__name__)
 
         # Optimization: Store symbols as a set for faster lookups if needed,
         # but dict is fine for tracking status.

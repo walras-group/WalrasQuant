@@ -3,6 +3,8 @@ import asyncio
 import threading
 import re
 import redis
+import nexuslog as logging
+
 from typing import Dict, Set, Type, List, Optional, Any
 from collections import defaultdict
 from returns.maybe import maybe
@@ -25,7 +27,7 @@ from nexustrader.schema import (
 )
 from nexustrader.constants import STATUS_TRANSITIONS, AccountType, KlineInterval
 from nexustrader.core.entity import TaskManager, get_redis_client_if_available
-from nexustrader.core.nautilius_core import LiveClock, MessageBus, Logger
+from nexustrader.core.nautilius_core import LiveClock, MessageBus
 from nexustrader.constants import StorageType, ParamBackend
 from nexustrader.backends import SQLiteBackend, PostgreSQLBackend
 
@@ -54,7 +56,7 @@ class AsyncCache:
         self._storage_backend = storage_backend
         self._db_path = db_path
 
-        self._log = Logger(name=type(self).__name__)
+        self._log = logging.getLogger(name=type(self).__name__)
         self._clock = clock
 
         # in-memory save

@@ -5,10 +5,11 @@ This module provides kline (candlestick) aggregation from trade data.
 """
 
 from typing import Optional, Literal
+import nexuslog as logging
 from datetime import timedelta, datetime, timezone
 from nexustrader.schema import Trade, Kline
 from nexustrader.constants import KlineInterval, ExchangeType, OrderSide
-from nexustrader.core.nautilius_core import LiveClock, TimeEvent, Logger, MessageBus
+from nexustrader.core.nautilius_core import LiveClock, TimeEvent, MessageBus
 
 
 class KlineBuilder:
@@ -194,7 +195,7 @@ class KlineAggregator:
         self.symbol = symbol
         self.interval = interval
         self._msgbus = msgbus
-        self._log = Logger(name=type(self).__name__)
+        self._log = logging.getLogger(name=type(self).__name__)
 
         self._builder = KlineBuilder(
             exchange=exchange,

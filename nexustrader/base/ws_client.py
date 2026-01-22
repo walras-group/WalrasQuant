@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from types import MethodType
 from typing import Any
 from typing import Callable, Literal
+import nexuslog as logging
 
 
 from nexustrader.core.entity import TaskManager
@@ -16,7 +17,7 @@ from picows import (
     WSAutoPingStrategy,
     # PICOWS_DEBUG_LL,
 )
-from nexustrader.core.nautilius_core import LiveClock, Logger
+from nexustrader.core.nautilius_core import LiveClock
 
 # import logging
 
@@ -168,7 +169,7 @@ class WSClient(ABC):
         elif auto_ping_strategy == "ping_periodically":
             self._auto_ping_strategy = WSAutoPingStrategy.PING_PERIODICALLY
         self._task_manager = task_manager
-        self._log = Logger(name=type(self).__name__)
+        self._log = logging.getLogger(name=type(self).__name__)
         self._ready = asyncio.Event()  # Only set once on initial connection
 
 

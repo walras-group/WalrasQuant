@@ -5,9 +5,10 @@ from typing import Dict, Any
 from decimal import Decimal
 import redis
 import msgspec
+import nexuslog as logging
 
 from nexustrader.core.cache import AsyncCache
-from nexustrader.core.nautilius_core import Logger, LiveClock
+from nexustrader.core.nautilius_core import LiveClock
 from nexustrader.core.entity import get_redis_client_if_available
 
 
@@ -20,7 +21,7 @@ class StrategyStateExporter:
         self.strategy_id = strategy_id
         self.user_id = user_id
         self.cache = cache
-        self.log = Logger(name=type(self).__name__)
+        self.log = logging.getLogger(name=type(self).__name__)
         self.clock = clock
 
         # Setup Redis connection and strategy tracking

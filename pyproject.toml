@@ -38,6 +38,7 @@ dependencies = [
     "curl-cffi>=0.13.0",
     "picows>=1.10.2",
     "dynaconf[redis]>=3.2.12",
+    "nexuslog>=0.4.1",
 ]
 
 [project.scripts]
