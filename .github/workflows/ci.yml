@@ -11,80 +11,6 @@ permissions:
   contents: read
 
 jobs:
-  # Build wheels for Linux x86_64
-  linux-x86_64:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: |
-            3.11
-            3.12
-            3.13
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          target: x86_64
-          args: --release --out dist -i python3.11 -i python3.12 -i python3.13
-          sccache: 'true'
-          manylinux: auto
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-linux-x86_64
-          path: dist
-
-  # Build wheels for Linux aarch64 (native ARM64 runner)
-  linux-aarch64:
-    runs-on: ubuntu-24.04-arm
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: |
-            3.11
-            3.12
-            3.13
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          target: aarch64
-          args: --release --out dist -i python3.11 -i python3.12 -i python3.13
-          sccache: 'true'
-          manylinux: auto
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-linux-aarch64
-          path: dist
-
-  # Build wheels for macOS
-  macos:
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        target: [x86_64, aarch64]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: |
-            3.11
-            3.12
-            3.13
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          target: ${{ matrix.target }}-apple-darwin
-          args: --release --out dist -i python3.11 -i python3.12 -i python3.13
-          sccache: 'true'
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-macos-${{ matrix.target }}
-          path: dist
-
   # Run pytest
   test:
     runs-on: ubuntu-latest
@@ -94,42 +20,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Build and install package
+      - name: Install dependencies
         run: uv sync --python ${{ matrix.python-version }}
       - name: Run tests
         run: uv run pytest tests -v
 
-  # Build source distribution
-  sdist:
+  # Lint and format check
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build sdist
-        uses: PyO3/maturin-action@v1
-        with:
-          command: sdist
-          args: --out dist
-      - name: Upload sdist
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-sdist
-          path: dist
+      - uses: astral-sh/setup-uv@v5
+      - name: Install dependencies
+        run: uv sync --python 3.11
+      - name: Ruff check
+        run: uvx ruff check
+      - name: Ruff format check
+        run: uvx ruff format --check
 
-  # Publish to PyPI
+  # Build and publish to PyPI
   release:
     name: Release
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [linux-x86_64, linux-aarch64, macos, sdist]
+    needs: [test, lint]
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: wheels-*
-          merge-multiple: true
-          path: dist
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Build package
+        run: uv build
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
