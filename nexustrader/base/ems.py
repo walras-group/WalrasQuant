@@ -191,7 +191,7 @@ class ExecutionManagementSystem(ABC):
         Cancel all orders
         """
         symbol = order_submit.symbol
-        self._cache.mark_all_cancel_intent(symbol)
+        # self._cache.mark_all_cancel_intent(symbol)
         self._task_manager.create_task(
             self._private_connectors[account_type]._oms.cancel_all_orders(symbol)
         )
@@ -202,7 +202,7 @@ class ExecutionManagementSystem(ABC):
         """
         Cancel an order
         """
-        self._cache.mark_cancel_intent(order_submit.oid)
+        # self._cache.mark_cancel_intent(order_submit.oid)
         self._task_manager.create_task(
             self._private_connectors[account_type]._oms.cancel_order(
                 oid=order_submit.oid,
@@ -217,7 +217,7 @@ class ExecutionManagementSystem(ABC):
         """
         Cancel an order
         """
-        self._cache.mark_cancel_intent(order_submit.oid)
+        # self._cache.mark_cancel_intent(order_submit.oid)
         self._task_manager.create_task(
             self._private_connectors[account_type]._oms.cancel_order_ws(
                 oid=order_submit.oid,

@@ -331,6 +331,7 @@ class PublicConnector(ABC):
             msgbus=self._msgbus,
             clock=self._clock,
             build_with_no_updates=build_with_no_updates,
+            loop=self._task_manager._loop,
         )
 
     def _create_volume_kline_aggregator(
@@ -347,6 +348,7 @@ class PublicConnector(ABC):
             msgbus=self._msgbus,
             volume_threshold=volume_threshold,
             volume_type=volume_type,
+            loop=self._task_manager._loop,
         )
 
     def _add_aggregator(self, symbol: str, aggregator) -> None:

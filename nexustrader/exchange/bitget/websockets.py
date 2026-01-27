@@ -562,13 +562,13 @@ class BitgetWSApiClient(WSClient):
 # async def main():
 #     from nexustrader.constants import settings
 #     from nexustrader.core.entity import TaskManager
-#     from nexustrader.core.nautilius_core import setup_nautilus_core, UUID4
+#     from nexustrader.core.nautilius_core import setup_nexus_core, UUID4
 
 #     API_KEY = settings.BITGET.DEMO1.API_KEY
 #     SECRET = settings.BITGET.DEMO1.SECRET
 #     PASSPHRASE = settings.BITGET.DEMO1.PASSPHRASE
 
-#     log_guard, _, clock = setup_nautilus_core(  # noqa
+#     log_guard, _, clock = setup_nexus_core(  # noqa
 #         trader_id="bnc-test",
 #         level_stdout="DEBUG",
 #     )

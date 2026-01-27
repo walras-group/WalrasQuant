@@ -392,12 +392,12 @@ class HyperLiquidWSApiClient(WSClient):
 #     from nexustrader.constants import settings
 #     from nexustrader.exchange.hyperliquid.constants import oid_to_cloid_hex
 #     from nexustrader.core.entity import TaskManager, OidGen
-#     from nexustrader.core.nautilius_core import LiveClock, setup_nautilus_core
+#     from nexustrader.core.nautilius_core import LiveClock, setup_nexus_core
 
 #     HYPER_API_KEY = settings.HYPER.TESTNET.API_KEY
 #     HYPER_SECRET = settings.HYPER.TESTNET.SECRET
 
-#     log_guard, _, clock = setup_nautilus_core(  # noqa
+#     log_guard, _, clock = setup_nexus_core(  # noqa
 #         trader_id="hyper-test",
 #         level_stdout="DEBUG",
 #     )

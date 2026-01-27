@@ -79,7 +79,7 @@ config = Config(
     strategy_id="buy_and_sell_binance",
     user_id="user_test",
     strategy=Demo(),
-    log_config=LogConfig(level="DEBUG", filename="logs/app.log"),
+    log_config=LogConfig(level="INFO", filename="logs/app.log"),
     basic_config={
         ExchangeType.BINANCE: BasicConfig(
             api_key=BINANCE_API_KEY,

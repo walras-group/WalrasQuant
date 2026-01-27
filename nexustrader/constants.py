@@ -3,7 +3,6 @@ import sys
 from typing import Literal, Dict, List, TypedDict, NotRequired
 from enum import Enum
 from dynaconf import Dynaconf
-from nautilus_trader.core.nautilus_pyo3 import LogColor  # noqa
 
 BACKEND_LITERAL = Literal["memory", "redis"]
 

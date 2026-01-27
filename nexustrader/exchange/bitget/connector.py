@@ -531,7 +531,7 @@ class BitgetPrivateConnector(PrivateConnector):
 #             "password": PASSPHRASE,
 #         }
 #     )
-#     logguard, msgbus, clock = setup_nautilus_core("test-001", level_stdout="DEBUG")
+#     logguard, msgbus, clock = setup_nexus_core("test-001", level_stdout="DEBUG")
 #     task_manager = TaskManager(
 #         loop=asyncio.get_event_loop(),
 #     )

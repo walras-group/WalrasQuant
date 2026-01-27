@@ -27,7 +27,6 @@ dependencies = [
     "ccxt>=4.5.22",
     "asyncpg>=0.30.0",
     "psycopg2-binary>=2.9.10",
-    "nautilus-trader>=1.220.0",
     "textual>=0.85.0",
     "click>=8.1.0",
     "pycryptodome>=3.23.0",
@@ -38,7 +37,9 @@ dependencies = [
     "curl-cffi>=0.13.0",
     "picows>=1.10.2",
     "dynaconf[redis]>=3.2.12",
-    "nexuslog>=0.4.1",
+    "nexuslog>=0.4.3",
+    "flashcore>=0.1.5",
+    "pandas (>=2.3.3,<3.0.0)",
 ]
 
 [project.scripts]

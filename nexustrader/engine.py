@@ -22,7 +22,7 @@ from nexustrader.exchange.registry import get_factory
 from nexustrader.exchange.base_factory import BuildContext
 
 from nexustrader.core.entity import TaskManager, ZeroMQSignalRecv
-from nexustrader.core.nautilius_core import setup_nautilus_core
+from nexustrader.core.nautilius_core import setup_nexus_core
 from nexustrader.schema import InstrumentId
 from nexustrader.web.app import StrategyFastAPI
 from nexustrader.web.server import StrategyWebServer
@@ -55,11 +55,12 @@ class Engine:
         self._custom_signal_recv = None
 
         # Initialize nautilus core components and configure nexuslog
-        self._msgbus, self._clock = setup_nautilus_core(
+        self._msgbus, self._clock = setup_nexus_core(
             trader_id=trader_id,
             filename=self._config.log_config.filename,
             level=self._config.log_config.level,
             unix_ts=self._config.log_config.unix_ts,
+            batch_size=self._config.log_config.batch_size,
         )
 
         # Create logger instance for Engine

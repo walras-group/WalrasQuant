@@ -63,8 +63,6 @@ from nexustrader.constants import (
 
 class Strategy:
     def __init__(self):
-        self.log = logging.getLogger(name=type(self).__name__)
-
         # Track which symbols use aggregator: {(interval, symbol): use_aggregator}
         self._kline_use_aggregator: list = []
 
@@ -89,6 +87,8 @@ class Strategy:
     ):
         if self._initialized:
             return
+        
+        self.log = logging.getLogger(name=type(self).__name__)
 
         self.cache = cache
         self.clock = clock
@@ -545,6 +545,7 @@ class Strategy:
         self._ems[order.instrument_id.exchange]._submit_order(
             order, SubmitType.CREATE, account_type
         )
+        self.log.info(f"[new order] symbol={symbol}, oid={order.oid}, side={side}, type={type}, amount={amount}, price={price}, time_in_force={time_in_force}, reduce_only={reduce_only}")
         return order.oid
 
     def create_order_ws(
@@ -575,11 +576,13 @@ class Strategy:
         self._ems[order.instrument_id.exchange]._submit_order(
             order, SubmitType.CREATE_WS, account_type
         )
+        self.log.info(f"[new order ws] symbol={symbol}, oid={order.oid}, side={side}, type={type}, amount={amount}, price={price}, time_in_force={time_in_force}, reduce_only={reduce_only}")
         return order.oid
 
     def cancel_order(
         self, symbol: str, oid: str, account_type: AccountType | None = None, **kwargs
     ) -> str:
+        self.cache.mark_cancel_intent(oid)
         order = CancelOrderSubmit(
             symbol=symbol,
             instrument_id=InstrumentId.from_str(symbol),
@@ -589,11 +592,13 @@ class Strategy:
         self._ems[order.instrument_id.exchange]._submit_order(
             order, SubmitType.CANCEL, account_type
         )
+        self.log.info(f"[cancel order] symbol={symbol}, oid={oid}")
         return order.oid
 
     def cancel_order_ws(
         self, symbol: str, oid: str, account_type: AccountType | None = None, **kwargs
     ) -> str:
+        self.cache.mark_cancel_intent(oid)
         order = CancelOrderSubmit(
             symbol=symbol,
             instrument_id=InstrumentId.from_str(symbol),
@@ -603,11 +608,13 @@ class Strategy:
         self._ems[order.instrument_id.exchange]._submit_order(
             order, SubmitType.CANCEL_WS, account_type
         )
+        self.log.info(f"[cancel order ws] symbol={symbol}, oid={oid}")
         return order.oid
 
     def cancel_all_orders(
         self, symbol: str, account_type: AccountType | None = None
     ) -> str:
+        self.cache.mark_all_cancel_intent(symbol)
         order = CancelAllOrderSubmit(
             symbol=symbol,
             instrument_id=InstrumentId.from_str(symbol),
@@ -615,6 +622,7 @@ class Strategy:
         self._ems[order.instrument_id.exchange]._submit_order(
             order, SubmitType.CANCEL_ALL, account_type
         )
+        self.log.info(f"[cancel all orders] symbol={symbol}")
 
     def modify_order(
         self,
@@ -638,6 +646,7 @@ class Strategy:
         self._ems[order.instrument_id.exchange]._submit_order(
             order, SubmitType.MODIFY, account_type
         )
+        self.log.info(f"[modify order] symbol={symbol}, oid={oid}, side={side}, price={price}, amount={amount}")
         return order.oid
 
     # def create_twap(

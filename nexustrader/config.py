@@ -20,6 +20,7 @@ class LogConfig:
     filename: str | None = None
     level: Literal["TRACE", "DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     unix_ts: bool = False
+    batch_size: int = 1
 
     def __post_init__(self):
         if self.level not in ["TRACE", "DEBUG", "INFO", "WARNING", "ERROR"]:

@@ -583,7 +583,7 @@ class BitgetApiClient(ApiClient):
 #     SECRET = settings.BITGET.DEMO1.SECRET
 #     PASSPHRASE = settings.BITGET.DEMO1.PASSPHRASE
 
-#     log_guard, _, clock = setup_nautilus_core(
+#     log_guard, _, clock = setup_nexus_core(
 #         trader_id="TESTER-001",
 #         level_stdout="DEBUG",
 #     )

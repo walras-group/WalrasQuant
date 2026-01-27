@@ -361,13 +361,13 @@ class OkxWSApiClient(WSClient):
 # async def main():
 #     from nexustrader.constants import settings
 #     from nexustrader.core.entity import TaskManager
-#     from nexustrader.core.nautilius_core import LiveClock, setup_nautilus_core, UUID4
+#     from nexustrader.core.nautilius_core import LiveClock, setup_nexus_core, UUID4
 
 #     OKX_API_KEY = settings.OKX.DEMO_1.API_KEY
 #     OKX_SECRET = settings.OKX.DEMO_1.SECRET
 #     OKX_PASSPHRASE = settings.OKX.DEMO_1.PASSPHRASE
 
-#     log_guard = setup_nautilus_core(  # noqa
+#     log_guard = setup_nexus_core(  # noqa
 #         trader_id="bnc-test",
 #         level_stdout="DEBUG",
 #     )
