@@ -14,17 +14,18 @@ from nexustrader.schema import BookL1, Order, BatchOrder
 from nexustrader.engine import Engine
 
 
-BINANCE_API_KEY = settings.BINANCE.FUTURE.TESTNET_1.API_KEY
-BINANCE_SECRET = settings.BINANCE.FUTURE.TESTNET_1.SECRET
+BINANCE_API_KEY = settings.BINANCE.DEMO.API_KEY
+BINANCE_SECRET = settings.BINANCE.DEMO.SECRET
 
 
 class Demo(Strategy):
     def __init__(self):
         super().__init__()
         self.signal = True
+        self.symbol = "BTCUSDT-PERP.BINANCE"
 
     def on_start(self):
-        self.subscribe_bookl1(symbols=["BTCUSDT-PERP.BINANCE"])
+        self.subscribe_bookl1(symbols=[self.symbol])
 
     def on_failed_order(self, order: Order):
         self.log.info(str(order))
@@ -43,22 +44,21 @@ class Demo(Strategy):
 
     def on_bookl1(self, bookl1: BookL1):
         if self.signal:
-            symbol = "BTCUSDT-PERP.BINANCE"
             bid = bookl1.bid
 
             prices = [
-                self.price_to_precision(symbol, bid),
-                self.price_to_precision(symbol, bid * 0.999),
-                self.price_to_precision(symbol, bid * 0.998),
-                self.price_to_precision(symbol, bid * 0.997),
-                self.price_to_precision(symbol, bid * 0.996),
-                self.price_to_precision(symbol, bid * 0.995),
-                self.price_to_precision(symbol, bid * 0.994),
+                self.price_to_precision(self.symbol, bid),
+                self.price_to_precision(self.symbol, bid * 0.999),
+                self.price_to_precision(self.symbol, bid * 0.998),
+                self.price_to_precision(self.symbol, bid * 0.997),
+                self.price_to_precision(self.symbol, bid * 0.996),
+                self.price_to_precision(self.symbol, bid * 0.995),
+                self.price_to_precision(self.symbol, bid * 0.994),
             ]
 
             orders = [
                 BatchOrder(
-                    symbol=symbol,
+                    symbol=self.symbol,
                     side=OrderSide.BUY,
                     type=OrderType.LIMIT,
                     amount=Decimal("0.01"),
@@ -71,6 +71,14 @@ class Demo(Strategy):
                 orders=orders,
             )
             self.signal = False
+
+        open_orders = self.cache.get_open_orders(symbol=self.symbol)
+        for oid in open_orders:
+            self.cancel_order(
+                symbol=self.symbol,
+                oid=oid,
+                account_type=BinanceAccountType.USD_M_FUTURE_TESTNET,
+            )
 
 
 config = Config(

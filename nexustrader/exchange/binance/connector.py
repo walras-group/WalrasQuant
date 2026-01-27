@@ -151,7 +151,7 @@ class BinancePublicConnector(PublicConnector):
             last_price=float(ticker_response.lastPrice),
             volume=float(ticker_response.volume),
             volumeCcy=float(
-                ticker_response.quoteVolume or ticker_response.baseVolume or 0.0 # type: ignore
+                ticker_response.quoteVolume or ticker_response.baseVolume or 0.0  # type: ignore
             ),
             timestamp=self._clock.timestamp_ms(),
         )
@@ -180,7 +180,7 @@ class BinancePublicConnector(PublicConnector):
                 last_price=float(ticker_response.lastPrice),
                 volume=float(ticker_response.volume),
                 volumeCcy=float(
-                    ticker_response.quoteVolume or ticker_response.baseVolume or 0.0 # type: ignore
+                    ticker_response.quoteVolume or ticker_response.baseVolume or 0.0  # type: ignore
                 ),
                 timestamp=self._clock.timestamp_ms(),
             )

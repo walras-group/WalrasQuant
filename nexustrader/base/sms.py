@@ -136,9 +136,7 @@ class SubscriptionManagementSystem:
         self, subscription: SubscriptionSubmit, account_type: AccountType
     ):
         """Subscribe to trade data"""
-        self._public_connectors[account_type].subscribe_trade(
-            subscription.symbols
-        )
+        self._public_connectors[account_type].subscribe_trade(subscription.symbols)
 
         # Register DataReady
         if DataType.TRADE not in self._subscriptions_ready:
@@ -154,9 +152,7 @@ class SubscriptionManagementSystem:
         self, subscription: SubscriptionSubmit, account_type: AccountType
     ):
         """Subscribe to bookl1 data"""
-        self._public_connectors[account_type].subscribe_bookl1(
-            subscription.symbols
-        )
+        self._public_connectors[account_type].subscribe_bookl1(subscription.symbols)
 
         # Register DataReady
         if DataType.BOOKL1 not in self._subscriptions_ready:
@@ -197,7 +193,7 @@ class SubscriptionManagementSystem:
         self, subscription: SubscriptionSubmit, account_type: AccountType
     ):
         """Subscribe to kline data"""
-        interval: KlineInterval = subscription.params.get("interval") # type: ignore
+        interval: KlineInterval = subscription.params.get("interval")  # type: ignore
         if interval is None:
             raise ValueError("interval is required for KLINE subscription")
 
@@ -239,9 +235,9 @@ class SubscriptionManagementSystem:
         volume_type = subscription.params.get("volume_type", "DEFAULT")
 
         for symbol in subscription.symbols:
-            self._public_connectors[
-                account_type
-            ].subscribe_volume_kline_aggregator(symbol, volume_threshold, volume_type)
+            self._public_connectors[account_type].subscribe_volume_kline_aggregator(
+                symbol, volume_threshold, volume_type
+            )
 
             # Register DataReady for each symbol (volume kline uses symbol as key)
             if symbol in self._subscriptions_ready:
@@ -269,9 +265,9 @@ class SubscriptionManagementSystem:
         volume_type = subscription.params.get("volume_type", "DEFAULT")
 
         for symbol in subscription.symbols:
-            self._public_connectors[
-                account_type
-            ].unsubscribe_volume_kline_aggregator(symbol, volume_threshold, volume_type)
+            self._public_connectors[account_type].unsubscribe_volume_kline_aggregator(
+                symbol, volume_threshold, volume_type
+            )
 
     def _subscribe_funding_rate(
         self, subscription: SubscriptionSubmit, account_type: AccountType
@@ -321,9 +317,7 @@ class SubscriptionManagementSystem:
         self, subscription: SubscriptionSubmit, account_type: AccountType
     ):
         """Subscribe to mark price data"""
-        self._public_connectors[account_type].subscribe_mark_price(
-            subscription.symbols
-        )
+        self._public_connectors[account_type].subscribe_mark_price(subscription.symbols)
 
         # Register DataReady
         if DataType.MARK_PRICE not in self._subscriptions_ready:
@@ -343,17 +337,13 @@ class SubscriptionManagementSystem:
         self, unsubscription: UnsubscriptionSubmit, account_type: AccountType
     ):
         """Unsubscribe from trade data"""
-        self._public_connectors[account_type].unsubscribe_trade(
-            unsubscription.symbols
-        )
+        self._public_connectors[account_type].unsubscribe_trade(unsubscription.symbols)
 
     def _unsubscribe_bookl1(
         self, unsubscription: UnsubscriptionSubmit, account_type: AccountType
     ):
         """Unsubscribe from bookl1 data"""
-        self._public_connectors[account_type].unsubscribe_bookl1(
-            unsubscription.symbols
-        )
+        self._public_connectors[account_type].unsubscribe_bookl1(unsubscription.symbols)
 
     def _unsubscribe_bookl2(
         self, unsubscription: UnsubscriptionSubmit, account_type: AccountType
@@ -378,9 +368,9 @@ class SubscriptionManagementSystem:
         use_aggregator = unsubscription.params.get("use_aggregator", False)
         if use_aggregator:
             for symbol in unsubscription.symbols:
-                self._public_connectors[
-                    account_type
-                ].unsubscribe_kline_aggregator(symbol, interval)
+                self._public_connectors[account_type].unsubscribe_kline_aggregator(
+                    symbol, interval
+                )
         else:
             self._public_connectors[account_type].unsubscribe_kline(
                 unsubscription.symbols, interval
@@ -447,21 +437,13 @@ class SubscriptionManagementSystem:
                     case DataType.KLINE:
                         self._subscribe_kline(account_subscription, account_type)
                     case DataType.VOLUME_KLINE:
-                        self._subscribe_volume_kline(
-                            account_subscription, account_type
-                        )
+                        self._subscribe_volume_kline(account_subscription, account_type)
                     case DataType.FUNDING_RATE:
-                        self._subscribe_funding_rate(
-                            account_subscription, account_type
-                        )
+                        self._subscribe_funding_rate(account_subscription, account_type)
                     case DataType.INDEX_PRICE:
-                        self._subscribe_index_price(
-                            account_subscription, account_type
-                        )
+                        self._subscribe_index_price(account_subscription, account_type)
                     case DataType.MARK_PRICE:
-                        self._subscribe_mark_price(
-                            account_subscription, account_type
-                        )
+                        self._subscribe_mark_price(account_subscription, account_type)
             self._subscribe_queue.task_done()
 
     async def _handle_unsubscribe(self):
@@ -489,21 +471,13 @@ class SubscriptionManagementSystem:
                 )
                 match unsubscription.data_type:
                     case DataType.TRADE:
-                        self._unsubscribe_trade(
-                            account_unsubscription, account_type
-                        )
+                        self._unsubscribe_trade(account_unsubscription, account_type)
                     case DataType.BOOKL1:
-                        self._unsubscribe_bookl1(
-                            account_unsubscription, account_type
-                        )
+                        self._unsubscribe_bookl1(account_unsubscription, account_type)
                     case DataType.BOOKL2:
-                        self._unsubscribe_bookl2(
-                            account_unsubscription, account_type
-                        )
+                        self._unsubscribe_bookl2(account_unsubscription, account_type)
                     case DataType.KLINE:
-                        self._unsubscribe_kline(
-                            account_unsubscription, account_type
-                        )
+                        self._unsubscribe_kline(account_unsubscription, account_type)
                     case DataType.MARK_PRICE:
                         self._unsubscribe_mark_price(
                             account_unsubscription, account_type

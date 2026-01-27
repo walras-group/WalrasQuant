@@ -5,7 +5,7 @@ from nexustrader.config import (
     PublicConnectorConfig,
     PrivateConnectorConfig,
     BasicConfig,
-    LogConfig
+    LogConfig,
 )
 from nexustrader.strategy import Strategy
 from nexustrader.constants import ExchangeType, OrderSide, OrderType
@@ -80,9 +80,7 @@ config = Config(
     strategy_id="demo_buy_and_cancel",
     user_id="user_test",
     strategy=Demo(),
-    log_config=LogConfig(
-        level="INFO"
-    ),
+    log_config=LogConfig(level="INFO"),
     basic_config={
         ExchangeType.OKX: BasicConfig(
             api_key=OKX_API_KEY,

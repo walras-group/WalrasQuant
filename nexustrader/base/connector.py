@@ -363,7 +363,7 @@ class PublicConnector(ABC):
         if aggregators:
             for aggregator in aggregators:
                 aggregator.handle_trade(trade)
-    
+
     async def connect(self):
         """Connect to the exchange"""
         await self._ws_client.connect()

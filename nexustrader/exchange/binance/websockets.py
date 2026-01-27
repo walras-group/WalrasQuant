@@ -72,7 +72,9 @@ class BinanceWSClient(WSClient):
             for param in client_params:
                 self._log.debug(f"Subscribing to {param}...")
             if self._is_client_connected(client_id):
-                self._send_payload(client_params, method="SUBSCRIBE", client_id=client_id)
+                self._send_payload(
+                    client_params, method="SUBSCRIBE", client_id=client_id
+                )
 
     def _unsubscribe(self, params: List[str]):
         removed = self._unregister_subscriptions(params)

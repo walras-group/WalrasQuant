@@ -102,7 +102,7 @@ class OrderManagementSystem(ABC):
         """
         await self._ws_client.wait_ready()
         # Check if subclass has a WebSocket API client
-        if hasattr(self, '_ws_api_client') and self._ws_api_client is not None:
+        if hasattr(self, "_ws_api_client") and self._ws_api_client is not None:
             await self._ws_api_client.wait_ready()
 
     def _price_to_precision(

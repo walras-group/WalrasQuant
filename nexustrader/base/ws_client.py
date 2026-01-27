@@ -244,7 +244,10 @@ class WSClient(ABC):
             if len(subs) < self._max_subscriptions_per_client:  # type: ignore[operator]
                 return client_id
 
-        if self._max_clients is not None and len(self._client_subscriptions) >= self._max_clients:
+        if (
+            self._max_clients is not None
+            and len(self._client_subscriptions) >= self._max_clients
+        ):
             raise RuntimeError("Maximum number of websocket clients reached")
 
         client_id = self._next_client_id
@@ -268,7 +271,9 @@ class WSClient(ABC):
             assigned.setdefault(client_id, []).append(subscription)
         return assigned
 
-    def _unregister_subscriptions(self, subscriptions: list[Any]) -> dict[int, list[Any]]:
+    def _unregister_subscriptions(
+        self, subscriptions: list[Any]
+    ) -> dict[int, list[Any]]:
         removed: dict[int, list[Any]] = {}
         for subscription in subscriptions:
             if subscription not in self._subscriptions:
@@ -280,9 +285,10 @@ class WSClient(ABC):
             self._subscriptions.remove(subscription)
         return removed
 
-
     async def _connect(self, client_id: int):
-        self._log.debug(f"Connecting to Websocket at {self._url} (client {client_id})...")
+        self._log.debug(
+            f"Connecting to Websocket at {self._url} (client {client_id})..."
+        )
         WSListenerFactory = lambda: Listener(  # noqa: E731
             self._callback,
             self._log,
@@ -300,7 +306,9 @@ class WSClient(ABC):
         )
         self._transports[client_id] = transport
         self._listeners[client_id] = listener
-        self._log.debug(f"Websocket connected successfully to {self._url} (client {client_id}).")
+        self._log.debug(
+            f"Websocket connected successfully to {self._url} (client {client_id})."
+        )
         self._notify_connection_change(client_id, True)
 
     async def connect(self):
@@ -343,7 +351,9 @@ class WSClient(ABC):
                 self._log.debug(f"Websocket disconnected (client {client_id}).")
                 self._notify_connection_change(client_id, False)
             except asyncio.CancelledError:
-                self._log.debug(f"Websocket connection loop cancelled (client {client_id}).")
+                self._log.debug(
+                    f"Websocket connection loop cancelled (client {client_id})."
+                )
                 break
             except Exception as e:
                 self._log.error(f"Connection error: {e}")
@@ -395,7 +405,5 @@ class WSClient(ABC):
                 transport.disconnect()
 
     @abstractmethod
-    async def _resubscribe_for_client(
-        self, client_id: int, subscriptions: list[Any]
-    ):
+    async def _resubscribe_for_client(self, client_id: int, subscriptions: list[Any]):
         pass

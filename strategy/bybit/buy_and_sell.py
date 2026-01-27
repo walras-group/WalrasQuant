@@ -77,7 +77,7 @@ config = Config(
     strategy_id="bybit_buy_and_sell",
     user_id="user_test",
     strategy=Demo(),
-    log_config=LogConfig(level="INFO"),
+    log_config=LogConfig(level="INFO", name_levels={"Strategy": "WARNING"}),
     basic_config={
         ExchangeType.BYBIT: BasicConfig(
             api_key=BYBIT_API_KEY,

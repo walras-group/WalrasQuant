@@ -588,7 +588,9 @@ class ExecutionManagementSystem(ABC):
         )
 
     async def _handle_submit_order(
-        self, account_type: AccountType, queue: asyncio.Queue[tuple[OrderSubmit, SubmitType]]
+        self,
+        account_type: AccountType,
+        queue: asyncio.Queue[tuple[OrderSubmit, SubmitType]],
     ):
         """
         Handle the order submit

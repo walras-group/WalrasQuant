@@ -65,6 +65,7 @@ class Engine:
             trader_id=trader_id,
             filename=self._config.log_config.filename,
             level=self._config.log_config.level,
+            name_levels=self._config.log_config.name_levels,
             unix_ts=self._config.log_config.unix_ts,
             batch_size=self._config.log_config.batch_size,
         )
@@ -381,7 +382,7 @@ class Engine:
             return
 
         self._connection_policy_state = policy
-        self._log.info(
+        self._log.debug(
             "Connection policy update: "
             f"md_ok={policy.md_ok} td_ok={policy.td_ok} "
             f"allow_open={policy.allow_open} allow_trade={policy.allow_trade} "

@@ -525,7 +525,6 @@ class BitgetPrivateConnector(PrivateConnector):
         await self._oms._ws_api_client.connect()
 
 
-
 # async def main():
 #     from nexustrader.constants import settings
 

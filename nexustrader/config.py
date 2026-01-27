@@ -4,6 +4,8 @@ from nexustrader.constants import AccountType, ExchangeType, StorageType
 from nexustrader.strategy import Strategy
 from zmq.asyncio import Socket
 
+LOG_LEVELS = Literal["TRACE", "DEBUG", "INFO", "WARNING", "ERROR"]
+
 
 @dataclass
 class LogConfig:
@@ -18,7 +20,8 @@ class LogConfig:
     """
 
     filename: str | None = None
-    level: Literal["TRACE", "DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
+    level: LOG_LEVELS = "INFO"
+    name_levels: dict[str | None, LOG_LEVELS] | None = None
     unix_ts: bool = False
     batch_size: int = 1
 
@@ -27,6 +30,13 @@ class LogConfig:
             raise ValueError(
                 f"Invalid level: {self.level}. Must be one of TRACE, DEBUG, INFO, WARNING, ERROR."
             )
+
+        if self.name_levels:
+            for name, level in self.name_levels.items():
+                if level not in ["TRACE", "DEBUG", "INFO", "WARNING", "ERROR"]:
+                    raise ValueError(
+                        f"Invalid level: {level} for logger name: {name}. Must be one of TRACE, DEBUG, INFO, WARNING, ERROR."
+                    )
 
 
 @dataclass

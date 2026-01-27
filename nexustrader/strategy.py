@@ -89,8 +89,9 @@ class Strategy:
     ):
         if self._initialized:
             return
-        
+
         self.log = logging.getLogger(name=type(self).__name__)
+        self._sys_log = logging.getLogger(name=Strategy.__name__)
 
         self.cache = cache
         self.clock = clock
@@ -113,13 +114,13 @@ class Strategy:
                 self._state_exporter = StrategyStateExporter(
                     strategy_id=strategy_id, user_id=user_id, cache=cache, clock=clock
                 )
-                self.log.debug("CLI monitoring enabled with Redis")
+                self._sys_log.debug("CLI monitoring enabled with Redis")
             except Exception as e:
-                self.log.debug(
+                self._sys_log.debug(
                     f"State exporter initialization failed, CLI monitoring disabled: {e}"
                 )
         elif strategy_id and user_id:
-            self.log.debug("Redis not available, CLI monitoring disabled")
+            self._sys_log.debug("Redis not available, CLI monitoring disabled")
 
         self._msgbus.register(endpoint="pending", handler=self.on_pending_order)
         self._msgbus.register(endpoint="accepted", handler=self.on_accepted_order)
@@ -136,7 +137,7 @@ class Strategy:
 
         self._msgbus.register(endpoint="balance", handler=self.on_balance)
         self._msgbus.register(
-            endpoint="connection_status", handler=self.on_connection_status
+            endpoint="connection_status", handler=self._handle_connection_status
         )
 
         self._initialized = True
@@ -166,9 +167,14 @@ class Strategy:
             return False
         return self._connection_status.allow_close_only
 
-    def on_connection_status(self, status: ConnectionPolicyState) -> None:
-        """Handle connection policy updates from the engine."""
+    def _handle_connection_status(self, status: ConnectionPolicyState) -> None:
+        """Internal handler for connection policy updates from the engine."""
+        self.on_connection_status(status)
         self._connection_status = status
+
+    def on_connection_status(self, status: ConnectionPolicyState) -> None:
+        """Optional user hook for connection policy updates."""
+        pass
 
     def tick_sz(self, symbol: str) -> float:
         return self.market(symbol).precision.price
@@ -375,18 +381,18 @@ class Strategy:
                 if kline.symbol == symbol and kline.confirm:
                     indicator._process_warmup_kline(kline)
 
-            self.log.debug(
+            self._sys_log.debug(
                 f"Warmed up indicator {indicator.name} for {symbol} with {len(historical_klines)} klines"
             )
 
         except Exception as e:
-            self.log.error(
+            self._sys_log.error(
                 f"Failed to warm up indicator {indicator.name} for {symbol}: {e}"
             )
 
     def get_warmup_status(self) -> dict[str, list[dict]]:
         """Get the warmup status of all indicators by symbol."""
-        status = {}
+        status: dict[str, list[dict]] = {}
         requirements = self._indicator_manager.get_warmup_requirements()
 
         for symbol, indicator_list in requirements.items():
@@ -499,6 +505,9 @@ class Strategy:
                 kwargs=order.kwargs,
             )
             batch_orders.append(batch_order)
+            self._sys_log.info(
+                f"[new batch order] symbol={order.symbol}, oid={batch_order.oid}, side={order.side}, type={order.type}, amount={order.amount}, price={order.price}, time_in_force={order.time_in_force}, reduce_only={order.reduce_only}"
+            )
         self._ems[batch_orders[0].instrument_id.exchange]._submit_order(
             batch_orders, SubmitType.BATCH, account_type
         )
@@ -575,7 +584,9 @@ class Strategy:
         self._ems[order.instrument_id.exchange]._submit_order(
             order, SubmitType.CREATE, account_type
         )
-        self.log.info(f"[new order] symbol={symbol}, oid={order.oid}, side={side}, type={type}, amount={amount}, price={price}, time_in_force={time_in_force}, reduce_only={reduce_only}")
+        self._sys_log.info(
+            f"[new order] symbol={symbol}, oid={order.oid}, side={side}, type={type}, amount={amount}, price={price}, time_in_force={time_in_force}, reduce_only={reduce_only}"
+        )
         return order.oid
 
     def create_order_ws(
@@ -606,7 +617,9 @@ class Strategy:
         self._ems[order.instrument_id.exchange]._submit_order(
             order, SubmitType.CREATE_WS, account_type
         )
-        self.log.info(f"[new order ws] symbol={symbol}, oid={order.oid}, side={side}, type={type}, amount={amount}, price={price}, time_in_force={time_in_force}, reduce_only={reduce_only}")
+        self._sys_log.info(
+            f"[new order ws] symbol={symbol}, oid={order.oid}, side={side}, type={type}, amount={amount}, price={price}, time_in_force={time_in_force}, reduce_only={reduce_only}"
+        )
         return order.oid
 
     def cancel_order(
@@ -622,7 +635,7 @@ class Strategy:
         self._ems[order.instrument_id.exchange]._submit_order(
             order, SubmitType.CANCEL, account_type
         )
-        self.log.info(f"[cancel order] symbol={symbol}, oid={oid}")
+        self._sys_log.info(f"[cancel order] symbol={symbol}, oid={oid}")
         return order.oid
 
     def cancel_order_ws(
@@ -638,7 +651,7 @@ class Strategy:
         self._ems[order.instrument_id.exchange]._submit_order(
             order, SubmitType.CANCEL_WS, account_type
         )
-        self.log.info(f"[cancel order ws] symbol={symbol}, oid={oid}")
+        self._sys_log.info(f"[cancel order ws] symbol={symbol}, oid={oid}")
         return order.oid
 
     def cancel_all_orders(
@@ -652,7 +665,7 @@ class Strategy:
         self._ems[order.instrument_id.exchange]._submit_order(
             order, SubmitType.CANCEL_ALL, account_type
         )
-        self.log.info(f"[cancel all orders] symbol={symbol}")
+        self._sys_log.info(f"[cancel all orders] symbol={symbol}")
 
     def modify_order(
         self,
@@ -676,7 +689,9 @@ class Strategy:
         self._ems[order.instrument_id.exchange]._submit_order(
             order, SubmitType.MODIFY, account_type
         )
-        self.log.info(f"[modify order] symbol={symbol}, oid={oid}, side={side}, price={price}, amount={amount}")
+        self._sys_log.info(
+            f"[modify order] symbol={symbol}, oid={oid}, side={side}, price={price}, amount={amount}"
+        )
         return order.oid
 
     # def create_twap(

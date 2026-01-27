@@ -1,20 +1,16 @@
 from collections import deque
-from nexustrader.constants import settings
 from nexustrader.config import (
     Config,
     PublicConnectorConfig,
     BasicConfig,
 )
 from nexustrader.strategy import Strategy
-from nexustrader.constants import ExchangeType, KlineInterval, DataType, LogColor
+from nexustrader.constants import ExchangeType, KlineInterval, DataType
 from nexustrader.exchange import BybitAccountType
 from nexustrader.engine import Engine
 
 from nexustrader.indicator import Indicator
 from nexustrader.schema import Kline, BookL1, BookL2, Trade
-
-BYBIT_API_KEY = settings.BYBIT.LIVE.ACCOUNT1.API_KEY
-BYBIT_SECRET = settings.BYBIT.LIVE.ACCOUNT1.SECRET
 
 
 class MovingAverageIndicator(Indicator):
@@ -98,9 +94,7 @@ class WarmupDemo(Strategy):
             return
 
         if not ma_20_for_symbol.is_warmed_up or not ma_50_for_symbol.is_warmed_up:
-            self.log.info(
-                f"Indicators for {symbol} still warming up...", color=LogColor.BLUE
-            )
+            self.log.info(f"Indicators for {symbol} still warming up...")
             return
 
         if not kline.confirm:
@@ -110,30 +104,20 @@ class WarmupDemo(Strategy):
             self.log.info(
                 f"{symbol} - MA20: {ma_20_for_symbol.value:.4f}, MA50: {ma_50_for_symbol.value:.4f}, "
                 f"Current Price: {kline.close:.4f}",
-                color=LogColor.BLUE,
             )
 
             # Simple golden cross strategy signal per symbol
             if ma_20_for_symbol.value > ma_50_for_symbol.value:
-                self.log.info(
-                    f"{symbol} - Golden Cross - Bullish signal!", color=LogColor.BLUE
-                )
+                self.log.info(f"{symbol} - Golden Cross - Bullish signal!")
             elif ma_20_for_symbol.value < ma_50_for_symbol.value:
-                self.log.info(
-                    f"{symbol} - Death Cross - Bearish signal!", color=LogColor.BLUE
-                )
+                self.log.info(f"{symbol} - Death Cross - Bearish signal!")
 
 
 config = Config(
     strategy_id="bybit_warmup_demo",
     user_id="user_test",
     strategy=WarmupDemo(),
-    basic_config={
-        ExchangeType.BYBIT: BasicConfig(
-            api_key=BYBIT_API_KEY,
-            secret=BYBIT_SECRET,
-        )
-    },
+    basic_config={ExchangeType.BYBIT: BasicConfig()},
     public_conn_config={
         ExchangeType.BYBIT: [
             PublicConnectorConfig(

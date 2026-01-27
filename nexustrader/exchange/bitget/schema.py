@@ -806,13 +806,14 @@ class BitgetWsApiUtaGeneralMsg(msgspec.Struct, kw_only=True):
     def is_cancel_order(self) -> bool:
         if not self.id:
             raise ValueError("id is None")
-        return self.id.startswith("c") 
+        return self.id.startswith("c")
 
     @property
     def is_place_order(self) -> bool:
         if not self.id:
             raise ValueError("id is None")
-        return self.id.startswith("n")  
+        return self.id.startswith("n")
+
     @property
     def is_success(self):
         return int(self.code) == 0

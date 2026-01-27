@@ -32,13 +32,13 @@ if use_nautilius:
 else:
     from flashcore import MessageBus, LiveClock, TimeEvent, TraderId, UUID4
     from flashcore import hmac_signature, rsa_signature, ed25519_signature
-    
 
 
 def setup_nexus_core(
     trader_id: str,
     filename: str | None = None,
     level: str = "INFO",
+    name_levels: dict[str | None, str] | None = None,
     unix_ts: bool = False,
     batch_size: int | None = None,
 ):
@@ -71,10 +71,18 @@ def setup_nexus_core(
 
     log_level = level_map.get(level, logging.INFO)
 
+    _name_levels = None
+    if name_levels:
+        _name_levels = {
+            name: level_map.get(lvl_str, logging.INFO)
+            for name, lvl_str in name_levels.items()
+        }
+
     # Configure nexuslog using basicConfig
     logging.basicConfig(
         filename=filename,
         level=log_level,
+        name_levels=_name_levels,
         unix_ts=unix_ts,
         batch_size=batch_size,
     )

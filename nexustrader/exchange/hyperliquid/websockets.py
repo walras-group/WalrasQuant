@@ -68,7 +68,10 @@ class HyperLiquidWSClient(WSClient):
         )
 
     def _send_msg(
-        self, msg: Dict[str, str], method: str = "subscribe", client_id: int | None = None
+        self,
+        msg: Dict[str, str],
+        method: str = "subscribe",
+        client_id: int | None = None,
     ):
         self.send(
             {
@@ -132,9 +135,7 @@ class HyperLiquidWSClient(WSClient):
         msgs = [{"type": "l2Book", "coin": symbol} for symbol in symbols]
         self._unsubscribe(msgs)
 
-    def subscribe_candle(
-        self, symbols: List[str], interval: HyperLiquidKlineInterval
-    ):
+    def subscribe_candle(self, symbols: List[str], interval: HyperLiquidKlineInterval):
         msgs = [
             {"type": "candle", "coin": symbol, "interval": interval.value}
             for symbol in symbols

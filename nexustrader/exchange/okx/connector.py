@@ -781,7 +781,7 @@ class OkxPublicConnector(PublicConnector):
     async def connect(self):
         await self._ws_client.connect()
         await self._business_ws_client.connect()
-    
+
     async def wait_ready(self):
         """Wait for the initial WebSocket connection to be established"""
         await self._ws_client.wait_ready()
