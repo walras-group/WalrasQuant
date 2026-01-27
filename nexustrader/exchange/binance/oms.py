@@ -71,6 +71,8 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
         msgbus: MessageBus,
         task_manager: TaskManager,
         enable_rate_limit: bool,
+        max_subscriptions_per_client: int | None = None,
+        max_clients: int | None = None,
     ):
         super().__init__(
             account_type=account_type,
@@ -84,6 +86,8 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
                 handler=self._ws_msg_handler,
                 task_manager=task_manager,
                 clock=clock,
+                max_subscriptions_per_client=max_subscriptions_per_client,
+                max_clients=max_clients,
             ),
             exchange_id=exchange_id,
             clock=clock,

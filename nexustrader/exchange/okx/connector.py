@@ -62,6 +62,8 @@ class OkxPublicConnector(PublicConnector):
         task_manager: TaskManager,
         custom_url: str | None = None,
         enable_rate_limit: bool = True,
+        max_subscriptions_per_client: int | None = None,
+        max_clients: int | None = None,
     ):
         super().__init__(
             account_type=account_type,
@@ -74,6 +76,8 @@ class OkxPublicConnector(PublicConnector):
                 task_manager=task_manager,
                 custom_url=custom_url,
                 clock=clock,
+                max_subscriptions_per_client=max_subscriptions_per_client,
+                max_clients=max_clients,
             ),
             msgbus=msgbus,
             clock=clock,
@@ -91,6 +95,8 @@ class OkxPublicConnector(PublicConnector):
             business_url=True,
             custom_url=custom_url,
             clock=clock,
+            max_subscriptions_per_client=max_subscriptions_per_client,
+            max_clients=max_clients,
         )
         self._ws_msg_general_decoder = msgspec.json.Decoder(OkxWsGeneralMsg)
         self._ws_msg_bbo_tbt_decoder = msgspec.json.Decoder(OkxWsBboTbtMsg)
@@ -799,6 +805,8 @@ class OkxPrivateConnector(PrivateConnector):
         msgbus: MessageBus,
         task_manager: TaskManager,
         enable_rate_limit: bool = True,
+        max_subscriptions_per_client: int | None = None,
+        max_clients: int | None = None,
         **kwargs,
     ):
         if not exchange.api_key or not exchange.secret or not exchange.passphrase:
@@ -831,6 +839,8 @@ class OkxPrivateConnector(PrivateConnector):
             msgbus=msgbus,
             task_manager=task_manager,
             enable_rate_limit=enable_rate_limit,
+            max_subscriptions_per_client=max_subscriptions_per_client,
+            max_clients=max_clients,
         )
 
         super().__init__(

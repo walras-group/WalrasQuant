@@ -71,6 +71,8 @@ class BitgetPublicConnector(PublicConnector):
         task_manager: TaskManager,
         custom_url: str | None = None,
         enable_rate_limit: bool = True,
+        max_subscriptions_per_client: int | None = None,
+        max_clients: int | None = None,
     ):
         if not account_type.is_uta:
             raise ValueError(
@@ -89,6 +91,8 @@ class BitgetPublicConnector(PublicConnector):
                 clock=clock,
                 task_manager=task_manager,
                 custom_url=custom_url,
+                max_subscriptions_per_client=max_subscriptions_per_client,
+                max_clients=max_clients,
             ),
             clock=clock,
             msgbus=msgbus,
@@ -450,6 +454,8 @@ class BitgetPrivateConnector(PrivateConnector):
         msgbus: MessageBus,
         task_manager: TaskManager,
         enable_rate_limit: bool = True,
+        max_subscriptions_per_client: int | None = None,
+        max_clients: int | None = None,
         **kwargs,
     ):
         if not exchange.api_key or not exchange.secret or not exchange.passphrase:
@@ -485,6 +491,8 @@ class BitgetPrivateConnector(PrivateConnector):
             task_manager=task_manager,
             max_slippage=max_slippage,
             enable_rate_limit=enable_rate_limit,
+            max_subscriptions_per_client=max_subscriptions_per_client,
+            max_clients=max_clients,
         )
 
         super().__init__(

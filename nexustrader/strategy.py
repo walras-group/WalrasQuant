@@ -59,6 +59,7 @@ from nexustrader.constants import (
     TriggerType,
     BACKEND_LITERAL,
 )
+from nexustrader.core.connection import ConnectionPolicyState
 
 
 class Strategy:
@@ -69,6 +70,7 @@ class Strategy:
         self._initialized = False
         self._scheduler = AsyncIOScheduler()
         self.indicator = IndicatorProxy()
+        self._connection_status: ConnectionPolicyState | None = None
 
     def _init_core(
         self,
@@ -133,12 +135,40 @@ class Strategy:
         )
 
         self._msgbus.register(endpoint="balance", handler=self.on_balance)
+        self._msgbus.register(
+            endpoint="connection_status", handler=self.on_connection_status
+        )
 
         self._initialized = True
 
     @property
     def ready(self):
         return self._sms.ready
+
+    @property
+    def connection_status(self) -> ConnectionPolicyState | None:
+        return self._connection_status
+
+    def can_open(self) -> bool:
+        if self._connection_status is None:
+            return False
+        # allow_open == md_ok and td_ok
+        return self._connection_status.allow_open
+
+    def can_trade(self) -> bool:
+        if self._connection_status is None:
+            return False
+        # allow_trade == td_ok
+        return self._connection_status.allow_trade
+
+    def close_only(self) -> bool:
+        if self._connection_status is None:
+            return False
+        return self._connection_status.allow_close_only
+
+    def on_connection_status(self, status: ConnectionPolicyState) -> None:
+        """Handle connection policy updates from the engine."""
+        self._connection_status = status
 
     def tick_sz(self, symbol: str) -> float:
         return self.market(symbol).precision.price

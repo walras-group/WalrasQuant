@@ -52,6 +52,8 @@ class PublicConnectorConfig:
     account_type: AccountType
     enable_rate_limit: bool = True
     custom_url: str | None = None
+    max_subscriptions_per_client: int | None = None
+    max_clients: int | None = None
 
 
 @dataclass
@@ -80,6 +82,8 @@ class PrivateConnectorConfig:
     delay_max_ms: int = 800
     backoff_factor: int = 2
     max_slippage: float = 0.02  # 2% slippage
+    max_subscriptions_per_client: int | None = None
+    max_clients: int | None = None
 
 
 @dataclass

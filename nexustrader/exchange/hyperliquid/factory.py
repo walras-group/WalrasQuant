@@ -58,6 +58,8 @@ class HyperLiquidFactory(ExchangeFactory):
             task_manager=context.task_manager,
             enable_rate_limit=config.enable_rate_limit,
             custom_url=config.custom_url,
+            max_subscriptions_per_client=config.max_subscriptions_per_client,
+            max_clients=config.max_clients,
         )
 
         # HyperLiquid needs post-creation setup
@@ -85,6 +87,8 @@ class HyperLiquidFactory(ExchangeFactory):
             enable_rate_limit=config.enable_rate_limit,
             task_manager=context.task_manager,
             max_slippage=config.max_slippage,
+            max_subscriptions_per_client=config.max_subscriptions_per_client,
+            max_clients=config.max_clients,
         )
 
     def create_ems(

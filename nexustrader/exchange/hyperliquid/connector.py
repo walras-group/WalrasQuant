@@ -51,6 +51,8 @@ class HyperLiquidPublicConnector(PublicConnector):
         task_manager: TaskManager,
         custom_url: str | None = None,
         enable_rate_limit: bool = True,
+        max_subscriptions_per_client: int | None = None,
+        max_clients: int | None = None,
     ):
         super().__init__(
             account_type=account_type,
@@ -63,6 +65,8 @@ class HyperLiquidPublicConnector(PublicConnector):
                 task_manager=task_manager,
                 clock=clock,
                 custom_url=custom_url,
+                max_subscriptions_per_client=max_subscriptions_per_client,
+                max_clients=max_clients,
             ),
             api_client=HyperLiquidApiClient(
                 clock=clock,
@@ -312,6 +316,8 @@ class HyperLiquidPrivateConnector(PrivateConnector):
         msgbus: MessageBus,
         task_manager: TaskManager,
         enable_rate_limit: bool = True,
+        max_subscriptions_per_client: int | None = None,
+        max_clients: int | None = None,
         **kwargs,
     ):
         if not exchange.api_key or not exchange.secret:
@@ -341,6 +347,8 @@ class HyperLiquidPrivateConnector(PrivateConnector):
             msgbus=msgbus,
             task_manager=task_manager,
             max_slippage=kwargs.get("max_slippage", 0.02),
+            max_subscriptions_per_client=max_subscriptions_per_client,
+            max_clients=max_clients,
         )
 
         super().__init__(

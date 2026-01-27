@@ -66,6 +66,8 @@ class BybitWSClient(WSClient):
         api_key: str | None = None,
         secret: str | None = None,
         custom_url: str | None = None,
+        max_subscriptions_per_client: int | None = None,
+        max_clients: int | None = None,
     ):
         self._account_type = account_type
         self._api_key = api_key
@@ -83,11 +85,13 @@ class BybitWSClient(WSClient):
             handler=handler,
             task_manager=task_manager,
             clock=clock,
-            ping_idle_timeout=5,
+            ping_idle_timeout=10,
             ping_reply_timeout=2,
             specific_ping_msg=msgspec.json.encode({"op": "ping"}),
             auto_ping_strategy="ping_periodically",
             user_pong_callback=user_pong_callback,
+            max_subscriptions_per_client=max_subscriptions_per_client,
+            max_clients=max_clients,
         )
 
     @property
@@ -103,12 +107,16 @@ class BybitWSClient(WSClient):
         signature, expires = self._generate_signature()
         return {"op": "auth", "args": [self._api_key, expires, signature]}
 
-    async def _auth(self):
-        self._send(self._get_auth_payload())
+    async def _auth(self, client_id: int | None = None):
+        self.send(self._get_auth_payload(), client_id=client_id)
         await asyncio.sleep(5)
 
     def _send_payload(
-        self, params: List[str], chunk_size: int = 100, op: str = "subscribe"
+        self,
+        params: List[str],
+        chunk_size: int = 100,
+        op: str = "subscribe",
+        client_id: int | None = None,
     ):
         # Split params into chunks of 100 if length exceeds 100
         params_chunks = [
@@ -117,31 +125,26 @@ class BybitWSClient(WSClient):
 
         for chunk in params_chunks:
             payload = {"op": op, "args": chunk}
-            self._send(payload)
+            self.send(payload, client_id=client_id)
 
     def _subscribe(self, topics: List[str]):
-        topics = [topic for topic in topics if topic not in self._subscriptions]
-
-        for topic in topics:
-            self._subscriptions.append(topic)
-            self._log.debug(f"Subscribing to {topic}...")
-
-        if not topics:
+        assigned = self._register_subscriptions(topics)
+        if not assigned:
             return
-        
-        if self.connected:
-            self._send_payload(topics, op="subscribe")
+        for client_id, client_topics in assigned.items():
+            for topic in client_topics:
+                self._log.debug(f"Subscribing to {topic}...")
+            if self._is_client_connected(client_id):
+                self._send_payload(client_topics, op="subscribe", client_id=client_id)
 
     def _unsubscribe(self, topics: List[str]):
-        topics = [topic for topic in topics if topic in self._subscriptions]
-
-        for topic in topics:
-            self._subscriptions.remove(topic)
-            self._log.debug(f"Unsubscribing from {topic}...")
-
-        if not topics:
+        removed = self._unregister_subscriptions(topics)
+        if not removed:
             return
-        self._send_payload(topics, op="unsubscribe")
+        for client_id, client_topics in removed.items():
+            for topic in client_topics:
+                self._log.debug(f"Unsubscribing from {topic}...")
+            self._send_payload(client_topics, op="unsubscribe", client_id=client_id)
 
     def subscribe_order_book(self, symbols: List[str], depth: int):
         """subscribe to orderbook"""
@@ -183,10 +186,12 @@ class BybitWSClient(WSClient):
         topics = [f"kline.{interval.value}.{symbol}" for symbol in symbols]
         self._unsubscribe(topics)
 
-    async def _resubscribe(self):
+    async def _resubscribe_for_client(self, client_id: int, subscriptions: List[str]):
+        if not subscriptions:
+            return
         if self.is_private:
-            await self._auth()
-        self._send_payload(self._subscriptions)
+            await self._auth(client_id=client_id)
+        self._send_payload(subscriptions, client_id=client_id)
 
     def subscribe_order(self, topic: str = "order"):
         """subscribe to order"""
@@ -241,8 +246,8 @@ class BybitWSApiClient(WSClient):
         signature, expires = self._generate_signature()
         return {"op": "auth", "args": [self._api_key, expires, signature]}
 
-    async def _auth(self):
-        self._send(self._get_auth_payload())
+    async def _auth(self, client_id: int | None = None):
+        self.send(self._get_auth_payload(), client_id=client_id)
         await asyncio.sleep(5)
 
     def _submit(self, reqId: str, op: str, args: list[dict]):
@@ -297,5 +302,5 @@ class BybitWSApiClient(WSClient):
             await self._limiter("10/s").limit(key=op, cost=1)
         self._submit(reqId=f"c{id}", op=op, args=[arg])
 
-    async def _resubscribe(self):
-        await self._auth()
+    async def _resubscribe_for_client(self, client_id: int, subscriptions: List[str]):
+        await self._auth(client_id=client_id)

@@ -33,6 +33,8 @@ class BitgetWSClient(WSClient):
         secret: str | None = None,
         passphrase: str | None = None,
         custom_url: str | None = None,
+        max_subscriptions_per_client: int | None = None,
+        max_clients: int | None = None,
     ):
         self._api_key = api_key
         self._secret = secret
@@ -56,6 +58,8 @@ class BitgetWSClient(WSClient):
             ping_idle_timeout=30,
             ping_reply_timeout=5,
             user_pong_callback=user_pong_callback,
+            max_subscriptions_per_client=max_subscriptions_per_client,
+            max_clients=max_clients,
         )
 
     @property
@@ -95,12 +99,16 @@ class BitgetWSClient(WSClient):
 
         return payload
 
-    async def _auth(self):
-        self._send(self._get_auth_payload())
+    async def _auth(self, client_id: int | None = None):
+        self.send(self._get_auth_payload(), client_id=client_id)
         await asyncio.sleep(5)
 
     def _send_payload(
-        self, params: List[Dict[str, Any]], op: str = "subscribe", chunk_size: int = 100
+        self,
+        params: List[Dict[str, Any]],
+        op: str = "subscribe",
+        chunk_size: int = 100,
+        client_id: int | None = None,
     ):
         # Split params into chunks of 100 if length exceeds 100
         params_chunks = [
@@ -109,33 +117,28 @@ class BitgetWSClient(WSClient):
 
         for chunk in params_chunks:
             payload = {"op": op, "args": chunk}
-            self._send(payload)
+            self.send(payload, client_id=client_id)
 
     def _subscribe(self, params: List[Dict[str, Any]]):
-        params = [param for param in params if param not in self._subscriptions]
-
-        for param in params:
-            self._subscriptions.append(param)
-            formatted_param = ".".join(param.values())
-            self._log.debug(f"Subscribing to {formatted_param}...")
-
-        if not params:
+        assigned = self._register_subscriptions(params)
+        if not assigned:
             return
-        
-        if self.connected:
-            self._send_payload(params, op="subscribe")
+        for client_id, client_params in assigned.items():
+            for param in client_params:
+                formatted_param = ".".join(param.values())
+                self._log.debug(f"Subscribing to {formatted_param}...")
+            if self._is_client_connected(client_id):
+                self._send_payload(client_params, op="subscribe", client_id=client_id)
 
     def _unsubscribe(self, params: List[Dict[str, Any]]):
-        params = [param for param in params if param in self._subscriptions]
-
-        for param in params:
-            self._subscriptions.remove(param)
-            formatted_param = ".".join(param.values())
-            self._log.debug(f"Unsubscribing from {formatted_param}...")
-
-        if not params:
+        removed = self._unregister_subscriptions(params)
+        if not removed:
             return
-        self._send_payload(params, op="unsubscribe")
+        for client_id, client_params in removed.items():
+            for param in client_params:
+                formatted_param = ".".join(param.values())
+                self._log.debug(f"Unsubscribing from {formatted_param}...")
+            self._send_payload(client_params, op="unsubscribe", client_id=client_id)
 
     def subscribe_depth(self, symbols: List[str], inst_type: str, channel: str):
         if channel not in ["books1", "books5", "books15"]:
@@ -295,10 +298,14 @@ class BitgetWSClient(WSClient):
         ]
         self._unsubscribe(params)
 
-    async def _resubscribe(self):
+    async def _resubscribe_for_client(
+        self, client_id: int, subscriptions: List[Dict[str, Any]]
+    ):
+        if not subscriptions:
+            return
         if self.is_private:
-            await self._auth()
-        self._send_payload(self._subscriptions)
+            await self._auth(client_id=client_id)
+        self._send_payload(subscriptions, client_id=client_id)
 
     def subscribe_v3_order(self):
         params = [{"instType": "UTA", "topic": "order"}]
@@ -378,8 +385,8 @@ class BitgetWSApiClient(WSClient):
 
         return payload
 
-    async def _auth(self):
-        self._send(self._get_auth_payload())
+    async def _auth(self, client_id: int | None = None):
+        self.send(self._get_auth_payload(), client_id=client_id)
         await asyncio.sleep(5)
 
     def _submit(
@@ -555,8 +562,8 @@ class BitgetWSApiClient(WSClient):
             args=args,
         )
 
-    async def _resubscribe(self):
-        await self._auth()
+    async def _resubscribe_for_client(self, client_id: int, subscriptions: List[Any]):
+        await self._auth(client_id=client_id)
 
 
 # async def main():

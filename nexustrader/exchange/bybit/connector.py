@@ -60,6 +60,8 @@ class BybitPublicConnector(PublicConnector):
         task_manager: TaskManager,
         custom_url: str | None = None,
         enable_rate_limit: bool = True,
+        max_subscriptions_per_client: int | None = None,
+        max_clients: int | None = None,
     ):
         if account_type in {BybitAccountType.UNIFIED, BybitAccountType.UNIFIED_TESTNET}:
             raise ValueError(
@@ -77,6 +79,8 @@ class BybitPublicConnector(PublicConnector):
                 clock=clock,
                 task_manager=task_manager,
                 custom_url=custom_url,
+                max_subscriptions_per_client=max_subscriptions_per_client,
+                max_clients=max_clients,
             ),
             clock=clock,
             msgbus=msgbus,
@@ -734,6 +738,8 @@ class BybitPrivateConnector(PrivateConnector):
         msgbus: MessageBus,
         task_manager: TaskManager,
         enable_rate_limit: bool = True,
+        max_subscriptions_per_client: int | None = None,
+        max_clients: int | None = None,
         **kwargs,
     ):
         if not exchange.api_key or not exchange.secret:
@@ -770,6 +776,8 @@ class BybitPrivateConnector(PrivateConnector):
             msgbus=msgbus,
             task_manager=task_manager,
             enable_rate_limit=enable_rate_limit,
+            max_subscriptions_per_client=max_subscriptions_per_client,
+            max_clients=max_clients,
         )
 
         super().__init__(

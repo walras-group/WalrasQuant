@@ -64,6 +64,8 @@ class OkxOrderManagementSystem(OrderManagementSystem):
         msgbus: MessageBus,
         task_manager: TaskManager,
         enable_rate_limit: bool,
+        max_subscriptions_per_client: int | None = None,
+        max_clients: int | None = None,
     ):
         super().__init__(
             account_type=account_type,
@@ -80,6 +82,8 @@ class OkxOrderManagementSystem(OrderManagementSystem):
                 api_key=api_key,
                 secret=secret,
                 passphrase=passphrase,
+                max_subscriptions_per_client=max_subscriptions_per_client,
+                max_clients=max_clients,
             ),
             exchange_id=exchange_id,
             clock=clock,

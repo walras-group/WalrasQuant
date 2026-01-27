@@ -69,6 +69,8 @@ class HyperLiquidOrderManagementSystem(OrderManagementSystem):
         msgbus: MessageBus,
         task_manager: TaskManager,
         max_slippage: float,
+        max_subscriptions_per_client: int | None = None,
+        max_clients: int | None = None,
     ):
         super().__init__(
             account_type=account_type,
@@ -83,6 +85,8 @@ class HyperLiquidOrderManagementSystem(OrderManagementSystem):
                 clock=clock,
                 task_manager=task_manager,
                 api_key=api_key,
+                max_subscriptions_per_client=max_subscriptions_per_client,
+                max_clients=max_clients,
             ),
             exchange_id=exchange_id,
             clock=clock,

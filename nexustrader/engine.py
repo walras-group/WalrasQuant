@@ -26,6 +26,12 @@ from nexustrader.core.nautilius_core import setup_nexus_core
 from nexustrader.schema import InstrumentId
 from nexustrader.web.app import StrategyFastAPI
 from nexustrader.web.server import StrategyWebServer
+from nexustrader.base.ws_client import WSClient
+from nexustrader.core.connection import (
+    ConnectionState,
+    ConnectionPolicyState,
+    ConnectionRole,
+)
 
 
 class Engine:
@@ -109,6 +115,11 @@ class Engine:
         self._web_app: StrategyFastAPI | None = None
         self._web_server: StrategyWebServer | None = None
         self._prepare_web_interface()
+
+        self._connection_registry: Dict[
+            tuple[str, str, str, str, int], ConnectionState
+        ] = {}
+        self._connection_policy_state: ConnectionPolicyState | None = None
 
     def _prepare_web_interface(self) -> None:
         web_app = getattr(self._strategy, "web_app", None)
@@ -339,12 +350,130 @@ class Engine:
             ems._build(self._private_connectors)
             self._ems[exchange_id] = ems
 
+    def _connection_key(
+        self,
+        role: ConnectionRole,
+        exchange_id: str,
+        account_type: str,
+        ws_name: str,
+        client_id: int,
+    ) -> tuple[str, str, str, str, int]:
+        return (role, exchange_id, account_type, ws_name, client_id)
+
+    def _recompute_connection_policy(self) -> None:
+        md_required = [
+            state
+            for state in self._connection_registry.values()
+            if state.is_md() and state.required
+        ]
+        td_required = [
+            state
+            for state in self._connection_registry.values()
+            if state.is_td() and state.required
+        ]
+
+        md_ok = bool(md_required) and all(state.connected for state in md_required)
+        td_ok = bool(td_required) and all(state.connected for state in td_required)
+
+        policy = ConnectionPolicyState(md_ok=md_ok, td_ok=td_ok)
+
+        if policy == self._connection_policy_state:
+            return
+
+        self._connection_policy_state = policy
+        self._log.info(
+            "Connection policy update: "
+            f"md_ok={policy.md_ok} td_ok={policy.td_ok} "
+            f"allow_open={policy.allow_open} allow_trade={policy.allow_trade} "
+            f"allow_close_only={policy.allow_close_only}"
+        )
+
+        self._msgbus.send(
+            endpoint="connection_status",
+            msg=policy,
+        )
+
+    def _register_ws_client(
+        self,
+        ws_client: WSClient,
+        role: ConnectionRole,
+        account_type: AccountType,
+        ws_name: str,
+        required: bool,
+    ) -> None:
+        exchange_id = getattr(account_type, "exchange_id", str(account_type))
+        account_label = str(account_type)
+
+        def _callback(client_id: int, connected: bool) -> None:
+            key = self._connection_key(
+                role, exchange_id, account_label, ws_name, client_id
+            )
+            state = ConnectionState(
+                role=role,
+                exchange_id=str(exchange_id),
+                account_type=account_label,
+                ws_name=ws_name,
+                client_id=client_id,
+                required=required,
+                connected=connected,
+                changed_at_ms=self._clock.timestamp_ms(),
+            )
+            self._connection_registry[key] = state
+            self._recompute_connection_policy()
+
+        ws_client.set_connection_change_callback(_callback)
+
+    def _register_connection_callbacks(self) -> None:
+        for account_type, connector in self._public_connectors.items():
+            ws_client = getattr(connector, "_ws_client", None)
+            if isinstance(ws_client, WSClient):
+                self._register_ws_client(
+                    ws_client=ws_client,
+                    role="MD",
+                    account_type=account_type,
+                    ws_name="public",
+                    required=True,
+                )
+            business_ws_client = getattr(connector, "_business_ws_client", None)
+            if isinstance(business_ws_client, WSClient):
+                self._register_ws_client(
+                    ws_client=business_ws_client,
+                    role="MD",
+                    account_type=account_type,
+                    ws_name="business",
+                    required=True,
+                )
+
+        for account_type, connector in self._private_connectors.items():
+            oms = getattr(connector, "_oms", None)
+            if not oms:
+                continue
+            ws_client = getattr(oms, "_ws_client", None)
+            if isinstance(ws_client, WSClient):
+                self._register_ws_client(
+                    ws_client=ws_client,
+                    role="TD",
+                    account_type=account_type,
+                    ws_name="oms",
+                    required=True,
+                )
+            ws_api_client = getattr(oms, "_ws_api_client", None)
+            if isinstance(ws_api_client, WSClient):
+                self._register_ws_client(
+                    ws_client=ws_api_client,
+                    role="TD",
+                    account_type=account_type,
+                    ws_name="oms_api",
+                    required=True,
+                )
+
     def _build(self):
         self._build_exchanges()
         self._build_public_connectors()
         self._build_private_connectors()
         self._build_ems()
         self._build_custom_signal_recv()
+        self._register_connection_callbacks()
         self._is_built = True
 
     async def _start_connectors(self):

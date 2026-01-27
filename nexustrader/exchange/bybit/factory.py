@@ -59,6 +59,8 @@ class BybitFactory(ExchangeFactory):
             task_manager=context.task_manager,
             enable_rate_limit=config.enable_rate_limit,
             custom_url=config.custom_url,
+            max_subscriptions_per_client=config.max_subscriptions_per_client,
+            max_clients=config.max_clients,
         )
 
     def create_private_connector(
@@ -88,6 +90,8 @@ class BybitFactory(ExchangeFactory):
             delay_initial_ms=config.delay_initial_ms,
             delay_max_ms=config.delay_max_ms,
             backoff_factor=config.backoff_factor,
+            max_subscriptions_per_client=config.max_subscriptions_per_client,
+            max_clients=config.max_clients,
         )
 
     def create_ems(

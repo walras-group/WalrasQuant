@@ -41,6 +41,8 @@ class HyperLiquidWSClient(WSClient):
         clock: LiveClock,
         api_key: str | None = None,  # in HyperLiquid, api_key is the wallet address
         custom_url: str | None = None,
+        max_subscriptions_per_client: int | None = None,
+        max_clients: int | None = None,
     ):
         self._account_type = account_type
 
@@ -61,36 +63,50 @@ class HyperLiquidWSClient(WSClient):
             specific_ping_msg=msgspec.json.encode({"method": "ping"}),
             auto_ping_strategy="ping_when_idle",
             user_pong_callback=user_api_pong_callback,
+            max_subscriptions_per_client=max_subscriptions_per_client,
+            max_clients=max_clients,
         )
 
-    def _send_msg(self, msg: Dict[str, str], method: str = "subscribe"):
-        self._send(
+    def _send_msg(
+        self, msg: Dict[str, str], method: str = "subscribe", client_id: int | None = None
+    ):
+        self.send(
             {
                 "method": method,
                 "subscription": msg,
-            }
+            },
+            client_id=client_id,
         )
 
     def _subscribe(self, msgs: List[Dict[str, str]]):
-        msgs = [msg for msg in msgs if msg not in self._subscriptions]
-        for msg in msgs:
-            self._subscriptions.append(msg)
-            format_msg = ".".join(msg.values())
-            self._log.debug(f"Subscribing to {format_msg}...")
-            if self.connected:
-                self._send_msg(msg)
+        assigned = self._register_subscriptions(msgs)
+        if not assigned:
+            return
+        for client_id, client_msgs in assigned.items():
+            for msg in client_msgs:
+                format_msg = ".".join(msg.values())
+                self._log.debug(f"Subscribing to {format_msg}...")
+            if self._is_client_connected(client_id):
+                for msg in client_msgs:
+                    self._send_msg(msg, client_id=client_id)
 
     def _unsubscribe(self, msgs: List[Dict[str, str]]):
-        msgs = [msg for msg in msgs if msg in self._subscriptions]
-        for msg in msgs:
-            self._subscriptions.remove(msg)
-            format_msg = ".".join(msg.values())
-            self._log.debug(f"Unsubscribing from {format_msg}...")
-            self._send_msg(msg, method="unsubscribe")
+        removed = self._unregister_subscriptions(msgs)
+        if not removed:
+            return
+        for client_id, client_msgs in removed.items():
+            for msg in client_msgs:
+                format_msg = ".".join(msg.values())
+                self._log.debug(f"Unsubscribing from {format_msg}...")
+                self._send_msg(msg, method="unsubscribe", client_id=client_id)
 
-    async def _resubscribe(self):
-        for msg in self._subscriptions:
-            self._send_msg(msg)
+    async def _resubscribe_for_client(
+        self, client_id: int, subscriptions: List[Dict[str, str]]
+    ):
+        if not subscriptions:
+            return
+        for msg in subscriptions:
+            self._send_msg(msg, client_id=client_id)
 
     def subscribe_trades(self, symbols: List[str]):
         msgs = [{"type": "trades", "coin": symbol} for symbol in symbols]
@@ -225,8 +241,8 @@ class HyperLiquidWSApiClient(WSClient):
             user_pong_callback=user_api_pong_callback,
         )
 
-    async def _resubscribe(self):
-        pass
+    async def _resubscribe_for_client(self, client_id: int, subscriptions: List[Any]):
+        return
 
     def _get_rate_limit_cost(self, length: int, cost: int = 1) -> int:
         """Get rate limit cost for an operation

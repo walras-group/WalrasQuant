@@ -64,6 +64,8 @@ class BinancePublicConnector(PublicConnector):
         task_manager: TaskManager,
         custom_url: str | None = None,
         enable_rate_limit: bool = True,
+        max_subscriptions_per_client: int | None = None,
+        max_clients: int | None = None,
     ):
         if not account_type.is_spot and not account_type.is_future:
             raise ValueError(
@@ -82,6 +84,8 @@ class BinancePublicConnector(PublicConnector):
                 clock=clock,
                 custom_url=custom_url,
                 ws_suffix="/stream",
+                max_subscriptions_per_client=max_subscriptions_per_client,
+                max_clients=max_clients,
             ),
             msgbus=msgbus,
             clock=clock,
@@ -740,6 +744,8 @@ class BinancePrivateConnector(PrivateConnector):
         msgbus: MessageBus,
         task_manager: TaskManager,
         enable_rate_limit: bool = True,
+        max_subscriptions_per_client: int | None = None,
+        max_clients: int | None = None,
         **kwargs,
     ):
         # Initialize API client first
@@ -767,6 +773,8 @@ class BinancePrivateConnector(PrivateConnector):
             msgbus=msgbus,
             task_manager=task_manager,
             enable_rate_limit=enable_rate_limit,
+            max_subscriptions_per_client=max_subscriptions_per_client,
+            max_clients=max_clients,
         )
 
         super().__init__(

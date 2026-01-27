@@ -85,6 +85,8 @@ class BitgetOrderManagementSystem(OrderManagementSystem):
         task_manager: TaskManager,
         max_slippage: float,
         enable_rate_limit: bool,
+        max_subscriptions_per_client: int | None = None,
+        max_clients: int | None = None,
     ):
         super().__init__(
             account_type=account_type,
@@ -103,6 +105,8 @@ class BitgetOrderManagementSystem(OrderManagementSystem):
                 api_key=api_key,
                 secret=secret,
                 passphrase=passphrase,
+                max_subscriptions_per_client=max_subscriptions_per_client,
+                max_clients=max_clients,
             ),
             exchange_id=exchange_id,
             clock=clock,
