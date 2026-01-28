@@ -824,26 +824,6 @@ wheels = [
 ]
 
 [[package]]
-name = "flashcore"
-version = "0.1.5"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/cd/19/49dcde2df911dfb05fb5bec11fff418d465fd51e254f7335109adc59fdd5/flashcore-0.1.5.tar.gz", hash = "sha256:ac6d9e069d0dd1e45da35be7bae731adb63a1c3bd497ddcc602e7bea9d1fa639", size = 96937, upload-time = "2026-01-26T11:44:45.064Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d0/3e/9b498466d88e5e677eecda94120121a128414e1e3cb008eacae388ef032f/flashcore-0.1.5-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:17dc5b665ce3765e8bb6b87e209590b72afab746c391ca58fec0c85a3f7de791", size = 1423191, upload-time = "2026-01-26T11:44:27.41Z" },
-    { url = "https://files.pythonhosted.org/packages/8a/ac/44ea9d427fbbf4def6b5c04e80561e56ac04798b5c561704232811838a5f/flashcore-0.1.5-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:ad709d321b8e1d64241801d144189151730c97e3cbd7e04cf738e977af68e684", size = 1337670, upload-time = "2026-01-26T11:44:29.052Z" },
-    { url = "https://files.pythonhosted.org/packages/3b/6a/3e0fd9b3b6825da6ecfe82ebd3c9b9efcfdce2267041d2f9bff53c173593/flashcore-0.1.5-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f18a994cd7fb28f483887000cd27d07f1ba116c846a8725c2fbc1238f1d7094d", size = 1277377, upload-time = "2026-01-26T11:44:30.623Z" },
-    { url = "https://files.pythonhosted.org/packages/81/9d/1a2463c8734e48bb6ab474e65dc4431a70d284d9fb0a9f6966fa59570ca5/flashcore-0.1.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ed6ce124f0671bb9098af1c0947ce35bef6778a2505fd0a8b62dd538b932cc34", size = 1423104, upload-time = "2026-01-26T11:44:32.003Z" },
-    { url = "https://files.pythonhosted.org/packages/82/0b/d9436249bd95e4fae8494ca34ce1118c18d82cc84307c919af65d6c9a615/flashcore-0.1.5-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:270603d8b70592b4bb84c6fb2d3b46a6b4b3cac99559fec3ade880874391b209", size = 1423085, upload-time = "2026-01-26T11:44:33.118Z" },
-    { url = "https://files.pythonhosted.org/packages/5a/99/b5d3087665b72072672a7dcf2dae72b42d24e7e6ddc995b1ec7655303462/flashcore-0.1.5-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:e7f713632c7ef0f803ea0848f9b7c94eddc709350e1e692a9f820aea8fdf0e3f", size = 1337386, upload-time = "2026-01-26T11:44:34.28Z" },
-    { url = "https://files.pythonhosted.org/packages/f1/5b/76353b250cd9edcae60326431693bcf5d5b7cda066b2a597fbf3b80fe20d/flashcore-0.1.5-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d09e54d7e18cc4284bf6a26de036670b8b4c061ea6d0ea2a08502ee6417fb88a", size = 1277820, upload-time = "2026-01-26T11:44:35.827Z" },
-    { url = "https://files.pythonhosted.org/packages/30/64/430dd295f822f32f1289c8363b08c848f2ffd1138907ba2c0bb1159e47ec/flashcore-0.1.5-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5fcf76b12af72f8549e88401fe528e5b526ab57a7e9f2dd65c49808c52a23e86", size = 1425922, upload-time = "2026-01-26T11:44:37.387Z" },
-    { url = "https://files.pythonhosted.org/packages/52/9b/1a368fd4dc0225aa122170f991ba7e9a9d18a1106ae47a7a1584f1ccb435/flashcore-0.1.5-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:ced47c5e27182994d4d731816d608097e40171fbda3f035046a3470cc3820864", size = 1422803, upload-time = "2026-01-26T11:44:39.19Z" },
-    { url = "https://files.pythonhosted.org/packages/d8/ac/6e0d907b7d4109a2a35891500d37fd617dc0cf02767d44fb4318d90c0b7f/flashcore-0.1.5-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:ab8b6454675d229c9cd8c2f8776ccf9653823b941423d946bb512262becacfd9", size = 1337001, upload-time = "2026-01-26T11:44:40.608Z" },
-    { url = "https://files.pythonhosted.org/packages/99/35/487953f038591221e473abb5c31be2feaef2745c46a9521b5434b1646f5a/flashcore-0.1.5-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:bf4d7f0fdfdaa9d881ad6c3d75f7f794c369d5878b7e19aedddc233090598094", size = 1277399, upload-time = "2026-01-26T11:44:42.006Z" },
-    { url = "https://files.pythonhosted.org/packages/0d/3b/52b63dfe1a609000f7a5710dce0a2ee34cc3341e7eb58b45dc8ba7c6c56e/flashcore-0.1.5-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:39665b6627c6b633e90f05bc75eda79946279b77126fa4e6aa8fc1855a5a509d", size = 1425499, upload-time = "2026-01-26T11:44:43.467Z" },
-]
-
-[[package]]
 name = "frozenlist"
 version = "1.6.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1132,7 +1112,7 @@ wheels = [
 
 [[package]]
 name = "nexustrader"
-version = "0.2.38"
+version = "0.2.40"
 source = { editable = "." }
 dependencies = [
     { name = "aiosqlite" },
@@ -1147,7 +1127,6 @@ dependencies = [
     { name = "dynaconf", extra = ["redis"] },
     { name = "eth-account" },
     { name = "fastapi" },
-    { name = "flashcore" },
     { name = "msgspec" },
     { name = "nexuslog" },
     { name = "numpy" },
@@ -1165,6 +1144,7 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "uvicorn" },
     { name = "uvloop" },
+    { name = "walras-nexuscore" },
     { name = "zmq" },
 ]
 
@@ -1188,7 +1168,6 @@ requires-dist = [
     { name = "dynaconf", extras = ["redis"], specifier = ">=3.2.12" },
     { name = "eth-account", specifier = ">=0.13.7" },
     { name = "fastapi", specifier = ">=0.117.1" },
-    { name = "flashcore", specifier = ">=0.1.5" },
     { name = "msgspec", specifier = ">=0.19.0,<0.20.0" },
     { name = "nexuslog", specifier = ">=0.4.4" },
     { name = "numpy", specifier = ">=1.26.4,<2.2.1" },
@@ -1206,6 +1185,7 @@ requires-dist = [
     { name = "typing-extensions", specifier = ">=4.12.2" },
     { name = "uvicorn", specifier = ">=0.36.0" },
     { name = "uvloop", specifier = ">=0.21.0" },
+    { name = "walras-nexuscore", specifier = ">=0.1.3" },
     { name = "zmq", specifier = ">=0.0.0,<0.0.1" },
 ]
 
@@ -2161,6 +2141,23 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/d2/19/f5b78616566ea68edd42aacaf645adbf71fbd83fc52281fba555dc27e3f1/uvloop-0.21.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f3df876acd7ec037a3d005b3ab85a7e4110422e4d9c1571d4fc89b0fc41b6816", size = 4701068, upload-time = "2024-10-14T23:38:06.385Z" },
     { url = "https://files.pythonhosted.org/packages/47/57/66f061ee118f413cd22a656de622925097170b9380b30091b78ea0c6ea75/uvloop-0.21.0-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:bd53ecc9a0f3d87ab847503c2e1552b690362e005ab54e8a48ba97da3924c0dc", size = 4454428, upload-time = "2024-10-14T23:38:08.416Z" },
     { url = "https://files.pythonhosted.org/packages/63/9a/0962b05b308494e3202d3f794a6e85abe471fe3cafdbcf95c2e8c713aabd/uvloop-0.21.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:a5c39f217ab3c663dc699c04cbd50c13813e31d917642d459fdcec07555cc553", size = 4660018, upload-time = "2024-10-14T23:38:10.888Z" },
+]
+
+[[package]]
+name = "walras-nexuscore"
+version = "0.1.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/65/cd/4b05c93a115531459b0b668127e13536a931331fad95c430ce4947f87bb0/walras_nexuscore-0.1.3.tar.gz", hash = "sha256:706699ca4d14ad1d8ed6cae07e3a1baecc4f17ed31ca2dd00a9e7c554ca4263e", size = 957805, upload-time = "2026-01-28T09:40:11.11Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a6/b8/181f25de829671a8d88b36353918ab7c068ac91338b778967b65e89e199e/walras_nexuscore-0.1.3-cp311-cp311-macosx_11_0_universal2.whl", hash = "sha256:87f9b611392d5b31a36121926224987a42cd1b7269f949982ef0362c64719ca4", size = 10013677, upload-time = "2026-01-28T09:39:59.335Z" },
+    { url = "https://files.pythonhosted.org/packages/f8/0b/e57d8a881d8a4997ec2d2d89338021920ef02ee4ce3791d467897e70ff99/walras_nexuscore-0.1.3-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:3c02809f8a4a3466594b2a0c3c0302df1a3bd6dba44b79f84cc3b050a169abb1", size = 11026593, upload-time = "2026-01-28T09:40:01.1Z" },
+    { url = "https://files.pythonhosted.org/packages/62/e6/1dc72405c29ae031815b08bdf9cff57f2ac3e59b5949fe6f88df5fe902d3/walras_nexuscore-0.1.3-cp312-cp312-macosx_11_0_universal2.whl", hash = "sha256:8f629f5a5eb54ea83d6b04b0d57001d402a26be8cd77ebc3ff512f8a44ccb5d9", size = 10014955, upload-time = "2026-01-28T09:40:03.358Z" },
+    { url = "https://files.pythonhosted.org/packages/01/f7/ac8a01fbd111189b0e1c4a9f5121dedc15489c54a6e0e11a32d706b41caf/walras_nexuscore-0.1.3-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:59cd72ba7015cad8ac53fd29b13dd102cbef04bd3bc04c30313b19e04d940646", size = 11047315, upload-time = "2026-01-28T09:40:05.012Z" },
+    { url = "https://files.pythonhosted.org/packages/ef/6d/2cfadf7687dde2242c107e01bff452591696c2ed07674644ee70cd374e4e/walras_nexuscore-0.1.3-cp313-cp313-macosx_11_0_universal2.whl", hash = "sha256:2aac9e044622832698df477493dc66fe7e836ac54366625897dbebc9187dd816", size = 10011537, upload-time = "2026-01-28T09:40:07.314Z" },
+    { url = "https://files.pythonhosted.org/packages/91/c1/4342e2c32af07e64368719f419d22e76446480ab243f7e982cfd7140a361/walras_nexuscore-0.1.3-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:716247f6415fd68d13936881757e73529ee8dff313db1af4e0486f3d77799c84", size = 11033079, upload-time = "2026-01-28T09:40:09.513Z" },
 ]
 
 [[package]]

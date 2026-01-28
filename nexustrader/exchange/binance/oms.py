@@ -45,6 +45,7 @@ from nexustrader.exchange.binance.schema import (
     BinanceSpotUpdateMsg,
     BinanceFuturesUpdateMsg,
     BinancePortfolioMarginBalance,
+    BinanceSpotUserDataStreamMsg,
 )
 from nexustrader.core.cache import AsyncCache
 
@@ -88,6 +89,14 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
                 clock=clock,
                 max_subscriptions_per_client=max_subscriptions_per_client,
                 max_clients=max_clients,
+            ) if not account_type.is_spot else BinanceWSApiClient(
+                account_type=account_type,
+                api_key=api_key,
+                secret=secret,
+                handler=self._ws_spot_msg_handler,
+                task_manager=task_manager,
+                clock=clock,
+                enable_rate_limit=enable_rate_limit,
             ),
             exchange_id=exchange_id,
             clock=clock,
@@ -106,6 +115,7 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
             )
 
         self._ws_msg_general_decoder = msgspec.json.Decoder(BinanceUserDataStreamMsg)
+        self._ws_spot_msg_general_decoder = msgspec.json.Decoder(BinanceSpotUserDataStreamMsg)
         self._ws_msg_spot_order_update_decoder = msgspec.json.Decoder(
             BinanceSpotOrderUpdateMsg
         )
@@ -228,20 +238,37 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
 
         except msgspec.DecodeError as e:
             self._log.error(f"Error decoding WebSocket API message: {str(raw)} {e}")
-
+    
+    def _ws_spot_msg_handler(self, raw: bytes):
+        try:
+            msg = self._ws_spot_msg_general_decoder.decode(raw)
+            if msg.event:
+                match msg.event.e:
+                    case (
+                        BinanceUserDataStreamWsEventType.EXECUTION_REPORT
+                    ):  # spot order update
+                        self._parse_execution_report(raw)
+                    case (
+                        BinanceUserDataStreamWsEventType.OUT_BOUND_ACCOUNT_POSITION
+                    ):  # spot account update
+                        self._parse_out_bound_account_position(raw)
+        
+        except msgspec.DecodeError as e:
+            self._log.error(f"Error decoding message: {str(raw)} {e}")
+    
     def _ws_msg_handler(self, raw: bytes):
         try:
             msg = self._ws_msg_general_decoder.decode(raw)
             if msg.e:
                 match msg.e:
-                    case (
-                        BinanceUserDataStreamWsEventType.ORDER_TRADE_UPDATE
-                    ):  # futures order update
-                        self._parse_order_trade_update(raw)
-                    case (
-                        BinanceUserDataStreamWsEventType.EXECUTION_REPORT
-                    ):  # spot order update
-                        self._parse_execution_report(raw)
+                    # case (
+                    #     BinanceUserDataStreamWsEventType.ORDER_TRADE_UPDATE
+                    # ):  # futures order update
+                    #     self._parse_order_trade_update(raw)
+                    # case (
+                    #     BinanceUserDataStreamWsEventType.EXECUTION_REPORT
+                    # ):  # spot order update
+                    #     self._parse_execution_report(raw)
                     case (
                         BinanceUserDataStreamWsEventType.ACCOUNT_UPDATE
                     ):  # futures account update
@@ -311,7 +338,8 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
         self.order_status_update(order)
 
     def _parse_execution_report(self, raw: bytes) -> Order:
-        event_data = self._ws_msg_spot_order_update_decoder.decode(raw)
+        data = self._ws_msg_spot_order_update_decoder.decode(raw)
+        event_data = data.event
         self._log.debug(f"Execution report: {event_data}")
 
         market_type = self.market_type or "_spot"
@@ -391,7 +419,8 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
             self._cache._apply_position(position)
 
     def _parse_out_bound_account_position(self, raw: bytes):
-        res = self._ws_msg_spot_account_update_decoder.decode(raw)
+        data = self._ws_msg_spot_account_update_decoder.decode(raw)
+        res = data.event
         self._log.debug(f"Out bound account position: {res}")
 
         balances = res.parse_to_balances()

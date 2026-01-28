@@ -4,10 +4,7 @@ Kline aggregation for live trading.
 This module provides kline (candlestick) aggregation from trade data.
 """
 
-from typing import Optional, Literal, Any
-from functools import partial
-import asyncio
-import threading
+from typing import Optional, Literal
 import nexuslog as logging
 from datetime import timedelta, datetime, timezone
 from nexustrader.schema import Trade, Kline
@@ -193,14 +190,11 @@ class KlineAggregator:
         symbol: str,
         msgbus: MessageBus,
         interval: KlineInterval,
-        loop: asyncio.AbstractEventLoop | None = None,
     ):
         self.exchange = exchange
         self.symbol = symbol
         self.interval = interval
         self._msgbus = msgbus
-        self._loop = loop
-        self._owner_thread_id = threading.get_ident()
         self._log = logging.getLogger(name=type(self).__name__)
 
         self._builder = KlineBuilder(
@@ -240,21 +234,13 @@ class KlineAggregator:
         """Build kline with current timestamp and publish to msgbus if kline was built."""
         kline = self._builder.build_now()
         if kline is not None:
-            self._publish("kline", kline)
+            self._msgbus.publish(topic="kline", msg=kline)
 
     def _build_and_send(self, start: int, timestamp: int) -> None:
         """Build kline with specified timestamps and publish to msgbus if kline was built."""
         kline = self._builder.build(start, timestamp)
         if kline is not None:
-            self._publish("kline", kline)
-
-    def _publish(self, topic: str, msg: Any) -> None:
-        if self._loop and threading.get_ident() != self._owner_thread_id:
-            self._loop.call_soon_threadsafe(
-                partial(self._msgbus.publish, topic=topic, msg=msg)
-            )
-            return
-        self._msgbus.publish(topic=topic, msg=msg)
+            self._msgbus.publish(topic="kline", msg=kline)
 
 
 class VolumeKlineAggregator(KlineAggregator):
@@ -285,11 +271,8 @@ class VolumeKlineAggregator(KlineAggregator):
         msgbus: MessageBus,
         volume_threshold: float,
         volume_type: Literal["DEFAULT", "BUY", "SELL"] = "DEFAULT",
-        loop: asyncio.AbstractEventLoop | None = None,
     ):
-        super().__init__(
-            exchange, symbol, msgbus, interval=KlineInterval.VOLUME, loop=loop
-        )
+        super().__init__(exchange, symbol, msgbus, interval=KlineInterval.VOLUME)
         self.volume_threshold = volume_threshold
 
         if volume_type == "DEFAULT":
@@ -378,9 +361,8 @@ class TimeKlineAggregator(KlineAggregator):
         msgbus: MessageBus,
         clock: LiveClock,
         build_with_no_updates: bool = True,
-        loop: asyncio.AbstractEventLoop | None = None,
     ):
-        super().__init__(exchange, symbol, msgbus, interval, loop=loop)
+        super().__init__(exchange, symbol, msgbus, interval)
         self._clock = clock
         self._timer_name = f"{exchange.value}_{symbol}_{interval.value}"
 

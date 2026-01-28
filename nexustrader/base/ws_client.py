@@ -390,9 +390,6 @@ class WSClient(ABC):
             return
         transport.send(WSMsgType.TEXT, msgspec.json.encode(payload))
 
-    def _send(self, payload: dict):
-        self.send(payload)
-
     def disconnect(self, client_id: int | None = None):
         if client_id is None:
             client_ids = list(self._transports.keys())

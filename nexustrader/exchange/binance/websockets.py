@@ -272,7 +272,7 @@ class BinanceWSApiClient(WSClient):
             "id": id,
             "params": params,
         }
-        self._send(payload)
+        self.send(payload)
 
     async def spot_new_order(
         self, oid: str, symbol: str, side: str, type: str, quantity: str, **kwargs: Any
@@ -346,5 +346,39 @@ class BinanceWSApiClient(WSClient):
         await self._limiter.dapi_order_limit(cost=1)
         self._send_payload(id=f"c{oid}", method="order.cancel", params=params)
 
-    async def _resubscribe_for_client(self, client_id: int, subscriptions: List[str]):
-        return
+    def _subscribe(self, subscriptions: List[tuple[Dict[str, Any], str]]):
+        assigned = self._register_subscriptions(subscriptions)
+        if not assigned:
+            return
+        for client_id, client_subs in assigned.items():
+            for params, method in client_subs:
+                self._log.debug(f"Subscribing to {method} with {params}...")
+            if self._is_client_connected(client_id):
+                for params, method in client_subs:
+                    request_id = f"{self._clock.timestamp_ms()}"
+                    self._send_payload(
+                        id=request_id,
+                        method=method,
+                        params=dict(params),
+                        auth=True,
+                    )
+
+    async def _resubscribe_for_client(
+        self, client_id: int, subscriptions: List[tuple[Dict[str, Any], str]]
+    ):
+        if not subscriptions:
+            return
+        for params, method in subscriptions:
+            request_id = f"s{self._clock.timestamp_ms()}"
+            self._send_payload(
+                id=request_id,
+                method=method,
+                params=dict(params),
+                auth=True,
+            )
+
+    def subscribe_spot_user_data_stream(self):
+        if not self._account_type.is_spot:
+            raise ValueError("Only Supported for `Spot Account`")
+        params: Dict[str, Any] = {}
+        self._subscribe([(params, "userDataStream.subscribe.signature")])

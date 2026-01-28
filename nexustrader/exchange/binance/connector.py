@@ -23,7 +23,7 @@ from nexustrader.core.registry import OrderRegistry
 from nexustrader.exchange.binance.schema import BinanceMarket
 from nexustrader.exchange.binance.rest_api import BinanceApiClient
 from nexustrader.exchange.binance.constants import BinanceAccountType
-from nexustrader.exchange.binance.websockets import BinanceWSClient
+from nexustrader.exchange.binance.websockets import BinanceWSClient, BinanceWSApiClient
 from nexustrader.exchange.binance.exchange import BinanceExchangeManager
 from nexustrader.exchange.binance.oms import BinanceOrderManagementSystem
 from nexustrader.exchange.binance.constants import (
@@ -787,7 +787,9 @@ class BinancePrivateConnector(PrivateConnector):
 
     async def _start_user_data_stream(self):
         if self._account_type.is_spot:
-            res = await self._api_client.post_api_v3_user_data_stream()
+            #NOTE: https://developers.binance.com/docs/binance-spot-api-docs/user-data-stream#account-update listenKey is deprecated for spot account
+            return
+            # res = await self._api_client.post_api_v3_user_data_stream()
         elif self._account_type.is_margin:
             res = await self._api_client.post_sapi_v1_user_data_stream()
         elif self._account_type.is_linear:
@@ -832,16 +834,27 @@ class BinancePrivateConnector(PrivateConnector):
                     break
 
     async def connect(self):
-        listen_key = await self._start_user_data_stream()
-
-        if listen_key:
-            self._task_manager.create_task(
-                self._keep_alive_user_data_stream(listen_key)
-            )
-            self._oms._ws_client.subscribe_user_data_stream(listen_key)
+        if self._account_type.is_spot:
+            if isinstance(self._oms._ws_client, BinanceWSApiClient):
+                self._oms._ws_client.subscribe_spot_user_data_stream()
+            else:
+                raise RuntimeError(
+                    "OMS WebSocket client is not BinanceWSApiClient for spot account"
+                )
+            await self._oms._ws_client.connect()
+            if self._oms._ws_api_client:
+                await self._oms._ws_api_client.connect()
         else:
-            raise RuntimeError("Failed to start user data stream")
+            listen_key = await self._start_user_data_stream()
 
-        await self._oms._ws_client.connect()
-        if self._oms._ws_api_client:
-            await self._oms._ws_api_client.connect()
+            if listen_key:
+                self._task_manager.create_task(
+                    self._keep_alive_user_data_stream(listen_key)
+                )
+                self._oms._ws_client.subscribe_user_data_stream(listen_key)
+            else:
+                raise RuntimeError("Failed to start user data stream")
+
+            await self._oms._ws_client.connect()
+            if self._oms._ws_api_client:
+                await self._oms._ws_api_client.connect()

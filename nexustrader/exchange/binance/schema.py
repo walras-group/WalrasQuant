@@ -230,7 +230,7 @@ class BinanceSpotAccountInfo(msgspec.Struct, frozen=True):
         return [balance.parse_to_balance() for balance in self.balances]
 
 
-class BinanceSpotOrderUpdateMsg(msgspec.Struct, kw_only=True):
+class _BinanceSpotOrderUpdateMsg(msgspec.Struct, kw_only=True):
     C: str | None = None
     E: int
     F: str | None = None
@@ -275,6 +275,9 @@ class BinanceSpotOrderUpdateMsg(msgspec.Struct, kw_only=True):
     d: int | None = None  # trailing Delta
     j: int | None = None  # strategy id
     u: int | None = None  # Trade Group id
+
+class BinanceSpotOrderUpdateMsg(msgspec.Struct, kw_only=True):
+    event: _BinanceSpotOrderUpdateMsg
 
 
 class BinanceFuturesOrderData(msgspec.Struct, kw_only=True):
@@ -453,6 +456,8 @@ class BinanceWsMessageGeneral(msgspec.Struct):
 class BinanceUserDataStreamMsg(msgspec.Struct):
     e: BinanceUserDataStreamWsEventType | None = None
 
+class BinanceSpotUserDataStreamMsg(msgspec.Struct):
+    event: BinanceUserDataStreamMsg | None = None
 
 class BinanceListenKey(msgspec.Struct):
     listenKey: str
@@ -682,7 +687,7 @@ class BinanceSpotBalanceData(msgspec.Struct):
         )
 
 
-class BinanceSpotUpdateMsg(msgspec.Struct, kw_only=True):
+class _BinanceSpotUpdateMsg(msgspec.Struct, kw_only=True):
     e: BinanceUserDataStreamWsEventType  # event type
     E: int  # event time
     u: int  # Time of last account update
@@ -690,6 +695,9 @@ class BinanceSpotUpdateMsg(msgspec.Struct, kw_only=True):
 
     def parse_to_balances(self) -> List[Balance]:
         return [balance.parse_to_balance() for balance in self.B]
+
+class BinanceSpotUpdateMsg(msgspec.Struct, kw_only=True):
+    event: _BinanceSpotUpdateMsg
 
 
 class BinanceResponseKline(msgspec.Struct, array_like=True):

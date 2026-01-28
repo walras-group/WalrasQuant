@@ -333,7 +333,7 @@ class HyperLiquidWSApiClient(WSClient):
             "id": message_id,
             "request": {"type": request_type, "payload": payload},
         }
-        self._send(message)
+        self.send(message)
 
     async def place_order(
         self,

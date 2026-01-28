@@ -30,8 +30,16 @@ if use_nautilius:
             "Nautilus Trader is not installed. Please install run `pip install nautilus-trader` to use Nautilus features."
         ) from e
 else:
-    from flashcore import MessageBus, LiveClock, TimeEvent, TraderId, UUID4
-    from flashcore import hmac_signature, rsa_signature, ed25519_signature
+    from nexuscore import (
+        MessageBus,
+        LiveClock,
+        TimeEvent,
+        TraderId,
+        UUID4,
+        hmac_signature,
+        rsa_signature,
+        ed25519_signature,
+    )
 
 
 def setup_nexus_core(
