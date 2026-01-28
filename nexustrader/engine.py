@@ -32,6 +32,7 @@ from nexustrader.core.connection import (
     ConnectionPolicyState,
     ConnectionRole,
 )
+from nexustrader.push import FlashDutyPushService
 
 
 class Engine:
@@ -97,6 +98,12 @@ class Engine:
             clock=self._clock,
         )
 
+        self._push_service = FlashDutyPushService(
+            integration_key=self._config.flashduty_integration_key,
+            strategy_id=self._config.strategy_id,
+            user_id=self._config.user_id,
+        )
+
         self._strategy: Strategy = config.strategy
         self._strategy._init_core(
             cache=self._cache,
@@ -108,6 +115,7 @@ class Engine:
             exchanges=self._exchanges,
             private_connectors=self._private_connectors,
             public_connectors=self._public_connectors,
+            push_service=self._push_service,
             strategy_id=config.strategy_id,
             user_id=config.user_id,
             enable_cli=config.enable_cli,
@@ -585,6 +593,7 @@ class Engine:
 
         await self._task_manager.cancel()
         await self._cache.close()
+        self._push_service.shutdown()
 
     def start(self):
         self._build()

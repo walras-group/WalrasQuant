@@ -60,6 +60,7 @@ from nexustrader.constants import (
     BACKEND_LITERAL,
 )
 from nexustrader.core.connection import ConnectionPolicyState
+from nexustrader.push import FlashDutyPushService, EventStatus
 
 
 class Strategy:
@@ -83,6 +84,7 @@ class Strategy:
         task_manager: TaskManager,
         sms: SubscriptionManagementSystem,
         ems: Dict[ExchangeType, ExecutionManagementSystem],
+        push_service: FlashDutyPushService,
         strategy_id: str = None,
         user_id: str = None,
         enable_cli: bool = False,
@@ -104,6 +106,7 @@ class Strategy:
         self._public_connectors = public_connectors
         self._exchanges = exchanges
         self._indicator_manager = IndicatorManager(self._msgbus)
+        self._push_service = push_service
 
         # Initialize state exporter if IDs are provided and Redis is fully available
         self._state_exporter = None
@@ -145,6 +148,92 @@ class Strategy:
     @property
     def ready(self):
         return self._sms.ready
+
+    def send_alert(
+        self,
+        event_status: EventStatus,
+        title_rule: str,
+        alert_key: Optional[str] = None,
+        description: Optional[str] = None,
+        labels: Optional[dict[str, str]] = None,
+        images: Optional[list[dict[str, str]]] = None,
+    ) -> None:
+        self._push_service.send_alert(
+            event_status=event_status,
+            title_rule=title_rule,
+            alert_key=alert_key,
+            description=description,
+            labels=labels,
+            images=images,
+        )
+
+    def alert_ok(
+        self,
+        title_rule: str,
+        alert_key: Optional[str] = None,
+        description: Optional[str] = None,
+        labels: Optional[dict[str, str]] = None,
+        images: Optional[list[dict[str, str]]] = None,
+    ) -> None:
+        self.send_alert(
+            event_status="Ok",
+            title_rule=title_rule,
+            alert_key=alert_key,
+            description=description,
+            labels=labels,
+            images=images,
+        )
+
+    def alert_info(
+        self,
+        title_rule: str,
+        alert_key: Optional[str] = None,
+        description: Optional[str] = None,
+        labels: Optional[dict[str, str]] = None,
+        images: Optional[list[dict[str, str]]] = None,
+    ) -> None:
+        self.send_alert(
+            event_status="Info",
+            title_rule=title_rule,
+            alert_key=alert_key,
+            description=description,
+            labels=labels,
+            images=images,
+        )
+
+    def alert_warning(
+        self,
+        title_rule: str,
+        alert_key: Optional[str] = None,
+        description: Optional[str] = None,
+        labels: Optional[dict[str, str]] = None,
+        images: Optional[list[dict[str, str]]] = None,
+    ) -> None:
+        self.send_alert(
+            event_status="Warning",
+            title_rule=title_rule,
+            alert_key=alert_key,
+            description=description,
+            labels=labels,
+            images=images,
+        )
+
+    def alert_critical(
+        self,
+        title_rule: str,
+        alert_key: Optional[str] = None,
+        description: Optional[str] = None,
+        labels: Optional[dict[str, str]] = None,
+        images: Optional[list[dict[str, str]]] = None,
+    ) -> None:
+        self.send_alert(
+            event_status="Critical",
+            title_rule=title_rule,
+            alert_key=alert_key,
+            description=description,
+            labels=labels,
+            images=images,
+        )
 
     @property
     def connection_status(self) -> ConnectionPolicyState | None:

@@ -824,6 +824,23 @@ wheels = [
 ]
 
 [[package]]
+name = "flashduty-sdk"
+version = "0.1.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a3/c7/973da4fb5b02be0fe80e8c77a3cc998fec80adb99ac0d45557982bc5f49e/flashduty_sdk-0.1.1.tar.gz", hash = "sha256:0f484e48b18db8c854b5af0c83848bdb92a6702cbb35346243a0d4a60f20a298", size = 15289, upload-time = "2026-01-28T14:48:45.901Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/23/2f/e5330ecb48d5f182d3d6223365cf23d766421c76cc2e5f70cf9cb2a17cec/flashduty_sdk-0.1.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:d071ded10ee474a0150e4699deaf90074fe841aecbfb1afd730877bd0efee766", size = 1524445, upload-time = "2026-01-28T14:48:32.231Z" },
+    { url = "https://files.pythonhosted.org/packages/f6/bb/0824d7257f87fd47480087ecb7f2e1005e7bec44144740e4c9c383e768b1/flashduty_sdk-0.1.1-cp311-cp311-manylinux_2_34_x86_64.whl", hash = "sha256:b81e907a1f93db7ff74621a62f16b12a0838835ebcf7ec33267d9d3fb6cc2845", size = 3955702, upload-time = "2026-01-28T14:48:33.472Z" },
+    { url = "https://files.pythonhosted.org/packages/aa/3e/60001bdfbc0d0741cb2ab9df36ae3481c9d0eb8e6f5812e18abfa8bc80ad/flashduty_sdk-0.1.1-cp311-cp311-win_amd64.whl", hash = "sha256:40e9c98364df7bfc872500951cf543bb326e5091124ad6ccb7b91ea7964cac3b", size = 1347558, upload-time = "2026-01-28T14:48:35.038Z" },
+    { url = "https://files.pythonhosted.org/packages/76/d6/1f5313bf5511392a1960091e9dee80a06c1ee30720f2e70f5bd2c5ae3627/flashduty_sdk-0.1.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:47b7049592cdeb7fa784fd6b91d88acd65817aaf82c108243f9ea1d00c695af9", size = 1522668, upload-time = "2026-01-28T14:48:38.538Z" },
+    { url = "https://files.pythonhosted.org/packages/d6/fe/bea438f61c8900a67018200299a4517d39c45ea9d256051b23e4c3270fb8/flashduty_sdk-0.1.1-cp312-cp312-manylinux_2_34_x86_64.whl", hash = "sha256:8156652336059c613210f096ce22f20179ffdd2be117dd2c69e9f946cbb0e22b", size = 3956982, upload-time = "2026-01-28T14:48:40.064Z" },
+    { url = "https://files.pythonhosted.org/packages/62/db/e28e2799d6f69947fa51124203dca8d091135a849708ed4df9f58d7caf86/flashduty_sdk-0.1.1-cp312-cp312-win_amd64.whl", hash = "sha256:c151eedd823011a09de771825baec9cbf9c2536cd7a302e94264411c61eac569", size = 1347809, upload-time = "2026-01-28T14:48:41.195Z" },
+    { url = "https://files.pythonhosted.org/packages/0a/08/9c49e7dff7e6a970a8e8a8c01f7089d5747a1e4ec702cd59226d280dac10/flashduty_sdk-0.1.1-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:8cda31ad8667d8162400edfe18a8169a604a37a3f5c5e8e546113678ed69abc1", size = 1522414, upload-time = "2026-01-28T14:48:42.406Z" },
+    { url = "https://files.pythonhosted.org/packages/57/66/25e7b246a556b0827c335afd865856c914e03bf602b91fc8a0921edac0c3/flashduty_sdk-0.1.1-cp313-cp313-manylinux_2_34_x86_64.whl", hash = "sha256:413363caff00dcd3fe13c35fd878fd2d69bc06f85cfb24f4a72921882fcdca6f", size = 3956383, upload-time = "2026-01-28T14:48:43.615Z" },
+    { url = "https://files.pythonhosted.org/packages/8c/51/1a66f4557e2c420cc755da31736f11c7934e9ce8239dc136704a44178198/flashduty_sdk-0.1.1-cp313-cp313-win_amd64.whl", hash = "sha256:9aecc098c49649757b940e48d40b6d1e804e1702cc9ae3dbdeda39bb110c2634", size = 1347726, upload-time = "2026-01-28T14:48:44.867Z" },
+]
+
+[[package]]
 name = "frozenlist"
 version = "1.6.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1112,7 +1129,7 @@ wheels = [
 
 [[package]]
 name = "nexustrader"
-version = "0.2.40"
+version = "0.2.41"
 source = { editable = "." }
 dependencies = [
     { name = "aiosqlite" },
@@ -1127,6 +1144,7 @@ dependencies = [
     { name = "dynaconf", extra = ["redis"] },
     { name = "eth-account" },
     { name = "fastapi" },
+    { name = "flashduty-sdk" },
     { name = "msgspec" },
     { name = "nexuslog" },
     { name = "numpy" },
@@ -1168,6 +1186,7 @@ requires-dist = [
     { name = "dynaconf", extras = ["redis"], specifier = ">=3.2.12" },
     { name = "eth-account", specifier = ">=0.13.7" },
     { name = "fastapi", specifier = ">=0.117.1" },
+    { name = "flashduty-sdk", specifier = ">=0.1.1" },
     { name = "msgspec", specifier = ">=0.19.0,<0.20.0" },
     { name = "nexuslog", specifier = ">=0.4.4" },
     { name = "numpy", specifier = ">=1.26.4,<2.2.1" },

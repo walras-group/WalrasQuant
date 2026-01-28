@@ -174,6 +174,7 @@ class Config:
         log_config (LogConfig): Configuration for logging. Defaults to a new LogConfig instance.
         enable_cli (bool): Flag to enable command-line interface. Defaults to False.
         web_config (WebConfig): Settings for the optional FastAPI web interface.
+        flashduty_integration_key (str | None): FlashDuty integration key for push alerts. Defaults to None.
         exit_after_cancel (bool): Whether to cancel all open orders when the engine is disposed (e.g., on Ctrl+C). Defaults to True.
 
     Notes:
@@ -199,6 +200,7 @@ class Config:
     enable_cli: bool = False
     web_config: WebConfig = field(default_factory=WebConfig)
     exit_after_cancel: bool = True
+    flashduty_integration_key: str | None = None
 
     def __post_init__(self):
         # Check if any connector is mock, then all must be mock
