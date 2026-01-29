@@ -239,18 +239,21 @@ class Strategy:
     def connection_status(self) -> ConnectionPolicyState | None:
         return self._connection_status
 
+    @property
     def can_open(self) -> bool:
         if self._connection_status is None:
             return False
         # allow_open == md_ok and td_ok
         return self._connection_status.allow_open
 
+    @property
     def can_trade(self) -> bool:
         if self._connection_status is None:
             return False
         # allow_trade == td_ok
         return self._connection_status.allow_trade
-
+    
+    @property
     def close_only(self) -> bool:
         if self._connection_status is None:
             return False

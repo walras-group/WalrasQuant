@@ -1,3 +1,4 @@
+import numpy as np
 from collections import defaultdict
 from typing import Dict
 import re
@@ -346,3 +347,30 @@ class IndicatorProxy:
         """Register an indicator instance for a specific symbol."""
         container = getattr(self, name)
         container[symbol] = indicator
+
+
+class RingBuffer:
+    def __init__(self, length: int):
+        self._length = length
+        self._buffer = np.zeros(length, dtype=np.float64)
+        self._idx = 0
+        self.is_full = False
+
+    def append(self, val: float):
+        self._buffer[self._idx] = val
+        self._idx = (self._idx + 1) % self._length
+        if not self.is_full and self._idx == 0:
+            self.is_full = True
+
+    def get_as_numpy_array(self) -> np.ndarray:
+        if not self.is_full:
+            return self._buffer[: self._idx].copy()
+        indexes = (
+            np.arange(self._idx, self._idx + self._length) % self._length
+        )
+        return self._buffer[indexes]
+
+    def get_last_value(self) -> float:
+        if self._idx == 0 and not self.is_full:
+            return np.nan
+        return self._buffer[self._idx - 1]
