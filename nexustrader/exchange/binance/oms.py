@@ -261,10 +261,10 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
             msg = self._ws_msg_general_decoder.decode(raw)
             if msg.e:
                 match msg.e:
-                    # case (
-                    #     BinanceUserDataStreamWsEventType.ORDER_TRADE_UPDATE
-                    # ):  # futures order update
-                    #     self._parse_order_trade_update(raw)
+                    case (
+                        BinanceUserDataStreamWsEventType.ORDER_TRADE_UPDATE
+                    ):  # futures order update
+                        self._parse_order_trade_update(raw)
                     # case (
                     #     BinanceUserDataStreamWsEventType.EXECUTION_REPORT
                     # ):  # spot order update
@@ -273,10 +273,10 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
                         BinanceUserDataStreamWsEventType.ACCOUNT_UPDATE
                     ):  # futures account update
                         self._parse_account_update(raw)
-                    case (
-                        BinanceUserDataStreamWsEventType.OUT_BOUND_ACCOUNT_POSITION
-                    ):  # spot account update
-                        self._parse_out_bound_account_position(raw)
+                    # case (
+                    #     BinanceUserDataStreamWsEventType.OUT_BOUND_ACCOUNT_POSITION
+                    # ):  # spot account update
+                    #     self._parse_out_bound_account_position(raw)
         except msgspec.DecodeError as e:
             self._log.error(f"Error decoding message: {str(raw)} {e}")
 
