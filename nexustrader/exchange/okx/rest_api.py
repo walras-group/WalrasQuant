@@ -2,9 +2,7 @@ import msgspec
 from typing import Dict, Any
 import base64
 from urllib.parse import urlencode
-
-# from curl_cffi import requests
-from curl_cffi.requests import exceptions as CurlCffiExceptions
+import httpx
 from nexustrader.base import ApiClient, RetryManager
 from nexustrader.exchange.okx.constants import (
     OkxRateLimiter,
@@ -68,7 +66,7 @@ class OkxApiClient(ApiClient):
                 delay_initial_ms=delay_initial_ms,
                 delay_max_ms=delay_max_ms,
                 backoff_factor=backoff_factor,
-                exc_types=(OkxRequestError, CurlCffiExceptions.RequestException),
+                exc_types=(OkxRequestError, httpx.RequestError),
                 retry_check=retry_check,
             ),
         )
@@ -657,16 +655,10 @@ class OkxApiClient(ApiClient):
                     status_code=response.status_code,
                     message=okx_error_response.msg,
                 )
-        except CurlCffiExceptions.Timeout as e:
+        except httpx.TimeoutException as e:
             self._log.error(f"Timeout {method} {request_path} {e}")
             raise
-        except CurlCffiExceptions.ConnectionError as e:
-            self._log.error(f"Connection Error {method} {request_path} {e}")
-            raise
-        except CurlCffiExceptions.HTTPError as e:
-            self._log.error(f"HTTP Error {method} {request_path} {e}")
-            raise
-        except CurlCffiExceptions.RequestException as e:
+        except httpx.RequestError as e:
             self._log.error(f"Request Error {method} {request_path} {e}")
             raise
         except Exception as e:
@@ -735,16 +727,10 @@ class OkxApiClient(ApiClient):
                     status_code=response.status_code,
                     message=okx_error_response.msg,
                 )
-        except CurlCffiExceptions.Timeout as e:
+        except httpx.TimeoutException as e:
             self._log.error(f"Timeout {method} {request_path} {e}")
             raise
-        except CurlCffiExceptions.ConnectionError as e:
-            self._log.error(f"Connection Error {method} {request_path} {e}")
-            raise
-        except CurlCffiExceptions.HTTPError as e:
-            self._log.error(f"HTTP Error {method} {request_path} {e}")
-            raise
-        except CurlCffiExceptions.RequestException as e:
+        except httpx.RequestError as e:
             self._log.error(f"Request Error {method} {request_path} {e}")
             raise
         except Exception as e:

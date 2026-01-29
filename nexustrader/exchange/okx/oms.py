@@ -697,7 +697,7 @@ class OkxOrderManagementSystem(OrderManagementSystem):
         market = self._market.get(symbol)
         if not market:
             raise ValueError(f"Symbol {symbol} formated wrongly, or not supported")
-        inst_id = market.id
+        inst_id_code = market.info.instIdCode
 
         td_mode = kwargs.pop("td_mode", None) or kwargs.pop("tdMode", None)
         if not td_mode:
@@ -712,7 +712,7 @@ class OkxOrderManagementSystem(OrderManagementSystem):
             sz = str(amount)
 
         params = {
-            "instId": inst_id,
+            "instIdCode": int(inst_id_code),
             "tdMode": td_mode.value,
             "side": OkxEnumParser.to_okx_order_side(side).value,
             "ordType": OkxEnumParser.to_okx_order_type(type, time_in_force).value,
@@ -850,9 +850,9 @@ class OkxOrderManagementSystem(OrderManagementSystem):
         market = self._market.get(symbol)
         if not market:
             raise ValueError(f"Symbol {symbol} formated wrongly, or not supported")
-        inst_id = market.id
+        inst_id_code = market.info.instIdCode
 
-        params = {"instId": inst_id, "clOrdId": oid}
+        params = {"instIdCode": int(inst_id_code), "clOrdId": oid}
         await self._ws_api_client.cancel_order(oid, **params)
 
     async def cancel_order(self, oid: str, symbol: str, **kwargs):

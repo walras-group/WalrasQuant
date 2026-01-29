@@ -366,7 +366,7 @@ class OkxCancelOrderResponse(msgspec.Struct):
     outTime: str  # milliseconds when response leaves REST gateway
 
 
-class OkxMarketInfo(msgspec.Struct):
+class OkxMarketInfo(msgspec.Struct, kw_only=True):
     """
     {
         "alias": "",
@@ -484,7 +484,8 @@ class OkxMarketInfo(msgspec.Struct):
     ctValCcy: str | None = None  # Contract value currency
     expTime: str | None = None  # Expiry time
     instFamily: str | None = None  # Instrument family
-    instId: str | None = None  # Instrument ID
+    instId: str 
+    instIdCode: str
     instType: str | None = None  # Instrument type (SPOT/FUTURES/SWAP)
     lever: str | None = None  # Leverage
     listTime: str | None = None  # Listing time

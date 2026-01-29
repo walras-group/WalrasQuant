@@ -4,7 +4,7 @@ from eth_account.signers.local import LocalAccount
 from eth_account.messages import encode_typed_data
 from typing import Dict, Any, List, Literal
 from urllib.parse import urljoin
-from curl_cffi import requests
+import httpx
 from Crypto.Hash import keccak
 
 from nexustrader.base.api_client import ApiClient
@@ -126,16 +126,10 @@ class HyperLiquidApiClient(ApiClient):
                 )
 
             return raw
-        except requests.exceptions.Timeout as e:
+        except httpx.TimeoutException as e:
             self._log.error(f"Timeout {method} {url} {e}")
             raise
-        except requests.exceptions.ConnectionError as e:
-            self._log.error(f"Connection Error {method} {url} {e}")
-            raise
-        except requests.exceptions.HTTPError as e:
-            self._log.error(f"HTTP Error {method} {url} {e}")
-            raise
-        except requests.exceptions.RequestException as e:
+        except httpx.RequestError as e:
             self._log.error(f"Request Error {method} {url} {e}")
             raise
         except Exception as e:
@@ -174,16 +168,10 @@ class HyperLiquidApiClient(ApiClient):
                 )
 
             return raw
-        except requests.exceptions.Timeout as e:
+        except httpx.TimeoutException as e:
             self._log.error(f"Timeout {method} {url} {e}")
             raise
-        except requests.exceptions.ConnectionError as e:
-            self._log.error(f"Connection Error {method} {url} {e}")
-            raise
-        except requests.exceptions.HTTPError as e:
-            self._log.error(f"HTTP Error {method} {url} {e}")
-            raise
-        except requests.exceptions.RequestException as e:
+        except httpx.RequestError as e:
             self._log.error(f"Request Error {method} {url} {e}")
             raise
         except Exception as e:

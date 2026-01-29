@@ -334,7 +334,7 @@ class OkxWSApiClient(WSClient):
     async def place_order(
         self,
         id: str,
-        instId: str,
+        instIdCode: int,
         tdMode: str,
         side: str,
         ordType: str,
@@ -342,7 +342,7 @@ class OkxWSApiClient(WSClient):
         **kwargs,
     ):
         params = {
-            "instId": instId,
+            "instIdCode": instIdCode,
             "tdMode": tdMode,
             "side": side,
             "ordType": ordType,
@@ -352,9 +352,9 @@ class OkxWSApiClient(WSClient):
         await self._limiter("/ws/order").limit("order", cost=1)
         self._submit(id, "order", params)
 
-    async def cancel_order(self, id: str, instId: str, clOrdId: str):
+    async def cancel_order(self, id: str, instIdCode: int, clOrdId: str):
         params = {
-            "instId": instId,
+            "instIdCode": instIdCode,
             "clOrdId": clOrdId,
         }
         await self._limiter("/ws/cancel").limit("cancel", cost=1)

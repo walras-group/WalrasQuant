@@ -3,7 +3,7 @@ import hashlib
 import msgspec
 from typing import Any, Dict, List
 from urllib.parse import urljoin, urlencode
-from curl_cffi import requests
+import httpx
 from decimal import Decimal
 from nexustrader.base import ApiClient, RetryManager
 from nexustrader.exchange.bybit.constants import (
@@ -212,16 +212,10 @@ class BybitApiClient(ApiClient):
                     code=bybit_response.retCode,
                     message=bybit_response.retMsg,
                 )
-        except requests.exceptions.Timeout as e:
+        except httpx.TimeoutException as e:
             self._log.error(f"Timeout {method} Url: {url} - {e}")
             raise
-        except requests.exceptions.ConnectionError as e:
-            self._log.error(f"Connection Error {method} Url: {url} - {e}")
-            raise
-        except requests.exceptions.HTTPError as e:
-            self._log.error(f"HTTP Error {method} Url: {url} - {e}")
-            raise
-        except requests.exceptions.RequestException as e:
+        except httpx.RequestError as e:
             self._log.error(f"Request Error {method} Url: {url} - {e}")
             raise
         except Exception as e:
@@ -283,16 +277,10 @@ class BybitApiClient(ApiClient):
                     code=bybit_response.retCode,
                     message=bybit_response.retMsg,
                 )
-        except requests.exceptions.Timeout as e:
+        except httpx.TimeoutException as e:
             self._log.error(f"Timeout {method} Url: {url} - {e}")
             raise
-        except requests.exceptions.ConnectionError as e:
-            self._log.error(f"Connection Error {method} Url: {url} - {e}")
-            raise
-        except requests.exceptions.HTTPError as e:
-            self._log.error(f"HTTP Error {method} Url: {url} - {e}")
-            raise
-        except requests.exceptions.RequestException as e:
+        except httpx.RequestError as e:
             self._log.error(f"Request Error {method} Url: {url} - {e}")
             raise
         except Exception as e:

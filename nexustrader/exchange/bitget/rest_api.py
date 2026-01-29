@@ -2,7 +2,7 @@ import msgspec
 import base64
 from typing import Any, Dict
 from urllib.parse import urlencode
-from curl_cffi import requests
+import httpx
 from nexustrader.base import ApiClient, RetryManager
 from nexustrader.exchange.bitget.constants import (
     BitgetRateLimiter,
@@ -215,16 +215,10 @@ class BitgetApiClient(ApiClient):
                     message=message,
                 )
             return raw
-        except requests.exceptions.Timeout as e:
+        except httpx.TimeoutException as e:
             self._log.error(f"Timeout {method} {request_path} {e}")
             raise
-        except requests.exceptions.ConnectionError as e:
-            self._log.error(f"Connection Error {method} {request_path} {e}")
-            raise
-        except requests.exceptions.HTTPError as e:
-            self._log.error(f"HTTP Error {method} {request_path} {e}")
-            raise
-        except requests.exceptions.RequestException as e:
+        except httpx.RequestError as e:
             self._log.error(f"Request Error {method} {request_path} {e}")
             raise
         except Exception as e:
@@ -283,16 +277,10 @@ class BitgetApiClient(ApiClient):
                     message=message,
                 )
             return raw
-        except requests.exceptions.Timeout as e:
+        except httpx.TimeoutException as e:
             self._log.error(f"Timeout {method} {request_path} {e}")
             raise
-        except requests.exceptions.ConnectionError as e:
-            self._log.error(f"Connection Error {method} {request_path} {e}")
-            raise
-        except requests.exceptions.HTTPError as e:
-            self._log.error(f"HTTP Error {method} {request_path} {e}")
-            raise
-        except requests.exceptions.RequestException as e:
+        except httpx.RequestError as e:
             self._log.error(f"Request Error {method} {request_path} {e}")
             raise
         except Exception as e:

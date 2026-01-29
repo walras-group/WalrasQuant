@@ -62,7 +62,7 @@ class Demo(Strategy):
             ]
 
             for price in prices:
-                self.create_order_ws(
+                self.create_order(
                     symbol=symbol,
                     side=OrderSide.BUY,
                     type=OrderType.POST_ONLY,
@@ -73,7 +73,7 @@ class Demo(Strategy):
 
         open_orders = self.cache.get_open_orders(symbol="BTCUSDT-PERP.OKX")
         for oid in open_orders:
-            self.cancel_order_ws(symbol="BTCUSDT-PERP.OKX", oid=oid)
+            self.cancel_order(symbol="BTCUSDT-PERP.OKX", oid=oid)
 
 
 config = Config(

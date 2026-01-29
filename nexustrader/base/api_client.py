@@ -1,7 +1,7 @@
 from abc import ABC
 import nexuslog as logging
 from typing import Optional
-from curl_cffi import requests
+from httpx import AsyncClient, Client
 from nexustrader.core.nautilius_core import LiveClock
 from nexustrader.constants import RateLimiter, RateLimiterSync
 from nexustrader.base.retry import RetryManager
@@ -22,8 +22,8 @@ class ApiClient(ABC):
         self._secret = secret
         self._timeout = timeout
         self._log = logging.getLogger(name=type(self).__name__)
-        self._session: Optional[requests.AsyncSession] = None
-        self._sync_session: Optional[requests.Session] = None
+        self._session: Optional[AsyncClient] = None
+        self._sync_session: Optional[Client] = None
         self._clock = clock
         self._limiter = rate_limiter
         self._limiter_sync = rate_limiter_sync
@@ -31,8 +31,8 @@ class ApiClient(ABC):
 
     def _init_session(self, base_url: str | None = None):
         if self._session is None:
-            self._session = requests.AsyncSession(
-                base_url=base_url if base_url else "", timeout=self._timeout
+            self._session = AsyncClient(
+                base_url=base_url if base_url else None, timeout=self._timeout
             )
 
     def _get_rate_limit_cost(self, cost: int = 1):
@@ -40,14 +40,14 @@ class ApiClient(ABC):
 
     def _init_sync_session(self, base_url: str | None = None):
         if self._sync_session is None:
-            self._sync_session = requests.Session(
-                base_url=base_url if base_url else "", timeout=self._timeout
+            self._sync_session = Client(
+                base_url=base_url if base_url else None, timeout=self._timeout
             )
 
     async def close_session(self):
         """Close the session"""
         if self._session:
-            await self._session.close()
+            await self._session.aclose()
             self._session = None
         if self._sync_session:
             self._sync_session.close()

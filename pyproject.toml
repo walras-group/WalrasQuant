@@ -1,6 +1,6 @@
 [project]
 name = "nexustrader"
-version = "0.2.42"
+version = "0.2.43"
 description = "fastest python trading bot"
 authors = [
     {name = "River-Shi",email = "nachuan.shi.quant@gmail.com"}
@@ -10,9 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11,<3.14"
 dependencies = [
     "numpy (>=1.26.4,<2.2.1)",
-    "pyinstrument (>=5.0.1,<6.0.0)",
     "redis (>=5.2.1,<6.0.0)",
-    "streamz (>=0.6.4,<0.7.0)",
     "msgspec (>=0.19.0,<0.20.0)",
     "cython (>=3.0.11,<4.0.0)",
     "certifi (>=2025.1.31,<2026.0.0)",
@@ -24,7 +22,6 @@ dependencies = [
     "aiosqlite (>=0.21.0,<0.22.0)",
     "uvloop>=0.21.0",
     "throttled-py>=2.2.3",
-    "ccxt>=4.5.22",
     "asyncpg>=0.30.0",
     "psycopg2-binary>=2.9.10",
     "textual>=0.85.0",
@@ -34,13 +31,14 @@ dependencies = [
     "typing-extensions>=4.12.2",
     "fastapi>=0.117.1",
     "uvicorn>=0.36.0",
-    "curl-cffi>=0.13.0",
     "picows>=1.10.2",
     "dynaconf[redis]>=3.2.12",
     "nexuslog>=0.4.4",
     "pandas (>=2.3.3,<3.0.0)",
     "walras-nexuscore>=0.1.3",
     "flashduty-sdk>=0.1.1",
+    "httpx>=0.28.1",
+    "ccxt>=4.5.34",
 ]
 
 [project.scripts]
