@@ -44,14 +44,26 @@ class Demo(Strategy):
         super().__init__()
         self.n = 30
         self.symbol = "SOLUSDT-PERP.OKX"
-        self.q_max = 0.1
+        self.multiplier = 2
+        self.q_max = 10
+        self.inv_gate = 8
         self.kappa = 0.3
         self.gamma = 0.5
-        self.inv_gate = 0.8
         self.bid_oid = None
         self.ask_oid = None
 
+        self.prev_q = None
+
         self.vol_indicator = VolatilityIndicator(n=self.n)
+
+        if self.multiplier < 1 or not isinstance(self.multiplier, int):
+            raise ValueError("Multiplier must be >= 1")
+
+        if self.q_max < 1 or not isinstance(self.q_max, int):
+            raise ValueError("q_max must be >= 1")
+        
+        if self.inv_gate > self.q_max or not isinstance(self.inv_gate, int):
+            raise ValueError("inv_gate must be <= q_max and an integer")
 
     def on_start(self):
         self.subscribe_bookl1(symbols=self.symbol)
@@ -75,7 +87,7 @@ class Demo(Strategy):
 
         bookl1 = self.cache.bookl1(self.symbol)
         self.vol_indicator.append(bookl1.mid)
-        amount_sz = self.min_order_amount(self.symbol)
+        amount_sz = self.min_order_amount(self.symbol) * int(self.multiplier)
 
         if not self.vol_indicator.is_ready:
             return
@@ -83,7 +95,7 @@ class Demo(Strategy):
         vol_pct = self.vol_indicator.value / bookl1.mid
 
         pos = self.cache.get_position(self.symbol).value_or(None)
-        q = 0 if pos is None else float(pos.signed_amount)
+        q = 0 if pos is None else int(pos.signed_amount // amount_sz)
 
         q_pct = np.tanh(q / self.q_max)
 
@@ -94,12 +106,13 @@ class Demo(Strategy):
         bid_px = min(adj_mid * (1 - half_spread_pct), bookl1.bid)
         ask_px = max(adj_mid * (1 + half_spread_pct), bookl1.ask)
 
-        allow_buy = q < self.q_max * self.inv_gate
-        allow_sell = q > -self.q_max * self.inv_gate
+        allow_buy = q < self.inv_gate
+        allow_sell = q > -self.inv_gate
 
-        self.log.info(
-            f"s: {self.symbol}, Mid: {bookl1.mid:.2f}, bid: {bid_px:.2f}, ask: {ask_px:.2f}, bid_oid: {self.bid_oid}, ask_oid: {self.ask_oid}, q: {q:.2f}, vol%: {vol_pct * 100:.4f}%, allow_buy: {allow_buy}, allow_sell: {allow_sell}"
-        )
+        if self.prev_q is not None and q != self.prev_q:  
+            self.log.info(
+                f"s: {self.symbol}, Mid: {bookl1.mid:.2f}, bid: {bid_px:.2f}, ask: {ask_px:.2f}, bid_oid: {self.bid_oid}, ask_oid: {self.ask_oid}, q: {q:.2f}, vol%: {vol_pct * 100:.4f}%, allow_buy: {allow_buy}, allow_sell: {allow_sell}"
+            )
 
         if not self.can_trade:
             return
@@ -155,6 +168,8 @@ class Demo(Strategy):
                     amount=amount_sz,
                     price=self.price_to_precision(self.symbol, ask_px),
                 )
+        
+        self.prev_q = q
 
 
 config = Config(

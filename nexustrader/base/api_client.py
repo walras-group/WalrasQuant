@@ -31,18 +31,20 @@ class ApiClient(ABC):
 
     def _init_session(self, base_url: str | None = None):
         if self._session is None:
-            self._session = AsyncClient(
-                base_url=base_url if base_url else None, timeout=self._timeout
-            )
+            kwargs = {"timeout": self._timeout}
+            if base_url:
+                kwargs["base_url"] = base_url
+            self._session = AsyncClient(**kwargs)
 
     def _get_rate_limit_cost(self, cost: int = 1):
         return cost
 
     def _init_sync_session(self, base_url: str | None = None):
         if self._sync_session is None:
-            self._sync_session = Client(
-                base_url=base_url if base_url else None, timeout=self._timeout
-            )
+            kwargs = {"timeout": self._timeout}
+            if base_url:
+                kwargs["base_url"] = base_url
+            self._sync_session = Client(**kwargs)
 
     async def close_session(self):
         """Close the session"""
