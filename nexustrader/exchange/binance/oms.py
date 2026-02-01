@@ -38,6 +38,8 @@ from nexustrader.exchange.binance.constants import (
 from nexustrader.exchange.binance.schema import (
     BinanceUserDataStreamMsg,
     BinanceSpotOrderUpdateMsg,
+    _BinanceSpotOrderUpdateMsg,
+    _BinanceSpotUpdateMsg,
     BinanceFuturesOrderUpdateMsg,
     BinanceSpotAccountInfo,
     BinanceFuturesAccountInfo,
@@ -89,7 +91,9 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
                 clock=clock,
                 max_subscriptions_per_client=max_subscriptions_per_client,
                 max_clients=max_clients,
-            ) if not account_type.is_spot else BinanceWSApiClient(
+            )
+            if not account_type.is_spot
+            else BinanceWSApiClient(
                 account_type=account_type,
                 api_key=api_key,
                 secret=secret,
@@ -119,6 +123,15 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
         self._ws_msg_spot_order_update_decoder = msgspec.json.Decoder(
             BinanceSpotOrderUpdateMsg
         )
+
+        self._ws_msg_pm_margin_order_update_decoder = msgspec.json.Decoder(
+            _BinanceSpotOrderUpdateMsg
+        )
+
+        self._ws_msg_pm_margin_account_update_decoder = msgspec.json.Decoder(
+            _BinanceSpotUpdateMsg
+        )
+
         self._ws_msg_futures_order_update_decoder = msgspec.json.Decoder(
             BinanceFuturesOrderUpdateMsg
         )
@@ -265,18 +278,21 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
                         BinanceUserDataStreamWsEventType.ORDER_TRADE_UPDATE
                     ):  # futures order update
                         self._parse_order_trade_update(raw)
-                    # case (
-                    #     BinanceUserDataStreamWsEventType.EXECUTION_REPORT
-                    # ):  # spot order update
-                    #     self._parse_execution_report(raw)
+                    case (
+                        BinanceUserDataStreamWsEventType.EXECUTION_REPORT
+                    ):  # spot order update
+                        self._parse_pm_execution_report(raw)
                     case (
                         BinanceUserDataStreamWsEventType.ACCOUNT_UPDATE
                     ):  # futures account update
                         self._parse_account_update(raw)
-                    # case (
-                    #     BinanceUserDataStreamWsEventType.OUT_BOUND_ACCOUNT_POSITION
-                    # ):  # spot account update
-                    #     self._parse_out_bound_account_position(raw)
+                    case (
+                        BinanceUserDataStreamWsEventType.OUT_BOUND_ACCOUNT_POSITION
+                    ):  # spot account update
+                        self._parse_pm_out_bound_account_position(raw)
+                    case BinanceUserDataStreamWsEventType.LISTEN_KEY_EXPIRED:
+                        res = self._ws_msg_general_decoder.decode(raw)
+                        self._log.warning(f"Listen key expired: {res}")
         except msgspec.DecodeError as e:
             self._log.error(f"Error decoding message: {str(raw)} {e}")
 
@@ -378,6 +394,46 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
 
         self.order_status_update(order)
 
+    def _parse_pm_execution_report(self, raw: bytes) -> Order:
+        event_data = self._ws_msg_pm_margin_order_update_decoder.decode(raw)
+        self._log.debug(f"Execution report: {event_data}")
+
+        market_type = self.market_type or "_spot"
+        id = event_data.s + market_type
+        symbol = self._market_id[id]
+
+        # Calculate average price only if filled amount is non-zero
+        average = (
+            float(event_data.Z) / float(event_data.z)
+            if float(event_data.z) != 0
+            else None
+        )
+
+        order = Order(
+            exchange=self._exchange_id,
+            symbol=symbol,
+            status=BinanceEnumParser.parse_order_status(event_data.X),
+            eid=str(event_data.i),
+            oid=event_data.c,
+            amount=Decimal(event_data.q),
+            filled=Decimal(event_data.z),
+            timestamp=event_data.E,
+            type=BinanceEnumParser.parse_spot_order_type(event_data.o),
+            side=BinanceEnumParser.parse_order_side(event_data.S),
+            time_in_force=BinanceEnumParser.parse_time_in_force(event_data.f),
+            price=float(event_data.p),
+            average=average,
+            last_filled_price=float(event_data.L),
+            last_filled=float(event_data.l),
+            remaining=Decimal(event_data.q) - Decimal(event_data.z),
+            fee=Decimal(event_data.n),
+            fee_currency=event_data.N,
+            cum_cost=Decimal(event_data.Z),
+            cost=Decimal(event_data.Y),
+        )
+
+        self.order_status_update(order)
+
     def _parse_account_update(self, raw: bytes):
         res = self._ws_msg_futures_account_update_decoder.decode(raw)
         self._log.debug(f"Account update: {res}")
@@ -421,6 +477,13 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
     def _parse_out_bound_account_position(self, raw: bytes):
         data = self._ws_msg_spot_account_update_decoder.decode(raw)
         res = data.event
+        self._log.debug(f"Out bound account position: {res}")
+
+        balances = res.parse_to_balances()
+        self._cache._apply_balance(account_type=self._account_type, balances=balances)
+
+    def _parse_pm_out_bound_account_position(self, raw: bytes):
+        res = self._ws_msg_pm_margin_account_update_decoder.decode(raw)
         self._log.debug(f"Out bound account position: {res}")
 
         balances = res.parse_to_balances()
