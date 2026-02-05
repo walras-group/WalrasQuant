@@ -119,7 +119,9 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
             )
 
         self._ws_msg_general_decoder = msgspec.json.Decoder(BinanceUserDataStreamMsg)
-        self._ws_spot_msg_general_decoder = msgspec.json.Decoder(BinanceSpotUserDataStreamMsg)
+        self._ws_spot_msg_general_decoder = msgspec.json.Decoder(
+            BinanceSpotUserDataStreamMsg
+        )
         self._ws_msg_spot_order_update_decoder = msgspec.json.Decoder(
             BinanceSpotOrderUpdateMsg
         )
@@ -251,7 +253,7 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
 
         except msgspec.DecodeError as e:
             self._log.error(f"Error decoding WebSocket API message: {str(raw)} {e}")
-    
+
     def _ws_spot_msg_handler(self, raw: bytes):
         try:
             msg = self._ws_spot_msg_general_decoder.decode(raw)
@@ -265,10 +267,10 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
                         BinanceUserDataStreamWsEventType.OUT_BOUND_ACCOUNT_POSITION
                     ):  # spot account update
                         self._parse_out_bound_account_position(raw)
-        
+
         except msgspec.DecodeError as e:
             self._log.error(f"Error decoding message: {str(raw)} {e}")
-    
+
     def _ws_msg_handler(self, raw: bytes):
         try:
             msg = self._ws_msg_general_decoder.decode(raw)

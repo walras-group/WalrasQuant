@@ -365,9 +365,7 @@ class RingBuffer:
     def get_as_numpy_array(self) -> np.ndarray:
         if not self.is_full:
             return self._buffer[: self._idx].copy()
-        indexes = (
-            np.arange(self._idx, self._idx + self._length) % self._length
-        )
+        indexes = np.arange(self._idx, self._idx + self._length) % self._length
         return self._buffer[indexes]
 
     def get_last_value(self) -> float:

@@ -484,7 +484,7 @@ class OkxMarketInfo(msgspec.Struct, kw_only=True):
     ctValCcy: str | None = None  # Contract value currency
     expTime: str | None = None  # Expiry time
     instFamily: str | None = None  # Instrument family
-    instId: str 
+    instId: str
     instIdCode: str
     instType: str | None = None  # Instrument type (SPOT/FUTURES/SWAP)
     lever: str | None = None  # Leverage

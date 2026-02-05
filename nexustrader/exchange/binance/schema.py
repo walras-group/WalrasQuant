@@ -276,6 +276,7 @@ class _BinanceSpotOrderUpdateMsg(msgspec.Struct, kw_only=True):
     j: int | None = None  # strategy id
     u: int | None = None  # Trade Group id
 
+
 class BinanceSpotOrderUpdateMsg(msgspec.Struct, kw_only=True):
     event: _BinanceSpotOrderUpdateMsg
 
@@ -456,8 +457,10 @@ class BinanceWsMessageGeneral(msgspec.Struct):
 class BinanceUserDataStreamMsg(msgspec.Struct):
     e: BinanceUserDataStreamWsEventType | None = None
 
+
 class BinanceSpotUserDataStreamMsg(msgspec.Struct):
     event: BinanceUserDataStreamMsg | None = None
+
 
 class BinanceListenKey(msgspec.Struct):
     listenKey: str
@@ -695,6 +698,7 @@ class _BinanceSpotUpdateMsg(msgspec.Struct, kw_only=True):
 
     def parse_to_balances(self) -> List[Balance]:
         return [balance.parse_to_balance() for balance in self.B]
+
 
 class BinanceSpotUpdateMsg(msgspec.Struct, kw_only=True):
     event: _BinanceSpotUpdateMsg

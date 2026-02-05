@@ -10,10 +10,7 @@ class Demo(Strategy):
         super().__init__()
 
     def on_start(self):
-        self.alert_info(
-            "This is a info Message",
-            "key:info"
-        )
+        self.alert_info("This is a info Message", "key:info")
 
         # can set ok alert after some time
         # time.sleep(5)
@@ -21,6 +18,7 @@ class Demo(Strategy):
         #     "This is a ok Message",
         #     "key:info"
         # )
+
 
 config = Config(
     strategy_id="test_alert",

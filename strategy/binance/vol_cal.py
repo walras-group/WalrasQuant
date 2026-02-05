@@ -41,23 +41,22 @@ class Demo(Strategy):
             trigger="interval",
             seconds=1,
         )
-    
+
     def on_tick(self):
         if not self.ready:
             return
-        
+
         bookl1 = self.cache.bookl1(self.symbol)
         self.vol_indicator.append(bookl1.mid)
 
         if not self.vol_indicator.is_ready:
             return
-        
+
         vol_pct = self.vol_indicator.value / bookl1.mid * 100
 
         self.log.info(
             f"Symbol: {self.symbol}, Mid: {bookl1.mid:.6f}, Vol%: {vol_pct:.4f}%"
         )
-        
 
 
 config = Config(

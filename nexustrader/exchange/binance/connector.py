@@ -787,7 +787,7 @@ class BinancePrivateConnector(PrivateConnector):
 
     async def _start_user_data_stream(self):
         if self._account_type.is_spot:
-            #NOTE: https://developers.binance.com/docs/binance-spot-api-docs/user-data-stream#account-update listenKey is deprecated for spot account
+            # NOTE: https://developers.binance.com/docs/binance-spot-api-docs/user-data-stream#account-update listenKey is deprecated for spot account
             return
             # res = await self._api_client.post_api_v3_user_data_stream()
         elif self._account_type.is_margin:

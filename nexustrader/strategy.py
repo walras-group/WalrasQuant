@@ -61,6 +61,13 @@ from nexustrader.constants import (
 )
 from nexustrader.core.connection import ConnectionPolicyState
 from nexustrader.push import FlashDutyPushService, EventStatus
+from nexustrader.execution import (
+    ExecAlgorithm,
+    ExecAlgorithmCommand,
+    ExecAlgorithmCommandType,
+    ExecAlgorithmOrder,
+    ExecAlgorithmOrderParams,
+)
 
 
 class Strategy:
@@ -73,7 +80,7 @@ class Strategy:
         self.indicator = IndicatorProxy()
         self._connection_status: ConnectionPolicyState | None = None
 
-    def _init_core(
+    def register(
         self,
         exchanges: Dict[ExchangeType, ExchangeManager],
         public_connectors: Dict[AccountType, PublicConnector],
@@ -81,10 +88,12 @@ class Strategy:
         cache: AsyncCache,
         msgbus: MessageBus,
         clock: LiveClock,
+        oidgen: OidGen,
         task_manager: TaskManager,
         sms: SubscriptionManagementSystem,
         ems: Dict[ExchangeType, ExecutionManagementSystem],
         push_service: FlashDutyPushService,
+        exec_algorithms: Dict[str, ExecAlgorithm] | None = None,
         strategy_id: str = None,
         user_id: str = None,
         enable_cli: bool = False,
@@ -97,7 +106,7 @@ class Strategy:
 
         self.cache = cache
         self.clock = clock
-        self._oidgen = OidGen(clock)
+        self._oidgen = oidgen
         self._ems = ems
         self._sms = sms
         self._task_manager = task_manager
@@ -107,6 +116,7 @@ class Strategy:
         self._exchanges = exchanges
         self._indicator_manager = IndicatorManager(self._msgbus)
         self._push_service = push_service
+        self._exec_algorithms = exec_algorithms if exec_algorithms is not None else {}
 
         # Initialize state exporter if IDs are provided and Redis is fully available
         self._state_exporter = None
@@ -252,7 +262,7 @@ class Strategy:
             return False
         # allow_trade == td_ok
         return self._connection_status.allow_trade
-    
+
     @property
     def close_only(self) -> bool:
         if self._connection_status is None:
@@ -785,6 +795,151 @@ class Strategy:
             f"[modify order] symbol={symbol}, oid={oid}, side={side}, price={price}, amount={amount}"
         )
         return order.oid
+
+    def create_algo_order(
+        self,
+        symbol: str,
+        side: OrderSide,
+        amount: Decimal,
+        exec_algorithm_id: str,
+        exec_params: Dict[str, Any],
+        reduce_only: bool = False,
+        account_type: AccountType | None = None,
+    ) -> str:
+        """
+        Create an order to be executed by an execution algorithm.
+
+        Parameters
+        ----------
+        symbol : str
+            The trading symbol.
+        side : OrderSide
+            The order side (BUY/SELL).
+        amount : Decimal
+            The total order amount.
+        exec_algorithm_id : str
+            The execution algorithm ID (e.g., "TWAP").
+        exec_params : Dict[str, Any]
+            Parameters for the execution algorithm.
+        reduce_only : bool
+            If True, only reduce position.
+        account_type : AccountType | None
+            The account type.
+
+        Returns
+        -------
+        str
+            The primary order ID.
+
+        Example
+        -------
+        >>> oid = self.create_algo_order(
+        ...     symbol="BTCUSDT-PERP.BINANCE",
+        ...     side=OrderSide.BUY,
+        ...     amount=Decimal("1.0"),
+        ...     exec_algorithm_id="TWAP",
+        ...     exec_params={
+        ...         "horizon_secs": 300,  # 5 minutes
+        ...         "interval_secs": 30,  # every 30 seconds
+        ...     },
+        ... )
+        """
+        if exec_algorithm_id not in self._exec_algorithms:
+            raise ValueError(
+                f"Execution algorithm '{exec_algorithm_id}' not registered"
+            )
+
+        oid = self._oidgen.oid
+        instrument_id = InstrumentId.from_str(symbol)
+
+        if not account_type:
+            account_type = self._ems[
+                instrument_id.exchange
+            ]._instrument_id_to_account_type(instrument_id)
+
+        # Create command to send to ExecAlgorithm
+        command = ExecAlgorithmCommand(
+            command_type=ExecAlgorithmCommandType.EXECUTE,
+            exec_algorithm_id=exec_algorithm_id,
+            order_params=ExecAlgorithmOrderParams(
+                oid=oid,
+                symbol=symbol,
+                side=side,
+                amount=amount,
+                account_type=account_type,
+                reduce_only=reduce_only,
+            ),
+            exec_params=exec_params,
+        )
+
+        # Send to execution algorithm via MessageBus
+        self._msgbus.send(
+            endpoint=f"{exec_algorithm_id}.execute",
+            msg=command,
+        )
+
+        self._sys_log.info(
+            f"[algo order] symbol={symbol}, oid={oid}, side={side}, "
+            f"amount={amount}, algorithm={exec_algorithm_id}"
+        )
+
+        return oid
+
+    def cancel_algo_order(self, oid: str, exec_algorithm_id: str):
+        """
+        Cancel an execution algorithm order.
+
+        Parameters
+        ----------
+        oid : str
+            The primary order ID.
+        exec_algorithm_id : str
+            The execution algorithm ID.
+        """
+        if exec_algorithm_id not in self._exec_algorithms:
+            raise ValueError(
+                f"Execution algorithm '{exec_algorithm_id}' not registered"
+            )
+
+        command = ExecAlgorithmCommand(
+            command_type=ExecAlgorithmCommandType.CANCEL,
+            exec_algorithm_id=exec_algorithm_id,
+            primary_oid=oid,
+        )
+
+        self._msgbus.send(
+            endpoint=f"{exec_algorithm_id}.execute",
+            msg=command,
+        )
+
+        self._sys_log.info(
+            f"[cancel algo order] oid={oid}, algorithm={exec_algorithm_id}"
+        )
+
+    def get_algo_order(
+        self, oid: str, exec_algorithm_id: str
+    ) -> ExecAlgorithmOrder | None:
+        """
+        Get an execution algorithm order by its primary order ID.
+
+        Parameters
+        ----------
+        oid : str
+            The primary order ID.
+        exec_algorithm_id : str
+            The execution algorithm ID.
+
+        Returns
+        -------
+        ExecAlgorithmOrder | None
+            The execution algorithm order, or None if not found.
+        """
+        if exec_algorithm_id not in self._exec_algorithms:
+            raise ValueError(
+                f"Execution algorithm '{exec_algorithm_id}' not registered"
+            )
+
+        return self._exec_algorithms[exec_algorithm_id].get_algo_order(oid)
 
     # def create_twap(
     #     self,

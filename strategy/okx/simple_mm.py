@@ -61,7 +61,7 @@ class Demo(Strategy):
 
         if self.q_max < 1 or not isinstance(self.q_max, int):
             raise ValueError("q_max must be >= 1")
-        
+
         if self.inv_gate > self.q_max or not isinstance(self.inv_gate, int):
             raise ValueError("inv_gate must be <= q_max and an integer")
 
@@ -109,7 +109,7 @@ class Demo(Strategy):
         allow_buy = q < self.inv_gate
         allow_sell = q > -self.inv_gate
 
-        if self.prev_q is not None and q != self.prev_q:  
+        if self.prev_q is not None and q != self.prev_q:
             self.log.info(
                 f"s: {self.symbol}, Mid: {bookl1.mid:.2f}, bid: {bid_px:.2f}, ask: {ask_px:.2f}, bid_oid: {self.bid_oid}, ask_oid: {self.ask_oid}, q: {q:.2f}, vol%: {vol_pct * 100:.4f}%, allow_buy: {allow_buy}, allow_sell: {allow_sell}"
             )
@@ -128,7 +128,9 @@ class Demo(Strategy):
             if self.bid_oid is not None:
                 order = self.cache.get_order(self.bid_oid).value_or(None)
                 if order is not None:
-                    if Decimal(str(order.price)) != self.price_to_precision(self.symbol, bid_px):
+                    if Decimal(str(order.price)) != self.price_to_precision(
+                        self.symbol, bid_px
+                    ):
                         self.cancel_order_ws(
                             symbol=self.symbol,
                             oid=self.bid_oid,
@@ -154,7 +156,9 @@ class Demo(Strategy):
             if self.ask_oid is not None:
                 order = self.cache.get_order(self.ask_oid).value_or(None)
                 if order is not None:
-                    if Decimal(str(order.price)) != self.price_to_precision(self.symbol, ask_px):
+                    if Decimal(str(order.price)) != self.price_to_precision(
+                        self.symbol, ask_px
+                    ):
                         self.cancel_order_ws(
                             symbol=self.symbol,
                             oid=self.ask_oid,
@@ -168,7 +172,7 @@ class Demo(Strategy):
                     amount=amount_sz,
                     price=self.price_to_precision(self.symbol, ask_px),
                 )
-        
+
         self.prev_q = q
 
 

@@ -33,6 +33,8 @@ from nexustrader.core.connection import (
     ConnectionRole,
 )
 from nexustrader.push import FlashDutyPushService
+from nexustrader.execution.algorithm import ExecAlgorithm
+from nexustrader.core.entity import OidGen
 
 
 class Engine:
@@ -85,11 +87,13 @@ class Engine:
             sync_interval=config.cache_sync_interval,
             expired_time=config.cache_expired_time,
         )
+        self._oidgen = OidGen(self._clock)
 
         self._registry = OrderRegistry()
         self._oms: Dict[ExchangeType, OrderManagementSystem] = {}
         self._ems: Dict[ExchangeType, ExecutionManagementSystem] = {}
         self._custom_ems: Dict[ExchangeType, ExecutionManagementSystem] = {}
+        self._exec_algorithms: Dict[str, ExecAlgorithm] = {}
 
         self._sms = SubscriptionManagementSystem(
             exchanges=self._exchanges,
@@ -105,10 +109,11 @@ class Engine:
         )
 
         self._strategy: Strategy = config.strategy
-        self._strategy._init_core(
+        self._strategy.register(
             cache=self._cache,
             msgbus=self._msgbus,
             clock=self._clock,
+            oidgen=self._oidgen,
             task_manager=self._task_manager,
             ems=self._ems,
             sms=self._sms,
@@ -116,6 +121,7 @@ class Engine:
             private_connectors=self._private_connectors,
             public_connectors=self._public_connectors,
             push_service=self._push_service,
+            exec_algorithms=self._exec_algorithms,
             strategy_id=config.strategy_id,
             user_id=config.user_id,
             enable_cli=config.enable_cli,
@@ -476,11 +482,67 @@ class Engine:
                     required=True,
                 )
 
+    def add_exec_algorithm(self, algorithm: ExecAlgorithm):
+        """
+        Add an execution algorithm to the engine.
+
+        Parameters
+        ----------
+        algorithm : ExecAlgorithm
+            The execution algorithm instance.
+
+        Example
+        -------
+        >>> from nexustrader.execution import TWAPExecAlgorithm
+        >>> engine = Engine(config)
+        >>> engine.add_exec_algorithm(TWAPExecAlgorithm())
+        >>> engine.start()
+        """
+        if algorithm.id in self._exec_algorithms:
+            raise ValueError(f"Execution algorithm '{algorithm.id}' already registered")
+        self._exec_algorithms[algorithm.id] = algorithm
+        self._log.info(f"Added execution algorithm: {algorithm.id}")
+
+    def _build_exec_algorithms(self):
+        """Build and register all execution algorithms."""
+        if not self._exec_algorithms:
+            return
+
+        # Get all market data from all exchanges
+        all_markets = {}
+        for exchange_id, exchange_manager in self._exchanges.items():
+            all_markets.update(exchange_manager.market)
+
+        # Get first available EMS for order submission
+        for algo_id, algorithm in self._exec_algorithms.items():
+            algorithm.register(
+                msgbus=self._msgbus,
+                clock=self._clock,
+                cache=self._cache,
+                task_manager=self._task_manager,
+                oidgen=self._oidgen,
+                registry=self._registry,
+                market=all_markets,
+                ems=self._ems,
+            )
+            self._log.debug(f"Registered execution algorithm: {algo_id}")
+
+    def _start_exec_algorithms(self):
+        """Start all execution algorithms."""
+        for algorithm in self._exec_algorithms.values():
+            algorithm.start()
+
+    def _stop_exec_algorithms(self):
+        """Stop all execution algorithms."""
+        for algorithm in self._exec_algorithms.values():
+            algorithm.stop()
+
     def _build(self):
         self._build_exchanges()
         self._build_public_connectors()
         self._build_private_connectors()
         self._build_ems()
+        self._build_exec_algorithms()
         self._build_custom_signal_recv()
         self._register_connection_callbacks()
         self._is_built = True
@@ -514,6 +576,7 @@ class Engine:
         await self._sms.start()
         await self._start_ems()
         await self._start_connectors()
+        self._start_exec_algorithms()
         if self._custom_signal_recv:
             await self._custom_signal_recv.start()
         self._strategy._on_start()
@@ -622,6 +685,8 @@ class Engine:
 
     def dispose(self):
         try:
+            self._stop_exec_algorithms()
+
             try:
                 self._strategy._on_stop()
             except Exception as e:

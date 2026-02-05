@@ -5,6 +5,7 @@ from typing import Optional
 from msgspec import Struct, field
 from nexustrader.core.nautilius_core import UUID4
 from nexustrader.constants import (
+    # AccountType,
     OrderSide,
     OrderType,
     TimeInForce,
