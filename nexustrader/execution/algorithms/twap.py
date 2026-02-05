@@ -31,7 +31,7 @@ class TWAPExecAlgorithm(ExecAlgorithm):
     ---------------------
     use_limit : bool, default False
         If True, use limit orders instead of market orders.
-    n_tick_sz : int, default 1
+    n_tick_sz : int, default 0
         Number of tick sizes to offset from the best bid/ask for limit orders.
         Positive for better price (more passive), negative for worse price (more aggressive).
 
@@ -46,7 +46,7 @@ class TWAPExecAlgorithm(ExecAlgorithm):
     ...     exec_params={
     ...         "horizon_secs": 300,
     ...         "interval_secs": 30,
-    ...         "n_tick_sz": 1,
+    ...         "n_tick_sz": 0,
     ...     },
     ... )
     """
@@ -223,15 +223,15 @@ class TWAPExecAlgorithm(ExecAlgorithm):
             # Get current market price
             bookl1 = self.cache.bookl1(exec_order.symbol)
             if bookl1:
-                n_tick_sz = params.get("n_tick_sz", 1)
+                n_tick_sz = params.get("n_tick_sz", 0)
                 tick_sz = self.tick_sz(exec_order.symbol)
                 
                 if exec_order.side.is_buy:
                     # For buy, offset positive = lower price (more passive)
-                    raw_price = bookl1.ask - n_tick_sz * tick_sz
+                    raw_price = bookl1.bid - n_tick_sz * tick_sz
                 else:
                     # For sell, offset positive = higher price (more passive)
-                    raw_price = bookl1.bid + n_tick_sz * tick_sz
+                    raw_price = bookl1.ask + n_tick_sz * tick_sz
 
                 price = self.price_to_precision(exec_order.symbol, raw_price)
                 spawn_oid = self.spawn_limit(exec_order, total_slice_amount, price)

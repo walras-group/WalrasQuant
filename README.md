@@ -475,6 +475,188 @@ class MyStrategy(Strategy):
 
 This approach ensures your indicators have sufficient historical data before making trading decisions, improving the reliability and accuracy of your trading strategies.
 
+## Execution Algorithms
+
+NexusTrader provides a powerful execution algorithm framework for implementing advanced order execution strategies like TWAP, VWAP, iceberg orders, and more. This allows you to split large orders into smaller chunks and execute them over time to minimize market impact.
+
+### Using TWAP (Time-Weighted Average Price)
+
+The built-in `TWAPExecAlgorithm` splits a large order into smaller slices and executes them at regular intervals over a specified time horizon.
+
+```python
+from decimal import Decimal
+from datetime import timedelta
+from nexustrader.constants import OrderSide
+from nexustrader.strategy import Strategy
+from nexustrader.engine import Engine
+from nexustrader.execution import TWAPExecAlgorithm
+
+class MyStrategy(Strategy):
+    def __init__(self):
+        super().__init__()
+        self.symbol = "BTCUSDT-PERP.BINANCE"
+
+    def on_start(self):
+        self.subscribe_bookl1(self.symbol)
+        # Schedule TWAP order placement
+        self.schedule(
+            func=self.place_twap_order,
+            trigger="date",
+            run_date=self.clock.utc_now() + timedelta(seconds=10),
+        )
+
+    def place_twap_order(self):
+        # Execute 1 BTC over 5 minutes with 30-second intervals (10 slices)
+        self.create_algo_order(
+            symbol=self.symbol,
+            side=OrderSide.BUY,
+            amount=Decimal("1.0"),
+            exec_algorithm_id="TWAP",
+            exec_params={
+                "horizon_secs": 300,    # Total execution time: 5 minutes
+                "interval_secs": 30,    # Interval between slices: 30 seconds
+            },
+        )
+
+# Register the execution algorithm with the engine
+engine = Engine(config)
+engine.add_exec_algorithm(algorithm=TWAPExecAlgorithm())
+```
+
+#### TWAP Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `horizon_secs` | int | Yes | Total execution time horizon in seconds |
+| `interval_secs` | int | Yes | Interval between order slices in seconds |
+| `use_limit` | bool | No | If True, use limit orders instead of market orders (default: False) |
+| `n_tick_sz` | int | No | Number of tick sizes to offset from best bid/ask for limit orders. Positive = more passive, Negative = more aggressive (default: 0) |
+
+#### TWAP with Limit Orders
+
+For better price execution, you can use limit orders with price offsets:
+
+```python
+self.create_algo_order(
+    symbol="BTCUSDT-PERP.OKX",
+    side=OrderSide.BUY,
+    amount=Decimal("2.0"),
+    exec_algorithm_id="TWAP",
+    exec_params={
+        "horizon_secs": 100,
+        "interval_secs": 10,
+        "use_limit": True,      # Use limit orders
+        "n_tick_sz": 1,         # Place 1 tick below best ask (for buy)
+    },
+    reduce_only=True,           # Optional: only reduce existing position
+)
+```
+
+### Creating Custom Execution Algorithms
+
+You can create your own execution algorithms by subclassing `ExecAlgorithm`. The key method to implement is `on_order()`, which is called when a new algorithmic order is received.
+
+```python
+from decimal import Decimal
+from nexustrader.execution.algorithm import ExecAlgorithm
+from nexustrader.execution.config import ExecAlgorithmConfig
+from nexustrader.execution.schema import ExecAlgorithmOrder
+from nexustrader.execution.constants import ExecAlgorithmStatus
+from nexustrader.schema import Order
+
+
+class MyAlgoConfig(ExecAlgorithmConfig, kw_only=True, frozen=True):
+    """Configuration for custom algorithm."""
+    exec_algorithm_id: str = "MY_ALGO"
+
+
+class MyExecAlgorithm(ExecAlgorithm):
+    """Custom execution algorithm example."""
+
+    def __init__(self, config: MyAlgoConfig | None = None):
+        if config is None:
+            config = MyAlgoConfig()
+        super().__init__(config)
+
+    def on_order(self, exec_order: ExecAlgorithmOrder):
+        """
+        Main entry point - called when create_algo_order() is invoked.
+
+        Parameters
+        ----------
+        exec_order : ExecAlgorithmOrder
+            Contains: primary_oid, symbol, side, total_amount, remaining_amount, params
+        """
+        # Access custom parameters
+        params = exec_order.params
+        my_param = params.get("my_param", "default")
+
+        # Spawn child orders using available methods:
+        # - spawn_market(exec_order, quantity)
+        # - spawn_limit(exec_order, quantity, price)
+        # - spawn_market_ws / spawn_limit_ws for WebSocket submission
+
+        # Example: split into two market orders
+        half = self.amount_to_precision(
+            exec_order.symbol,
+            exec_order.total_amount / 2,
+            mode="floor"
+        )
+        self.spawn_market(exec_order, half)
+        self.spawn_market(exec_order, exec_order.total_amount - half)
+
+    def on_spawned_order_filled(self, exec_order: ExecAlgorithmOrder, order: Order):
+        """Called when a spawned order is filled."""
+        if exec_order.remaining_amount <= 0:
+            self.mark_complete(exec_order)
+
+    def on_cancel(self, exec_order: ExecAlgorithmOrder):
+        """Handle cancellation request."""
+        exec_order.status = ExecAlgorithmStatus.CANCELED
+```
+
+#### Key Methods to Override
+
+| Method | Description |
+|--------|-------------|
+| `on_order(exec_order)` | **Required.** Main entry point when a new order is received |
+| `on_start()` | Called when the algorithm starts |
+| `on_stop()` | Called when the algorithm stops |
+| `on_cancel(exec_order)` | Called when cancellation is requested |
+| `on_execution_complete(exec_order)` | Called when execution completes |
+| `on_spawned_order_filled(exec_order, order)` | Called when a spawned order is filled |
+| `on_spawned_order_failed(exec_order, order)` | Called when a spawned order fails |
+
+#### Utility Methods
+
+| Method | Description |
+|--------|-------------|
+| `spawn_market(exec_order, quantity)` | Spawn a market order |
+| `spawn_limit(exec_order, quantity, price)` | Spawn a limit order |
+| `cancel_spawned_order(exec_order, spawned_oid)` | Cancel a spawned order |
+| `mark_complete(exec_order)` | Mark execution as complete |
+| `set_timer(name, interval, callback)` | Set a timer for scheduled execution |
+| `amount_to_precision(symbol, amount)` | Convert amount to market precision |
+| `price_to_precision(symbol, price)` | Convert price to market precision |
+| `min_order_amount(symbol)` | Get minimum order amount |
+| `cache.bookl1(symbol)` | Get current L1 order book |
+
+#### Register and Use
+
+```python
+engine = Engine(config)
+engine.add_exec_algorithm(algorithm=MyExecAlgorithm())
+
+# In strategy:
+self.create_algo_order(
+    symbol="BTCUSDT-PERP.BINANCE",
+    side=OrderSide.BUY,
+    amount=Decimal("1.0"),
+    exec_algorithm_id="MY_ALGO",
+    exec_params={"my_param": "value"},
+)
+```
+
 ## Contributing
 
 Thank you for considering contributing to nexustrader! We greatly appreciate any effort to help improve the project. If
