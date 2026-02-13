@@ -196,11 +196,12 @@ class BitgetExecutionManagementSystem(ExecutionManagementSystem):
             await super()._cancel_all_orders(order_submit, account_type)
         else:
             symbol = order_submit.symbol
+            await self._cache.wait_for_inflight_orders(symbol)
             oids = self._cache.get_open_orders(symbol)
             for oid in oids:
-                order_submit = CancelOrderSubmit(
+                cancel_submit = CancelOrderSubmit(
                     symbol=symbol,
                     instrument_id=InstrumentId.from_str(symbol),
                     oid=oid,
                 )
-            await self._cancel_order_ws(order_submit, account_type)
+                await self._cancel_order_ws(cancel_submit, account_type)

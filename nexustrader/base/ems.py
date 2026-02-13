@@ -233,6 +233,7 @@ class ExecutionManagementSystem(ABC):
         Create an order
         """
         self._registry.register_order(order_submit.oid)
+        self._cache.add_inflight_order(order_submit.symbol, order_submit.oid)
         self._task_manager.create_task(
             self._private_connectors[account_type]._oms.create_order(
                 oid=order_submit.oid,
@@ -254,6 +255,7 @@ class ExecutionManagementSystem(ABC):
         Create an order
         """
         self._registry.register_order(order_submit.oid)
+        self._cache.add_inflight_order(order_submit.symbol, order_submit.oid)
         self._task_manager.create_task(
             self._private_connectors[account_type]._oms.create_order_ws(
                 oid=order_submit.oid,
@@ -621,6 +623,7 @@ class ExecutionManagementSystem(ABC):
     ):
         for order in batch_orders:
             self._registry.register_order(order.oid)
+            self._cache.add_inflight_order(order.symbol, order.oid)
 
         await self._private_connectors[account_type]._oms.create_batch_orders(
             orders=batch_orders,

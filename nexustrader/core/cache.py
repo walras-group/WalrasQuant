@@ -79,6 +79,9 @@ class AsyncCache:
         self._cancel_intent_oids: Set[str] = (
             set()
         )  # oids currently pending cancel intent
+        self._inflight_orders: Dict[str, Set[str]] = defaultdict(
+            set
+        )  # symbol -> set(oid) orders submitted but not yet acknowledged by exchange
 
         # set params
         self._sync_interval = sync_interval  # sync interval
@@ -401,6 +404,9 @@ class AsyncCache:
                     return False
                 self._mem_orders[order.oid] = order
 
+                # Remove from inflight tracking once exchange acknowledges the order
+                self._inflight_orders[order.symbol].discard(order.oid)
+
                 # Ensure order is tracked in all sets if it's open (handles WebSocket arriving before REST API)
                 if not order.is_closed:
                     self._mem_open_orders[order.exchange].add(order.oid)
@@ -416,10 +422,37 @@ class AsyncCache:
         with self._order_lock:
             oids = self._mem_symbol_open_orders.get(symbol, set())
             self._cancel_intent_oids.update(oids)
+            self._log.debug(
+                f"Marked {len(oids)} orders as cancel intent for symbol {symbol}"
+            )
 
     def mark_cancel_intent(self, oid: str) -> None:
         with self._order_lock:
             self._cancel_intent_oids.add(oid)
+            self._log.debug(f"Marked order {oid} as cancel intent")
+
+    def add_inflight_order(self, symbol: str, oid: str) -> None:
+        with self._order_lock:
+            self._inflight_orders[symbol].add(oid)
+
+    def get_inflight_orders(self, symbol: str) -> Set[str]:
+        with self._order_lock:
+            return self._inflight_orders.get(symbol, set()).copy()
+
+    async def wait_for_inflight_orders(
+        self, symbol: str, timeout: float = 5.0, interval: float = 0.1
+    ) -> None:
+        waited = 0.0
+        while self.get_inflight_orders(symbol) and waited < timeout:
+            await asyncio.sleep(interval)
+            waited += interval
+
+        remaining = self.get_inflight_orders(symbol)
+        if remaining:
+            self._log.warning(
+                f"Timeout waiting for inflight orders to resolve for {symbol}, "
+                f"remaining inflight: {remaining}"
+            )
 
     # NOTE: this function is not for user to call, it is for internal use
     def _get_all_balances_from_db(self, account_type: AccountType) -> List[Balance]:

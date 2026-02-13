@@ -110,14 +110,15 @@ class HyperLiquidExecutionManagementSystem(ExecutionManagementSystem):
     ):
         # override the base method
         symbol = order_submit.symbol
+        await self._cache.wait_for_inflight_orders(symbol)
         oids = self._cache.get_open_orders(symbol)
         for oid in oids:
-            order_submit = CancelOrderSubmit(
+            cancel_submit = CancelOrderSubmit(
                 symbol=symbol,
                 instrument_id=InstrumentId.from_str(symbol),
                 oid=oid,
             )
-            await self._cancel_order(order_submit, account_type)
+            await self._cancel_order(cancel_submit, account_type)
 
     async def _create_order(
         self, order_submit: CreateOrderSubmit, account_type: AccountType
@@ -127,6 +128,7 @@ class HyperLiquidExecutionManagementSystem(ExecutionManagementSystem):
         """
         oid = oid_to_cloid_hex(order_submit.oid)
         self._registry.register_order(oid)
+        self._cache.add_inflight_order(order_submit.symbol, oid)
         await self._private_connectors[account_type]._oms.create_order(
             oid=oid,
             symbol=order_submit.symbol,
@@ -146,6 +148,7 @@ class HyperLiquidExecutionManagementSystem(ExecutionManagementSystem):
         for order in batch_orders:
             oid = oid_to_cloid_hex(order.oid)
             self._registry.register_order(oid=oid)
+            self._cache.add_inflight_order(order.symbol, oid)
             new_batch_orders.append(
                 BatchOrderSubmit(
                     symbol=order.symbol,
@@ -173,6 +176,7 @@ class HyperLiquidExecutionManagementSystem(ExecutionManagementSystem):
         """
         oid = oid_to_cloid_hex(order_submit.oid)
         self._registry.register_order(oid)
+        self._cache.add_inflight_order(order_submit.symbol, oid)
         await self._private_connectors[account_type]._oms.create_order_ws(
             oid=oid,
             symbol=order_submit.symbol,

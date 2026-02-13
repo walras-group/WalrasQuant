@@ -123,11 +123,12 @@ class OkxExecutionManagementSystem(ExecutionManagementSystem):
     ):
         # override the base methods
         symbol = order_submit.symbol
-        oids = self._cache.get_open_orders(symbol)
+        await self._cache.wait_for_inflight_orders(symbol)
+        oids = self._cache.get_open_orders(symbol, include_canceling=True)
         for oid in oids:
-            order_submit = CancelOrderSubmit(
+            cancel_submit = CancelOrderSubmit(
                 symbol=symbol,
                 instrument_id=InstrumentId.from_str(symbol),
                 oid=oid,
             )
-            await self._cancel_order(order_submit, account_type)
+            await self._cancel_order(cancel_submit, account_type)

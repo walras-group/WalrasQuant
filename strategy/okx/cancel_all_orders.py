@@ -1,4 +1,5 @@
 from decimal import Decimal
+import time
 
 
 from nexustrader.constants import settings
@@ -7,6 +8,7 @@ from nexustrader.config import (
     PublicConnectorConfig,
     PrivateConnectorConfig,
     BasicConfig,
+    LogConfig,
 )
 from nexustrader.strategy import Strategy
 from nexustrader.constants import ExchangeType, OrderSide, OrderType
@@ -30,25 +32,25 @@ class Demo(Strategy):
         self.subscribe_bookl1(symbols=["SOLUSDT-PERP.OKX"])
 
     def on_cancel_failed_order(self, order: Order):
-        print(order)
+        self.log.info(str(order))
 
     def on_canceled_order(self, order: Order):
-        print(order)
+        self.log.info(str(order))
 
     def on_failed_order(self, order: Order):
-        print(order)
+        self.log.info(str(order))
 
     def on_pending_order(self, order: Order):
-        print(order)
+        self.log.info(str(order))
 
     def on_accepted_order(self, order: Order):
-        print(order)
+        self.log.info(str(order))
 
     def on_partially_filled_order(self, order: Order):
-        print(order)
+        self.log.info(str(order))
 
     def on_filled_order(self, order: Order):
-        print(order)
+        self.log.info(str(order))
 
     def on_bookl1(self, bookl1: BookL1):
         if self.signal:
@@ -57,28 +59,28 @@ class Demo(Strategy):
                 side=OrderSide.BUY,
                 type=OrderType.LIMIT,
                 amount=Decimal("0.1"),
-                price=Decimal("140"),
+                price=Decimal("50"),
             )
             self.create_order(
                 symbol="SOLUSDT-PERP.OKX",
                 side=OrderSide.BUY,
                 type=OrderType.LIMIT,
                 amount=Decimal("0.1"),
-                price=Decimal("139"),
+                price=Decimal("50"),
             )
             self.create_order(
                 symbol="SOLUSDT-PERP.OKX",
                 side=OrderSide.BUY,
                 type=OrderType.LIMIT,
                 amount=Decimal("0.1"),
-                price=Decimal("138"),
+                price=Decimal("50"),
             )
             self.create_order(
                 symbol="SOLUSDT-PERP.OKX",
                 side=OrderSide.BUY,
                 type=OrderType.LIMIT,
                 amount=Decimal("0.1"),
-                price=Decimal("137"),
+                price=Decimal("50"),
             )
             self.signal = False
 
@@ -90,6 +92,7 @@ class Demo(Strategy):
 config = Config(
     strategy_id="demo_buy_and_cancel",
     user_id="user_test",
+    log_config=LogConfig(level="INFO", filename="logs/app.log"),
     strategy=Demo(),
     basic_config={
         ExchangeType.OKX: BasicConfig(
