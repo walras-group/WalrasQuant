@@ -17,6 +17,7 @@ from nexustrader.base import OrderManagementSystem
 from nexustrader.core.registry import OrderRegistry
 from nexustrader.core.entity import TaskManager
 from nexustrader.error import PositionModeError
+from nexustrader.exchange.binance.error import BinanceRateLimitError, BinanceClientError, BinanceServerError
 from nexustrader.exchange.binance.schema import (
     BinanceMarket,
     BinanceFuturesPositionInfo,
@@ -248,6 +249,7 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
                         price=tmp_order.price,
                         time_in_force=tmp_order.time_in_force,
                         reduce_only=tmp_order.reduce_only,
+                        reason=msg.error.format_str,
                     )
                     self.order_status_update(order)  # SOME STATUS -> FAILED
 
@@ -880,6 +882,28 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
                 if res.positionSide
                 else None,
             )
+        except BinanceRateLimitError as e:
+            error_msg = f"rate_limit (retry_after={e.retry_after:.1f}s, type={e.rate_limit_type}): {str(e)}"
+            self._log.error(f"Error canceling order: {error_msg} params: {str(params)}")
+            order = Order(
+                exchange=self._exchange_id,
+                timestamp=self._clock.timestamp_ms(),
+                symbol=symbol,
+                oid=oid,
+                status=OrderStatus.CANCEL_FAILED,
+                reason=error_msg,
+            )
+        except (BinanceClientError, BinanceServerError) as e:
+            error_msg = str(e)
+            self._log.error(f"Error canceling order: {error_msg} params: {str(params)}")
+            order = Order(
+                exchange=self._exchange_id,
+                timestamp=self._clock.timestamp_ms(),
+                symbol=symbol,
+                oid=oid,
+                status=OrderStatus.CANCEL_FAILED,
+                reason=error_msg,
+            )
         except Exception as e:
             error_msg = f"{e.__class__.__name__}: {str(e)}"
             self._log.error(f"Error canceling order: {error_msg} params: {str(params)}")
@@ -889,6 +913,7 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
                 symbol=symbol,
                 oid=oid,
                 status=OrderStatus.CANCEL_FAILED,
+                reason=error_msg,
             )
         self.order_status_update(order)
 

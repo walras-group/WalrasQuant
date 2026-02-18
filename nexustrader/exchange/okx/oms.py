@@ -3,6 +3,7 @@ import warnings
 from typing import Dict, List
 from decimal import Decimal
 from nexustrader.error import PositionModeError
+from nexustrader.exchange.okx.error import OkxRateLimitError, OkxHttpError, OkxRequestError
 from nexustrader.exchange.okx import OkxAccountType
 from nexustrader.exchange.okx.websockets import OkxWSClient, OkxWSApiClient
 from nexustrader.exchange.okx.schema import OkxWsGeneralMsg
@@ -213,6 +214,7 @@ class OkxOrderManagementSystem(OrderManagementSystem):
                             timestamp=ts,
                             time_in_force=time_in_force,
                             reduce_only=reduce_only,
+                            reason=msg.error_msg,
                         )
                         self.order_status_update(order)
         except msgspec.DecodeError as e:
@@ -875,6 +877,28 @@ class OkxOrderManagementSystem(OrderManagementSystem):
                 symbol=symbol,
                 status=OrderStatus.CANCELING,
             )
+        except OkxRateLimitError as e:
+            error_msg = f"rate_limit (retry_after={e.retry_after:.1f}s): {str(e)}"
+            self._log.error(f"Error canceling order: {error_msg} params: {str(params)}")
+            order = Order(
+                oid=oid,
+                exchange=self._exchange_id,
+                timestamp=self._clock.timestamp_ms(),
+                symbol=symbol,
+                status=OrderStatus.CANCEL_FAILED,
+                reason=error_msg,
+            )
+        except (OkxHttpError, OkxRequestError) as e:
+            error_msg = str(e)
+            self._log.error(f"Error canceling order: {error_msg} params: {str(params)}")
+            order = Order(
+                oid=oid,
+                exchange=self._exchange_id,
+                timestamp=self._clock.timestamp_ms(),
+                symbol=symbol,
+                status=OrderStatus.CANCEL_FAILED,
+                reason=error_msg,
+            )
         except Exception as e:
             error_msg = f"{e.__class__.__name__}: {str(e)}"
             self._log.error(f"Error canceling order: {error_msg} params: {str(params)}")
@@ -884,6 +908,7 @@ class OkxOrderManagementSystem(OrderManagementSystem):
                 timestamp=self._clock.timestamp_ms(),
                 symbol=symbol,
                 status=OrderStatus.CANCEL_FAILED,
+                reason=error_msg,
             )
         self.order_status_update(order)
 

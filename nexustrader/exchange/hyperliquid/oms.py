@@ -2,6 +2,7 @@ import msgspec
 from decimal import Decimal
 from typing import Dict, List
 from nexustrader.error import PositionModeError
+from nexustrader.exchange.hyperliquid.error import HyperliquidRateLimitError, HyperLiquidHttpError, HyperLiquidOrderError
 from nexustrader.constants import (
     ExchangeType,
     OrderSide,
@@ -472,7 +473,32 @@ class HyperLiquidOrderManagementSystem(OrderManagementSystem):
                     timestamp=self._clock.timestamp_ms(),
                     symbol=symbol,
                     status=OrderStatus.CANCEL_FAILED,
+                    reason=error_msg,
                 )
+            self.order_status_update(order)
+        except HyperliquidRateLimitError as e:
+            error_msg = f"rate_limit (retry_after={e.retry_after:.1f}s): {str(e)}"
+            self._log.error(f"Error canceling order: {error_msg} params: {str(params)}")
+            order = Order(
+                oid=oid,
+                exchange=self._exchange_id,
+                timestamp=self._clock.timestamp_ms(),
+                symbol=symbol,
+                status=OrderStatus.CANCEL_FAILED,
+                reason=error_msg,
+            )
+            self.order_status_update(order)
+        except (HyperLiquidHttpError, HyperLiquidOrderError) as e:
+            error_msg = str(e)
+            self._log.error(f"Error canceling order: {error_msg} params: {str(params)}")
+            order = Order(
+                oid=oid,
+                exchange=self._exchange_id,
+                timestamp=self._clock.timestamp_ms(),
+                symbol=symbol,
+                status=OrderStatus.CANCEL_FAILED,
+                reason=error_msg,
+            )
             self.order_status_update(order)
         except Exception as e:
             error_msg = f"{e.__class__.__name__}: {str(e)}"
@@ -483,6 +509,7 @@ class HyperLiquidOrderManagementSystem(OrderManagementSystem):
                 timestamp=self._clock.timestamp_ms(),
                 symbol=symbol,
                 status=OrderStatus.CANCEL_FAILED,
+                reason=error_msg,
             )
             self.order_status_update(order)
 
@@ -722,6 +749,7 @@ class HyperLiquidOrderManagementSystem(OrderManagementSystem):
                 timestamp=self._clock.timestamp_ms(),
                 symbol=temp_order.symbol,
                 status=OrderStatus.CANCEL_FAILED,
+                reason=status.error,
             )
         self.order_status_update(order)
 

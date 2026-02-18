@@ -4,6 +4,7 @@ from decimal import Decimal
 from typing import Literal
 from decimal import ROUND_HALF_UP, ROUND_CEILING, ROUND_FLOOR
 from nexustrader.error import PositionModeError
+from nexustrader.exchange.bitget.error import BitgetRateLimitError, BitgetError
 from nexustrader.core.nautilius_core import LiveClock, MessageBus
 from nexustrader.core.cache import AsyncCache
 from nexustrader.base import OrderManagementSystem
@@ -243,7 +244,8 @@ class BitgetOrderManagementSystem(OrderManagementSystem):
                 f"[{tmp_order.symbol}] canceling order failed: oid: {oid} {ws_msg.error_msg}"
             )
             order = self._create_order_from_tmp(
-                tmp_order, oid, None, OrderStatus.CANCEL_FAILED, ts
+                tmp_order, oid, None, OrderStatus.CANCEL_FAILED, ts,
+                reason=ws_msg.error_msg,
             )
             self.order_status_update(order)
 
@@ -299,7 +301,8 @@ class BitgetOrderManagementSystem(OrderManagementSystem):
                 f"[{tmp_order.symbol}] canceling order failed: oid: {oid} {ws_msg.error_msg}"
             )
             order = self._create_order_from_tmp(
-                tmp_order, oid, None, OrderStatus.CANCEL_FAILED, ts
+                tmp_order, oid, None, OrderStatus.CANCEL_FAILED, ts,
+                reason=ws_msg.error_msg,
             )
             self.order_status_update(order)
 
@@ -310,6 +313,7 @@ class BitgetOrderManagementSystem(OrderManagementSystem):
         order_id: str | None,
         status: OrderStatus,
         timestamp: int,
+        reason: str | None = None,
     ) -> Order:
         """Create Order object from temporary order data"""
         return Order(
@@ -325,6 +329,7 @@ class BitgetOrderManagementSystem(OrderManagementSystem):
             price=tmp_order.price,
             time_in_force=tmp_order.time_in_force,
             reduce_only=tmp_order.reduce_only,
+            reason=reason,
         )
 
     def _inst_type_suffix(self, inst_type: BitgetInstType):
@@ -933,6 +938,28 @@ class BitgetOrderManagementSystem(OrderManagementSystem):
                 symbol=symbol,
                 status=OrderStatus.CANCELING,
             )
+        except BitgetRateLimitError as e:
+            error_msg = f"rate_limit (retry_after={e.retry_after:.1f}s): {str(e)}"
+            self._log.error(f"Error canceling order: {error_msg} params: {str(params)}")
+            order = Order(
+                oid=oid,
+                exchange=self._exchange_id,
+                timestamp=self._clock.timestamp_ms(),
+                symbol=symbol,
+                status=OrderStatus.CANCEL_FAILED,
+                reason=error_msg,
+            )
+        except BitgetError as e:
+            error_msg = str(e)
+            self._log.error(f"Error canceling order: {error_msg} params: {str(params)}")
+            order = Order(
+                oid=oid,
+                exchange=self._exchange_id,
+                timestamp=self._clock.timestamp_ms(),
+                symbol=symbol,
+                status=OrderStatus.CANCEL_FAILED,
+                reason=error_msg,
+            )
         except Exception as e:
             error_msg = f"{e.__class__.__name__}: {str(e)}"
             self._log.error(f"Error canceling order: {error_msg} params: {str(params)}")
@@ -942,6 +969,7 @@ class BitgetOrderManagementSystem(OrderManagementSystem):
                 timestamp=self._clock.timestamp_ms(),
                 symbol=symbol,
                 status=OrderStatus.CANCEL_FAILED,
+                reason=error_msg,
             )
         self.order_status_update(order)
 

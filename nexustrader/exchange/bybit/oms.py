@@ -3,6 +3,7 @@ from typing import Dict, List
 from decimal import Decimal
 
 from nexustrader.error import PositionModeError
+from nexustrader.exchange.bybit.error import BybitRateLimitError, BybitError
 
 from nexustrader.core.nautilius_core import LiveClock, MessageBus
 from nexustrader.base import OrderManagementSystem
@@ -209,6 +210,7 @@ class BybitOrderManagementSystem(OrderManagementSystem):
                 time_in_force=time_in_force,
                 timestamp=ts,
                 reduce_only=reduce_only,
+                reason=msg.error_msg,
             )
             self.order_status_update(order)
 
@@ -292,6 +294,28 @@ class BybitOrderManagementSystem(OrderManagementSystem):
                 symbol=symbol,
                 status=OrderStatus.CANCELING,
             )
+        except BybitRateLimitError as e:
+            error_msg = f"rate_limit (retry_after={e.retry_after:.1f}s): {str(e)}"
+            self._log.error(f"Error canceling order: {error_msg} params: {str(params)}")
+            order = Order(
+                oid=oid,
+                exchange=self._exchange_id,
+                timestamp=self._clock.timestamp_ms(),
+                symbol=symbol,
+                status=OrderStatus.CANCEL_FAILED,
+                reason=error_msg,
+            )
+        except BybitError as e:
+            error_msg = str(e)
+            self._log.error(f"Error canceling order: {error_msg} params: {str(params)}")
+            order = Order(
+                oid=oid,
+                exchange=self._exchange_id,
+                timestamp=self._clock.timestamp_ms(),
+                symbol=symbol,
+                status=OrderStatus.CANCEL_FAILED,
+                reason=error_msg,
+            )
         except Exception as e:
             error_msg = f"{e.__class__.__name__}: {str(e)}"
             self._log.error(f"Error canceling order: {error_msg} params: {str(params)}")
@@ -301,6 +325,7 @@ class BybitOrderManagementSystem(OrderManagementSystem):
                 timestamp=self._clock.timestamp_ms(),
                 symbol=symbol,
                 status=OrderStatus.CANCEL_FAILED,
+                reason=error_msg,
             )
         self.order_status_update(order)
 

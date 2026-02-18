@@ -169,9 +169,10 @@ class BinanceApiClient(ApiClient):
                     error_msg = raw.decode()
 
                 if response.status_code >= 500:
+                    msg = error_msg.get("msg", str(error_msg)) if isinstance(error_msg, dict) else str(error_msg)
                     raise BinanceServerError(
                         code=int(response.status_code),
-                        message=error_msg,
+                        message=msg,
                     )
                 else:
                     raise BinanceClientError(
@@ -252,9 +253,10 @@ class BinanceApiClient(ApiClient):
                     error_msg = raw.decode()
 
                 if response.status_code >= 500:
+                    msg = error_msg.get("msg", str(error_msg)) if isinstance(error_msg, dict) else str(error_msg)
                     raise BinanceServerError(
                         code=int(response.status_code),
-                        message=error_msg,
+                        message=msg,
                     )
                 else:
                     raise BinanceClientError(

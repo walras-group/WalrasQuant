@@ -634,9 +634,12 @@ class OkxApiClient(ApiClient):
             raw = response.content
 
             if response.status_code >= 400:
+                error_data = msgspec.json.decode(raw)
+                code = error_data.get("code", str(response.status_code))
+                msg = error_data.get("msg", "Unknown error")
                 raise OkxHttpError(
                     status_code=response.status_code,
-                    message=msgspec.json.decode(raw),
+                    message=f"code={code}, msg={msg}",
                     headers=response.headers,
                 )
             okx_response = self._general_response_decoder.decode(raw)
@@ -706,9 +709,12 @@ class OkxApiClient(ApiClient):
             raw = response.content
 
             if response.status_code >= 400:
+                error_data = msgspec.json.decode(raw)
+                code = error_data.get("code", str(response.status_code))
+                msg = error_data.get("msg", "Unknown error")
                 raise OkxHttpError(
                     status_code=response.status_code,
-                    message=msgspec.json.decode(raw),
+                    message=f"code={code}, msg={msg}",
                     headers=response.headers,
                 )
             okx_response = self._general_response_decoder.decode(raw)
