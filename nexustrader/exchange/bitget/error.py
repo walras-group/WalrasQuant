@@ -16,3 +16,21 @@ class BitgetError(Exception):
         return f"{type(self).__name__}(code={self.code}, message='{self.message}')"
 
     __str__ = __repr__
+
+
+class BitgetRateLimitError(Exception):
+    """
+    Raised when Bitget API rate limit is exceeded.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        retry_after: float = 0.0,
+        scope: str | None = None,
+        endpoint: str | None = None,
+    ):
+        super().__init__(message)
+        self.retry_after = retry_after
+        self.scope = scope
+        self.endpoint = endpoint

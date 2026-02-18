@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Union
 from collections import defaultdict
 import nexuslog as logging
 
@@ -18,6 +18,7 @@ class SubscriptionManagementSystem:
         public_connectors: Dict[AccountType, PublicConnector],
         task_manager: TaskManager,
         clock: LiveClock,
+        sms_maxsize: int = 100_000,
     ):
         self._log = logging.getLogger(name=type(self).__name__)
 
@@ -27,11 +28,32 @@ class SubscriptionManagementSystem:
         self._clock = clock
 
         # Two queues: one for subscribe, one for unsubscribe
-        self._subscribe_queue: asyncio.Queue[SubscriptionSubmit] = asyncio.Queue()
-        self._unsubscribe_queue: asyncio.Queue[UnsubscriptionSubmit] = asyncio.Queue()
+        self._subscribe_queue: asyncio.Queue[SubscriptionSubmit] = asyncio.Queue(
+            maxsize=sms_maxsize
+        )
+        self._unsubscribe_queue: asyncio.Queue[UnsubscriptionSubmit] = asyncio.Queue(
+            maxsize=sms_maxsize
+        )
 
         # Track subscription readiness
         self._subscriptions_ready: Dict[Union[DataType, str], DataReady] = {}
+
+    def _safe_put(self, queue: asyncio.Queue, item: Any) -> None:
+        if queue.maxsize == 0 or queue.qsize() < queue.maxsize:
+            try:
+                queue.put_nowait(item)
+                return
+            except asyncio.QueueFull:
+                pass
+        task = asyncio.get_running_loop().create_task(queue.put(item))
+        task.add_done_callback(self._on_queue_put_done)
+
+    def _on_queue_put_done(self, task: asyncio.Task) -> None:
+        if task.cancelled():
+            return
+        exc = task.exception()
+        if exc:
+            self._log.error(f"Queue put failed: {exc!r}")
 
     def _infer_account_type(self, symbol: str) -> AccountType:
         """Infer account type from symbol"""
@@ -100,7 +122,7 @@ class SubscriptionManagementSystem:
             ready=ready,
         )
 
-        self._subscribe_queue.put_nowait(subscription)
+        self._safe_put(self._subscribe_queue, subscription)
         self._log.debug(f"Subscription queued: {data_type} for {symbols}")
 
     def unsubscribe(
@@ -129,7 +151,7 @@ class SubscriptionManagementSystem:
             params=params,
         )
 
-        self._unsubscribe_queue.put_nowait(unsubscription)
+        self._safe_put(self._unsubscribe_queue, unsubscription)
         self._log.debug(f"Unsubscription queued: {data_type} for {symbols}")
 
     def _subscribe_trade(

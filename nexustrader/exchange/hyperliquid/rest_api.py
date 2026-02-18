@@ -183,7 +183,7 @@ class HyperLiquidApiClient(ApiClient):
         """Get user perps summary"""
         endpoint = "/info"
         payload = {"type": "clearinghouseState", "user": self._api_key, "dex": ""}
-        self._limiter_sync(endpoint).limit(key=endpoint, cost=2)
+        self._limiter_sync.info_limit(cost=2)
         raw = self._fetch_sync("POST", self._base_url, endpoint, payload)
         return self._user_perps_summary_decoder.decode(raw)
 
@@ -191,7 +191,7 @@ class HyperLiquidApiClient(ApiClient):
         """Get user spot summary"""
         endpoint = "/info"
         payload = {"type": "spotClearinghouseState", "user": self._api_key}
-        self._limiter_sync(endpoint).limit(key=endpoint, cost=2)
+        self._limiter_sync.info_limit(cost=2)
         raw = self._fetch_sync("POST", self._base_url, endpoint, payload)
         return self._user_spot_summary_decoder.decode(raw)
 
@@ -213,7 +213,7 @@ class HyperLiquidApiClient(ApiClient):
             req["endTime"] = endTime
         payload = {"type": "candleSnapshot", "req": req}
 
-        self._limiter_sync(endpoint).limit(key=endpoint, cost=20)
+        self._limiter_sync.info_limit(cost=20)
         raw = self._fetch_sync("POST", self._base_url, endpoint, payload)
         return self._kline_decoder.decode(raw)
 
@@ -286,7 +286,7 @@ class HyperLiquidApiClient(ApiClient):
         }
         signature = self._sign_l1_action(orderAction, nounce, vaultAddress=None)
         cost = self._get_rate_limit_cost(length=len(orders), cost=1)
-        await self._limiter("/exchange").limit(key="orders", cost=cost)
+        await self._limiter.exchange_limit(cost=cost)
         res = await self._fetch(
             "POST",
             self._base_url,
@@ -311,7 +311,7 @@ class HyperLiquidApiClient(ApiClient):
         }
         signature = self._sign_l1_action(orderAction, nounce, vaultAddress=None)
         cost = self._get_rate_limit_cost(length=len(cancels), cost=1)
-        await self._limiter("/exchange").limit(key="cancel", cost=cost)
+        await self._limiter.exchange_limit(cost=cost)
         res = await self._fetch(
             "POST",
             self._base_url,
@@ -335,7 +335,7 @@ class HyperLiquidApiClient(ApiClient):
         }
         signature = self._sign_l1_action(orderAction, nounce, vaultAddress=None)
         cost = self._get_rate_limit_cost(length=len(cancels), cost=1)
-        await self._limiter("/exchange").limit(key="cancel", cost=cost)
+        await self._limiter.exchange_limit(cost=cost)
         res = await self._fetch(
             "POST",
             self._base_url,

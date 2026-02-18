@@ -225,7 +225,7 @@ class TWAPExecAlgorithm(ExecAlgorithm):
             if bookl1:
                 n_tick_sz = params.get("n_tick_sz", 0)
                 tick_sz = self.tick_sz(exec_order.symbol)
-                
+
                 if exec_order.side.is_buy:
                     # For buy, offset positive = lower price (more passive)
                     raw_price = bookl1.bid - n_tick_sz * tick_sz

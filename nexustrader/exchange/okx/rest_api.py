@@ -157,7 +157,7 @@ class OkxApiClient(ApiClient):
         endpoint = "/api/v5/account/balance"
         payload = {"ccy": ccy} if ccy else {}
         cost = self._get_rate_limit_cost(1)
-        self._limiter_sync(endpoint).limit(key=endpoint, cost=cost)
+        self._limiter_sync.query_limit(endpoint, cost=cost)
         raw = self._fetch_sync("GET", endpoint, payload=payload, signed=True)
         return self._balance_response_decoder.decode(raw)
 
@@ -181,7 +181,7 @@ class OkxApiClient(ApiClient):
             if v is not None
         }
         cost = self._get_rate_limit_cost(1)
-        self._limiter_sync(endpoint).limit(key=endpoint, cost=cost)
+        self._limiter_sync.query_limit(endpoint, cost=cost)
         raw = self._fetch_sync("GET", endpoint, payload=payload, signed=True)
         return self._position_response_decoder.decode(raw)
 
@@ -210,7 +210,7 @@ class OkxApiClient(ApiClient):
             **kwargs,
         }
         cost = self._get_rate_limit_cost(1)
-        await self._limiter(endpoint).limit(key=endpoint, cost=cost)
+        await self._limiter.order_limit(endpoint, cost=cost)
         raw = await self._fetch("POST", endpoint, payload=payload, signed=True)
         return self._place_order_decoder.decode(raw)
 
@@ -225,7 +225,7 @@ class OkxApiClient(ApiClient):
         payload = {"instId": instId, "clOrdId": clOrdId}
 
         cost = self._get_rate_limit_cost(1)
-        await self._limiter(endpoint).limit(key=endpoint, cost=cost)
+        await self._limiter.order_limit(endpoint, cost=cost)
         raw = await self._fetch("POST", endpoint, payload=payload, signed=True)
         return self._cancel_order_decoder.decode(raw)
 
@@ -248,7 +248,7 @@ class OkxApiClient(ApiClient):
         """
         endpoint = "/api/v5/trade/cancel-batch-orders"
         cost = len(payload)
-        await self._limiter(endpoint).limit(key=endpoint, cost=cost)
+        await self._limiter.order_limit(endpoint, cost=cost)
         raw = await self._fetch("POST", endpoint, payload=payload, signed=True)
         return self._cancel_batch_order_response_decoder.decode(raw)
 
@@ -273,7 +273,7 @@ class OkxApiClient(ApiClient):
         }
         payload = {k: v for k, v in payload.items() if v is not None}
         cost = self._get_rate_limit_cost(1)
-        self._limiter_sync(endpoint).limit(key=endpoint, cost=cost)
+        self._limiter_sync.query_limit(endpoint, cost=cost)
         raw = self._fetch_sync("GET", endpoint, payload=payload, signed=False)
         return self._index_candles_response_decoder.decode(raw)
 
@@ -299,7 +299,7 @@ class OkxApiClient(ApiClient):
             if v is not None
         }
         cost = self._get_rate_limit_cost(1)
-        self._limiter_sync(endpoint).limit(key=endpoint, cost=cost)
+        self._limiter_sync.query_limit(endpoint, cost=cost)
         raw = self._fetch_sync("GET", endpoint, payload=payload, signed=False)
         return self._candles_response_decoder.decode(raw)
 
@@ -325,7 +325,7 @@ class OkxApiClient(ApiClient):
             if v is not None
         }
         cost = self._get_rate_limit_cost(1)
-        self._limiter_sync(endpoint).limit(key=endpoint, cost=cost)
+        self._limiter_sync.query_limit(endpoint, cost=cost)
         raw = self._fetch_sync("GET", endpoint, payload=payload, signed=False)
         return self._candles_response_decoder.decode(raw)
 
@@ -459,7 +459,7 @@ class OkxApiClient(ApiClient):
         }
         payload = {k: v for k, v in payload.items() if v is not None}
         cost = self._get_rate_limit_cost(1)
-        await self._limiter(endpoint).limit(key=endpoint, cost=cost)
+        await self._limiter.order_limit(endpoint, cost=cost)
         raw = await self._fetch("POST", endpoint, payload=payload, signed=True)
         return self._amend_order_response_decoder.decode(raw)
 
@@ -487,7 +487,7 @@ class OkxApiClient(ApiClient):
         """
         endpoint = "/api/v5/trade/batch-orders"
         cost = len(payload)
-        await self._limiter(endpoint).limit(key=endpoint, cost=cost)
+        await self._limiter.order_limit(endpoint, cost=cost)
         raw = await self._fetch("POST", endpoint, payload=payload, signed=True)
         return self._batch_order_response_decoder.decode(raw)
 
@@ -534,9 +534,9 @@ class OkxApiClient(ApiClient):
         GET /api/v5/account/config
         """
         endpoint = "/api/v5/account/config"
-        raw = self._fetch_sync("GET", endpoint, signed=True)
         cost = self._get_rate_limit_cost(1)
-        self._limiter_sync(endpoint).limit(key=endpoint, cost=cost)
+        self._limiter_sync.query_limit(endpoint, cost=cost)
+        raw = self._fetch_sync("GET", endpoint, signed=True)
         return self._account_config_response_decoder.decode(raw)
 
     def _generate_signature(self, message: str) -> str:
@@ -768,7 +768,7 @@ class OkxApiClient(ApiClient):
         payload = {k: v for k, v in payload.items() if v is not None}
 
         cost = self._get_rate_limit_cost(1)
-        self._limiter_sync(endpoint).limit(key=endpoint, cost=cost)
+        self._limiter_sync.query_limit(endpoint, cost=cost)
         raw = self._fetch_sync("GET", endpoint, payload=payload, signed=False)
         return self._tickers_response_decoder.decode(raw)
 
@@ -791,7 +791,7 @@ class OkxApiClient(ApiClient):
         payload = {"instId": inst_id}
 
         cost = self._get_rate_limit_cost(1)
-        self._limiter_sync(endpoint).limit(key=endpoint, cost=cost)
+        self._limiter_sync.query_limit(endpoint, cost=cost)
         raw = self._fetch_sync("GET", endpoint, payload=payload, signed=False)
         return self._tickers_response_decoder.decode(raw)
 
@@ -832,6 +832,6 @@ class OkxApiClient(ApiClient):
             payload["clOrdId"] = cl_ord_id
 
         cost = self._get_rate_limit_cost(1)
-        await self._limiter(endpoint).limit(key=endpoint, cost=cost)
+        await self._limiter.order_limit(endpoint, cost=cost)
         raw = await self._fetch("GET", endpoint, payload=payload, signed=True)
         return self._order_response_decoder.decode(raw)

@@ -1,6 +1,6 @@
 import asyncio
 from abc import ABC, abstractmethod
-from typing import Mapping, List, Dict
+from typing import Any, Mapping, List, Dict
 from typing import Literal
 from decimal import Decimal
 import nexuslog as logging
@@ -46,6 +46,7 @@ class ExecutionManagementSystem(ABC):
         task_manager: TaskManager,
         registry: OrderRegistry,
         is_mock: bool = False,
+        queue_maxsize: int = 100_000,
     ):
         self._log = logging.getLogger(name=type(self).__name__)
 
@@ -55,11 +56,29 @@ class ExecutionManagementSystem(ABC):
         self._task_manager = task_manager
         self._registry = registry
         self._clock = clock
+        self._queue_maxsize = queue_maxsize
         self._order_submit_queues: Dict[
             AccountType, asyncio.Queue[tuple[OrderSubmit, SubmitType]]
         ] = {}
         self._private_connectors: Dict[AccountType, PrivateConnector] | None = None
         self._is_mock = is_mock
+
+    def _safe_put(self, queue: asyncio.Queue, item: Any) -> None:
+        if queue.maxsize == 0 or queue.qsize() < queue.maxsize:
+            try:
+                queue.put_nowait(item)
+                return
+            except asyncio.QueueFull:
+                pass
+        task = asyncio.get_running_loop().create_task(queue.put(item))
+        task.add_done_callback(self._on_queue_put_done)
+
+    def _on_queue_put_done(self, task: asyncio.Task) -> None:
+        if task.cancelled():
+            return
+        exc = task.exception()
+        if exc:
+            self._log.error(f"Queue put failed: {exc!r}")
 
     def _build(self, private_connectors: Dict[AccountType, PrivateConnector]):
         self._private_connectors = private_connectors

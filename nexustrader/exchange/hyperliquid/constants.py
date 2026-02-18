@@ -14,6 +14,7 @@ from nexustrader.error import KlineSupportedError
 from throttled.asyncio import Throttled, rate_limiter, RateLimiterType
 from throttled import Throttled as ThrottledSync
 from throttled import rate_limiter as rate_limiter_sync
+from nexustrader.exchange.hyperliquid.error import HyperliquidRateLimitError
 
 
 def oid_to_cloid_hex(oid: str) -> str:
@@ -168,32 +169,82 @@ class HyperLiquidRateLimiter:
     """Rate limiter for Hyperliquid API"""
 
     def __init__(self, enable_rate_limit: bool = True):
-        self._throttled: Dict[str, Throttled] = {
-            "/exchange": Throttled(
-                quota=rate_limiter.per_duration(timedelta(seconds=60), limit=1200),
-                timeout=600 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
-        }
+        self._enabled = enable_rate_limit
+        self._exchange = Throttled(
+            quota=rate_limiter.per_duration(timedelta(seconds=60), limit=1200),
+            timeout=-1,
+            using=RateLimiterType.FIXED_WINDOW.value,
+        )
+        self._info = Throttled(
+            quota=rate_limiter.per_duration(timedelta(seconds=60), limit=1200),
+            timeout=-1,
+            using=RateLimiterType.FIXED_WINDOW.value,
+        )
 
-    def __call__(self, endpoint: str) -> Throttled:
-        return self._throttled[endpoint]
+    @staticmethod
+    def _raise_if_limited(result, message: str, scope: str, cost: int | None = None):
+        if result.limited:
+            raise HyperliquidRateLimitError(
+                message,
+                retry_after=result.state.retry_after,
+                scope=scope,
+                cost=cost,
+            )
+
+    async def exchange_limit(self, cost: int = 1):
+        if not self._enabled:
+            return
+        result = await self._exchange.limit(key="exchange", cost=cost, timeout=-1)
+        self._raise_if_limited(
+            result,
+            "Hyperliquid exchange rate limit exceeded",
+            scope="uid",
+            cost=cost,
+        )
+
+    async def info_limit(self, cost: int = 1):
+        if not self._enabled:
+            return
+        result = await self._info.limit(key="info", cost=cost, timeout=120)
+        self._raise_if_limited(
+            result,
+            "Hyperliquid info rate limit exceeded",
+            scope="ip",
+            cost=cost,
+        )
 
 
 class HyperLiquidRateLimiterSync:
     """Synchronous rate limiter for Hyperliquid API"""
 
     def __init__(self, enable_rate_limit: bool = True):
-        self._throttled: Dict[str, Throttled] = {
-            "/info": ThrottledSync(
-                quota=rate_limiter_sync.per_duration(timedelta(seconds=60), limit=1200),
-                timeout=600 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
-        }
+        self._enabled = enable_rate_limit
+        self._info = ThrottledSync(
+            quota=rate_limiter_sync.per_duration(timedelta(seconds=60), limit=1200),
+            timeout=-1,
+            using=RateLimiterType.FIXED_WINDOW.value,
+        )
 
-    def __call__(self, endpoint: str) -> Throttled:
-        return self._throttled[endpoint]
+    @staticmethod
+    def _raise_if_limited(result, message: str, scope: str, cost: int | None = None):
+        if result.limited:
+            raise HyperliquidRateLimitError(
+                message,
+                retry_after=result.state.retry_after,
+                scope=scope,
+                cost=cost,
+            )
+
+    def info_limit(self, cost: int = 1):
+        if not self._enabled:
+            return
+        result = self._info.limit(key="info", cost=cost, timeout=120)
+        self._raise_if_limited(
+            result,
+            "Hyperliquid info rate limit exceeded",
+            scope="ip",
+            cost=cost,
+        )
 
 
 class HyperLiquidOrderLimitTypeRequest(TypedDict):

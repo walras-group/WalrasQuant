@@ -46,7 +46,7 @@ class Demo(Strategy):
                     "horizon_secs": 100,  # 100 seconds
                     "interval_secs": 10,  # every 10 seconds
                     "n_tick_sz": 1,  # offset by 1 tick size
-                    "use_limit": True, # use limit orders
+                    "use_limit": True,  # use limit orders
                 },
                 reduce_only=True,
             )

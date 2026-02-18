@@ -13,7 +13,9 @@ from nexustrader.constants import (
     RateLimiterSync,
 )
 from nexustrader.error import KlineSupportedError
+from nexustrader.exchange.binance.error import BinanceRateLimitError
 from throttled.asyncio import Throttled, rate_limiter, RateLimiterType
+from throttled import RateLimitResult
 from throttled import Throttled as ThrottledSync
 from throttled import rate_limiter as rate_limiter_sync
 
@@ -584,6 +586,7 @@ class BinanceEnumParser:
 class BinanceRateLimitType(Enum):
     ORDERS = "ORDERS"
     REQUEST_WEIGHT = "REQUEST_WEIGHT"
+    RAW_REQUESTS = "RAW_REQUESTS"
 
 
 class BinanceRateLimiter(RateLimiter):
@@ -652,180 +655,532 @@ class BinanceRateLimiter(RateLimiter):
     #     },
     # ]
 
+    _BLOCKING_WEIGHT_TIMEOUT = 120
+    _BLOCKING_RAW_REQUEST_TIMEOUT = 600
+    _NON_BLOCKING_TIMEOUT = -1
+
     def __init__(self, enable_rate_limit: bool = True):
+        self._enabled = enable_rate_limit
         self._api_weight_limit = Throttled(
             quota=rate_limiter.per_min(6000),
-            timeout=120 if enable_rate_limit else -1,
-            using=RateLimiterType.GCRA.value,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
+        )
+        self._api_raw_req_limit = Throttled(
+            quota=rate_limiter.per_duration(timedelta(minutes=5), limit=61000),
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
         )
         self._api_order_sec_limit = Throttled(
             quota=rate_limiter.per_duration(timedelta(seconds=10), limit=100),
-            timeout=60 if enable_rate_limit else -1,
-            using=RateLimiterType.GCRA.value,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
         )
         self._api_order_day_limit = Throttled(
             quota=rate_limiter.per_day(200000),
-            timeout=24 * 60 * 60 * 2 if enable_rate_limit else -1,
-            using=RateLimiterType.GCRA.value,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
         )
 
         self._fapi_weight_limit = Throttled(
             quota=rate_limiter.per_min(2400),
-            timeout=120 if enable_rate_limit else -1,
-            using=RateLimiterType.GCRA.value,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
         )
         self._fapi_order_sec_limit = Throttled(
             quota=rate_limiter.per_duration(timedelta(seconds=10), limit=300),
-            timeout=60 if enable_rate_limit else -1,
-            using=RateLimiterType.GCRA.value,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
         )
         self._fapi_order_min_limit = Throttled(
             quota=rate_limiter.per_min(1200),
-            timeout=120 if enable_rate_limit else -1,
-            using=RateLimiterType.GCRA.value,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
         )
         self._dapi_weight_limit = Throttled(
             quota=rate_limiter.per_min(2400),
-            timeout=120 if enable_rate_limit else -1,
-            using=RateLimiterType.GCRA.value,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
         )
         self._dapi_order_min_limit = Throttled(
             quota=rate_limiter.per_min(1200),
-            timeout=120 if enable_rate_limit else -1,
-            using=RateLimiterType.GCRA.value,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
         )
 
         self._papi_weight_limit = Throttled(
             quota=rate_limiter.per_min(6000),
-            timeout=120 if enable_rate_limit else -1,
-            using=RateLimiterType.GCRA.value,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
         )
         self._papi_order_min_limit = Throttled(
             quota=rate_limiter.per_min(1200),
-            timeout=120 if enable_rate_limit else -1,
-            using=RateLimiterType.GCRA.value,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
         )
 
+    @staticmethod
+    def _raise_if_limited(
+        result: RateLimitResult, message: str, api_type: str, rate_limit_type: str
+    ):
+        if result.limited:
+            raise BinanceRateLimitError(
+                message,
+                retry_after=result.state.retry_after,
+                api_type=api_type,
+                rate_limit_type=rate_limit_type,
+            )
+
     async def api_weight_limit(self, cost: int):
-        await self._api_weight_limit.limit(key="/api", cost=cost)
+        if not self._enabled:
+            return
+        result = await self._api_weight_limit.limit(
+            key="/api",
+            cost=cost,
+            timeout=self._BLOCKING_WEIGHT_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result, "SPOT API weight limit exceeded", "api", "weight"
+        )
+        result = await self._api_raw_req_limit.limit(
+            key="/api",
+            cost=1,
+            timeout=self._BLOCKING_RAW_REQUEST_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result,
+            "SPOT API raw request limit exceeded",
+            "api",
+            "raw_requests",
+        )
 
     async def api_order_limit(
-        self, cost: int, order_sec_cost: int = 1, order_day_cost: int = 1
+        self,
+        cost: int,
+        order_sec_cost: int = 1,
+        order_day_cost: int = 1,
     ):
-        await self._api_weight_limit.limit(key="/api", cost=cost)
-        await self._api_order_sec_limit.limit(key="/api", cost=order_sec_cost)
-        await self._api_order_day_limit.limit(key="/api", cost=order_day_cost)
+        if not self._enabled:
+            return
+        result = await self._api_order_sec_limit.limit(
+            key="/api",
+            cost=order_sec_cost,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result, "SPOT API order limit (10s) exceeded", "api", "orders"
+        )
+        result = await self._api_order_day_limit.limit(
+            key="/api",
+            cost=order_day_cost,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result, "SPOT API order limit (day) exceeded", "api", "orders"
+        )
+        result = await self._api_weight_limit.limit(
+            key="/api",
+            cost=cost,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result,
+            "SPOT API weight limit exceeded (order)",
+            "api",
+            "weight",
+        )
+        result = await self._api_raw_req_limit.limit(
+            key="/api",
+            cost=1,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result,
+            "SPOT API raw request limit exceeded (order)",
+            "api",
+            "raw_requests",
+        )
 
     async def fapi_weight_limit(self, cost: int):
-        await self._fapi_weight_limit.limit(key="/fapi", cost=cost)
+        if not self._enabled:
+            return
+        result = await self._fapi_weight_limit.limit(
+            key="/fapi",
+            cost=cost,
+            timeout=self._BLOCKING_WEIGHT_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result, "USD-M Futures weight limit exceeded", "fapi", "weight"
+        )
 
     async def fapi_order_limit(
-        self, cost: int = 1, order_sec_cost: int = 1, order_min_cost: int = 1
+        self,
+        cost: int = 1,
+        order_sec_cost: int = 1,
+        order_min_cost: int = 1,
     ):
-        await self._fapi_weight_limit.limit(key="/fapi", cost=cost)
-        await self._fapi_order_sec_limit.limit(key="/fapi", cost=order_sec_cost)
-        await self._fapi_order_min_limit.limit(key="/fapi", cost=order_min_cost)
+        if not self._enabled:
+            return
+        result = await self._fapi_order_sec_limit.limit(
+            key="/fapi",
+            cost=order_sec_cost,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result, "USD-M Futures order limit (10s) exceeded", "fapi", "orders"
+        )
+        result = await self._fapi_order_min_limit.limit(
+            key="/fapi",
+            cost=order_min_cost,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result, "USD-M Futures order limit (1m) exceeded", "fapi", "orders"
+        )
+        result = await self._fapi_weight_limit.limit(
+            key="/fapi",
+            cost=cost,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result,
+            "USD-M Futures weight limit exceeded (order)",
+            "fapi",
+            "weight",
+        )
 
     async def dapi_weight_limit(self, cost: int):
-        await self._dapi_weight_limit.limit(key="/dapi", cost=cost)
+        if not self._enabled:
+            return
+        result = await self._dapi_weight_limit.limit(
+            key="/dapi",
+            cost=cost,
+            timeout=self._BLOCKING_WEIGHT_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result, "COIN-M Futures weight limit exceeded", "dapi", "weight"
+        )
 
     async def dapi_order_limit(self, cost: int = 1, order_min_cost: int = 1):
-        await self._dapi_weight_limit.limit(key="/dapi", cost=cost)
-        await self._dapi_order_min_limit.limit(key="/dapi", cost=order_min_cost)
+        if not self._enabled:
+            return
+        result = await self._dapi_order_min_limit.limit(
+            key="/dapi",
+            cost=order_min_cost,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result, "COIN-M Futures order limit (1m) exceeded", "dapi", "orders"
+        )
+        result = await self._dapi_weight_limit.limit(
+            key="/dapi",
+            cost=cost,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result,
+            "COIN-M Futures weight limit exceeded (order)",
+            "dapi",
+            "weight",
+        )
 
     async def papi_weight_limit(self, cost: int):
-        await self._papi_weight_limit.limit(key="/papi", cost=cost)
+        if not self._enabled:
+            return
+        result = await self._papi_weight_limit.limit(
+            key="/papi",
+            cost=cost,
+            timeout=self._BLOCKING_WEIGHT_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result, "Portfolio Margin weight limit exceeded", "papi", "weight"
+        )
 
     async def papi_order_limit(self, cost: int = 1, order_min_cost: int = 1):
-        await self._papi_weight_limit.limit(key="/papi", cost=cost)
-        await self._papi_order_min_limit.limit(key="/papi", cost=order_min_cost)
+        if not self._enabled:
+            return
+        result = await self._papi_order_min_limit.limit(
+            key="/papi",
+            cost=order_min_cost,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result, "Portfolio Margin order limit (1m) exceeded", "papi", "orders"
+        )
+        result = await self._papi_weight_limit.limit(
+            key="/papi",
+            cost=cost,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result,
+            "Portfolio Margin weight limit exceeded (order)",
+            "papi",
+            "weight",
+        )
 
 
 class BinanceRateLimiterSync(RateLimiterSync):
+    _BLOCKING_WEIGHT_TIMEOUT = 120
+    _BLOCKING_RAW_REQUEST_TIMEOUT = 600
+    _NON_BLOCKING_TIMEOUT = -1
+
     def __init__(self, enable_rate_limit: bool = True):
+        self._enabled = enable_rate_limit
         self._api_weight_limit = ThrottledSync(
             quota=rate_limiter_sync.per_min(6000),
-            timeout=60 if enable_rate_limit else -1,
-            using=RateLimiterType.GCRA.value,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
+        )
+        self._api_raw_req_limit = ThrottledSync(
+            quota=rate_limiter_sync.per_duration(timedelta(minutes=5), limit=61000),
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
         )
         self._api_order_sec_limit = ThrottledSync(
             quota=rate_limiter_sync.per_duration(timedelta(seconds=10), limit=100),
-            timeout=60 if enable_rate_limit else -1,
-            using=RateLimiterType.GCRA.value,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
         )
         self._api_order_day_limit = ThrottledSync(
             quota=rate_limiter_sync.per_day(200000),
-            timeout=24 * 60 * 60 * 2 if enable_rate_limit else -1,
-            using=RateLimiterType.GCRA.value,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
         )
 
         self._fapi_weight_limit = ThrottledSync(
             quota=rate_limiter_sync.per_min(2400),
-            timeout=60 if enable_rate_limit else -1,
-            using=RateLimiterType.GCRA.value,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
         )
         self._fapi_order_sec_limit = ThrottledSync(
             quota=rate_limiter_sync.per_duration(timedelta(seconds=10), limit=300),
-            timeout=60 if enable_rate_limit else -1,
-            using=RateLimiterType.GCRA.value,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
         )
         self._fapi_order_min_limit = ThrottledSync(
             quota=rate_limiter_sync.per_min(1200),
-            timeout=60 if enable_rate_limit else -1,
-            using=RateLimiterType.GCRA.value,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
         )
         self._dapi_weight_limit = ThrottledSync(
             quota=rate_limiter_sync.per_min(2400),
-            timeout=60 if enable_rate_limit else -1,
-            using=RateLimiterType.GCRA.value,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
         )
         self._dapi_order_min_limit = ThrottledSync(
             quota=rate_limiter_sync.per_min(1200),
-            timeout=60 if enable_rate_limit else -1,
-            using=RateLimiterType.GCRA.value,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
         )
 
         self._papi_weight_limit = ThrottledSync(
             quota=rate_limiter_sync.per_min(6000),
-            timeout=60 if enable_rate_limit else -1,
-            using=RateLimiterType.GCRA.value,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
         )
         self._papi_order_min_limit = ThrottledSync(
             quota=rate_limiter_sync.per_min(1200),
-            timeout=60 if enable_rate_limit else -1,
-            using=RateLimiterType.GCRA.value,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+            using=RateLimiterType.FIXED_WINDOW.value,
         )
 
+    @staticmethod
+    def _raise_if_limited(
+        result: RateLimitResult, message: str, api_type: str, rate_limit_type: str
+    ):
+        if result.limited:
+            raise BinanceRateLimitError(
+                message,
+                retry_after=result.state.retry_after,
+                api_type=api_type,
+                rate_limit_type=rate_limit_type,
+            )
+
     def api_weight_limit(self, cost: int):
-        self._api_weight_limit.limit(key="/api", cost=cost)
+        if not self._enabled:
+            return
+        result = self._api_weight_limit.limit(
+            key="/api",
+            cost=cost,
+            timeout=self._BLOCKING_WEIGHT_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result, "SPOT API weight limit exceeded", "api", "weight"
+        )
+        result = self._api_raw_req_limit.limit(
+            key="/api",
+            cost=1,
+            timeout=self._BLOCKING_RAW_REQUEST_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result,
+            "SPOT API raw request limit exceeded",
+            "api",
+            "raw_requests",
+        )
 
     def api_order_limit(
-        self, cost: int, order_sec_cost: int = 1, order_day_cost: int = 1
+        self,
+        cost: int,
+        order_sec_cost: int = 1,
+        order_day_cost: int = 1,
     ):
-        self._api_weight_limit.limit(key="/api", cost=cost)
-        self._api_order_sec_limit.limit(key="/api", cost=order_sec_cost)
-        self._api_order_day_limit.limit(key="/api", cost=order_day_cost)
+        if not self._enabled:
+            return
+        result = self._api_order_sec_limit.limit(
+            key="/api",
+            cost=order_sec_cost,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result, "SPOT API order limit (10s) exceeded", "api", "orders"
+        )
+        result = self._api_order_day_limit.limit(
+            key="/api",
+            cost=order_day_cost,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result, "SPOT API order limit (day) exceeded", "api", "orders"
+        )
+        result = self._api_weight_limit.limit(
+            key="/api",
+            cost=cost,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result,
+            "SPOT API weight limit exceeded (order)",
+            "api",
+            "weight",
+        )
+        result = self._api_raw_req_limit.limit(
+            key="/api",
+            cost=1,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result,
+            "SPOT API raw request limit exceeded (order)",
+            "api",
+            "raw_requests",
+        )
 
     def fapi_weight_limit(self, cost: int):
-        self._fapi_weight_limit.limit(key="/fapi", cost=cost)
+        if not self._enabled:
+            return
+        result = self._fapi_weight_limit.limit(
+            key="/fapi",
+            cost=cost,
+            timeout=self._BLOCKING_WEIGHT_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result, "USD-M Futures weight limit exceeded", "fapi", "weight"
+        )
 
     def fapi_order_limit(
-        self, cost: int = 1, order_sec_cost: int = 1, order_min_cost: int = 1
+        self,
+        cost: int = 1,
+        order_sec_cost: int = 1,
+        order_min_cost: int = 1,
     ):
-        self._fapi_weight_limit.limit(key="/fapi", cost=cost)
-        self._fapi_order_sec_limit.limit(key="/fapi", cost=order_sec_cost)
-        self._fapi_order_min_limit.limit(key="/fapi", cost=order_min_cost)
+        if not self._enabled:
+            return
+        result = self._fapi_order_sec_limit.limit(
+            key="/fapi",
+            cost=order_sec_cost,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result, "USD-M Futures order limit (10s) exceeded", "fapi", "orders"
+        )
+        result = self._fapi_order_min_limit.limit(
+            key="/fapi",
+            cost=order_min_cost,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result, "USD-M Futures order limit (1m) exceeded", "fapi", "orders"
+        )
+        result = self._fapi_weight_limit.limit(
+            key="/fapi",
+            cost=cost,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result,
+            "USD-M Futures weight limit exceeded (order)",
+            "fapi",
+            "weight",
+        )
 
     def dapi_weight_limit(self, cost: int):
-        self._dapi_weight_limit.limit(key="/dapi", cost=cost)
+        if not self._enabled:
+            return
+        result = self._dapi_weight_limit.limit(
+            key="/dapi",
+            cost=cost,
+            timeout=self._BLOCKING_WEIGHT_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result, "COIN-M Futures weight limit exceeded", "dapi", "weight"
+        )
 
     def dapi_order_limit(self, cost: int = 1, order_min_cost: int = 1):
-        self._dapi_weight_limit.limit(key="/dapi", cost=cost)
-        self._dapi_order_min_limit.limit(key="/dapi", cost=order_min_cost)
+        if not self._enabled:
+            return
+        result = self._dapi_order_min_limit.limit(
+            key="/dapi",
+            cost=order_min_cost,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result, "COIN-M Futures order limit (1m) exceeded", "dapi", "orders"
+        )
+        result = self._dapi_weight_limit.limit(
+            key="/dapi",
+            cost=cost,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result,
+            "COIN-M Futures weight limit exceeded (order)",
+            "dapi",
+            "weight",
+        )
 
     def papi_weight_limit(self, cost: int):
-        self._papi_weight_limit.limit(key="/papi", cost=cost)
+        if not self._enabled:
+            return
+        result = self._papi_weight_limit.limit(
+            key="/papi",
+            cost=cost,
+            timeout=self._BLOCKING_WEIGHT_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result, "Portfolio Margin weight limit exceeded", "papi", "weight"
+        )
 
     def papi_order_limit(self, cost: int = 1, order_min_cost: int = 1):
-        self._papi_weight_limit.limit(key="/papi", cost=cost)
-        self._papi_order_min_limit.limit(key="/papi", cost=order_min_cost)
+        if not self._enabled:
+            return
+        result = self._papi_order_min_limit.limit(
+            key="/papi",
+            cost=order_min_cost,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result, "Portfolio Margin order limit (1m) exceeded", "papi", "orders"
+        )
+        result = self._papi_weight_limit.limit(
+            key="/papi",
+            cost=cost,
+            timeout=self._NON_BLOCKING_TIMEOUT,
+        )
+        self._raise_if_limited(
+            result,
+            "Portfolio Margin weight limit exceeded (order)",
+            "papi",
+            "weight",
+        )

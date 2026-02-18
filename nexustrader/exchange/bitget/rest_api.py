@@ -154,6 +154,7 @@ class BitgetApiClient(ApiClient):
         payload: Dict[str, Any] = None,
         signed: bool = False,
     ) -> Any:
+        await self._limiter.ip_limit()
         return await self._retry_manager.run(
             name=f"{method} {endpoint}",
             func=self._fetch_async,
@@ -232,6 +233,7 @@ class BitgetApiClient(ApiClient):
         payload: Dict[str, Any] = None,
         signed: bool = False,
     ) -> Any:
+        self._limiter_sync.ip_limit()
         self._init_sync_session(self._base_url)
 
         request_path = endpoint
@@ -310,7 +312,7 @@ class BitgetApiClient(ApiClient):
         }
         payload = {k: v for k, v in payload.items() if v is not None}
 
-        await self._limiter(endpoint).limit(key=endpoint, cost=1)
+        await self._limiter.order_limit(endpoint)
         raw = await self._fetch(
             method="POST",
             endpoint=endpoint,
@@ -333,7 +335,7 @@ class BitgetApiClient(ApiClient):
         }
         payload = {k: v for k, v in payload.items() if v is not None}
 
-        await self._limiter(endpoint).limit(key=endpoint, cost=1)
+        await self._limiter.order_limit(endpoint)
         raw = await self._fetch(
             method="POST",
             endpoint=endpoint,
@@ -379,7 +381,7 @@ class BitgetApiClient(ApiClient):
         }
         payload = {k: v for k, v in payload.items() if v is not None}
 
-        await self._limiter(endpoint).limit(key=endpoint, cost=1)
+        await self._limiter.order_limit(endpoint)
 
         raw = await self._fetch(
             method="POST",
@@ -413,7 +415,7 @@ class BitgetApiClient(ApiClient):
         }
 
         payload = {k: v for k, v in payload.items() if v is not None}
-        await self._limiter(endpoint).limit(key=endpoint, cost=1)
+        await self._limiter.order_limit(endpoint)
         raw = await self._fetch("POST", endpoint, payload, signed=True)
         return self._cancel_order_decoder.decode(raw)
 
@@ -445,7 +447,7 @@ class BitgetApiClient(ApiClient):
             **kwargs,
         }
         payload = {k: v for k, v in payload.items() if v is not None}
-        await self._limiter(endpoint).limit(key=endpoint, cost=1)
+        await self._limiter.order_limit(endpoint)
 
         raw = await self._fetch("POST", endpoint, payload, signed=True)
 
@@ -473,7 +475,7 @@ class BitgetApiClient(ApiClient):
         }
         payload = {k: v for k, v in payload.items() if v is not None}
 
-        await self._limiter(endpoint).limit(key=endpoint, cost=1)
+        await self._limiter.order_limit(endpoint)
 
         raw = await self._fetch("POST", endpoint, payload, signed=True)
 
@@ -496,7 +498,7 @@ class BitgetApiClient(ApiClient):
         }
         payload = {k: v for k, v in payload.items() if v is not None}
 
-        self._limiter_sync(endpoint).limit(key=endpoint, cost=1)
+        self._limiter_sync.query_limit(endpoint)
 
         raw = self._fetch_sync("GET", endpoint, payload, signed=True)
 
@@ -512,7 +514,7 @@ class BitgetApiClient(ApiClient):
             "category": category,
             "symbol": symbol,
         }
-        self._limiter_sync(endpoint).limit(key=endpoint, cost=1)
+        self._limiter_sync.query_limit(endpoint)
         payload = {k: v for k, v in payload.items() if v is not None}
         raw = self._fetch_sync("GET", endpoint, payload, signed=False)
         return self._ticker_response_decoder.decode(raw)
@@ -528,7 +530,7 @@ class BitgetApiClient(ApiClient):
             "category": category,
             "symbol": symbol,
         }
-        await self._limiter(endpoint).limit(key=endpoint, cost=1)
+        await self._limiter.order_limit(endpoint)
         payload = {k: v for k, v in payload.items() if v is not None}
         raw = await self._fetch("POST", endpoint, payload, signed=True)
         return self._msg_decoder.decode(raw)
@@ -559,7 +561,7 @@ class BitgetApiClient(ApiClient):
         }
         payload = {k: v for k, v in payload.items() if v is not None}
 
-        self._limiter_sync(endpoint).limit(key=endpoint, cost=1)
+        self._limiter_sync.query_limit(endpoint)
         raw = self._fetch_sync("GET", endpoint, payload, signed=True)
         return self._v3_position_response_decoder.decode(raw)
 

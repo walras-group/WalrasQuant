@@ -107,6 +107,7 @@ class OkxFactory(ExchangeFactory):
             task_manager=context.task_manager,
             registry=context.registry,
             is_mock=context.is_mock,
+            queue_maxsize=context.queue_maxsize,
         )
 
     def get_private_account_type(

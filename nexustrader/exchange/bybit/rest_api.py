@@ -147,6 +147,7 @@ class BybitApiClient(ApiClient):
         payload: Dict[str, Any] = None,
         signed: bool = False,
     ):
+        await self._limiter.ip_limit()
         return await self._retry_manager.run(
             name=f"{method} {endpoint}",
             func=self._fetch_async,
@@ -230,6 +231,7 @@ class BybitApiClient(ApiClient):
         payload: Dict[str, Any] = None,
         signed: bool = False,
     ):
+        self._limiter_sync.ip_limit()
         self._init_sync_session()
 
         url = urljoin(base_url, endpoint)
@@ -308,10 +310,7 @@ class BybitApiClient(ApiClient):
             "qty": str(qty),
             **kwargs,
         }
-        if category == "spot":
-            await self._limiter("20/s").limit(key=endpoint, cost=1)
-        else:
-            await self._limiter("10/s").limit(key=endpoint, cost=1)
+        await self._limiter.order_limit(category, endpoint, cost=1)
         raw = await self._fetch("POST", self._base_url, endpoint, payload, signed=True)
         return self._order_response_decoder.decode(raw)
 
@@ -327,10 +326,7 @@ class BybitApiClient(ApiClient):
             "symbol": symbol,
             **kwargs,
         }
-        if category == "spot":
-            await self._limiter("20/s").limit(key=endpoint, cost=1)
-        else:
-            await self._limiter("10/s").limit(key=endpoint, cost=1)
+        await self._limiter.order_limit(category, endpoint, cost=1)
         raw = await self._fetch("POST", self._base_url, endpoint, payload, signed=True)
         return self._order_response_decoder.decode(raw)
 
@@ -340,7 +336,7 @@ class BybitApiClient(ApiClient):
             "category": category,
             **kwargs,
         }
-        self._limiter_sync("50/s").limit(key=endpoint, cost=1)
+        self._limiter_sync.query_limit(endpoint)
         payload = {k: v for k, v in payload.items() if v is not None}
         raw = self._fetch_sync("GET", self._base_url, endpoint, payload, signed=True)
         return self._position_response_decoder.decode(raw)
@@ -377,7 +373,7 @@ class BybitApiClient(ApiClient):
             "accountType": account_type,
             **kwargs,
         }
-        self._limiter_sync("50/s").limit(key=endpoint, cost=1)
+        self._limiter_sync.query_limit(endpoint)
         raw = self._fetch_sync("GET", self._base_url, endpoint, payload, signed=True)
         return self._wallet_balance_response_decoder.decode(raw)
 
@@ -422,7 +418,7 @@ class BybitApiClient(ApiClient):
             "tpLimitPrice": tpLimitPrice,
             "slLimitPrice": slLimitPrice,
         }
-        await self._limiter("10/s").limit(key=endpoint, cost=1)
+        await self._limiter.order_limit(category, endpoint, cost=1)
         payload = {k: v for k, v in payload.items() if v is not None}
         raw = await self._fetch("POST", self._base_url, endpoint, payload, signed=True)
         return self._order_response_decoder.decode(raw)
@@ -445,10 +441,7 @@ class BybitApiClient(ApiClient):
             "orderFilter": orderFilter,
             "stopOrderType": stopOrderType,
         }
-        if category == "spot":
-            await self._limiter("20/s").limit(key=endpoint, cost=1)
-        else:
-            await self._limiter("10/s").limit(key=endpoint, cost=1)
+        await self._limiter.order_limit(category, endpoint, cost=1)
         payload = {k: v for k, v in payload.items() if v is not None}
         raw = await self._fetch("POST", self._base_url, endpoint, payload, signed=True)
         return self._msg_decoder.decode(raw)
@@ -471,7 +464,7 @@ class BybitApiClient(ApiClient):
             "end": end,
             "limit": limit,
         }
-        self._limiter_sync("public").limit(key=endpoint, cost=1)
+        self._limiter_sync.public_limit(endpoint)
         payload = {k: v for k, v in payload.items() if v is not None}
         raw = self._fetch_sync("GET", self._base_url, endpoint, payload, signed=False)
         return self._kline_response_decoder.decode(raw)
@@ -494,7 +487,7 @@ class BybitApiClient(ApiClient):
             "end": end,
             "limit": limit,
         }
-        self._limiter_sync("public").limit(key=endpoint, cost=1)
+        self._limiter_sync.public_limit(endpoint)
         payload = {k: v for k, v in payload.items() if v is not None}
         raw = self._fetch_sync("GET", self._base_url, endpoint, payload, signed=False)
         return self._index_kline_response_decoder.decode(raw)
@@ -520,11 +513,7 @@ class BybitApiClient(ApiClient):
             "request": request,
         }
 
-        # Rate limit cost based on category
-        if category == "spot":
-            await self._limiter("20/s").limit(key=endpoint, cost=len(request))
-        else:
-            await self._limiter("10/s").limit(key=endpoint, cost=len(request))
+        await self._limiter.order_limit(category, endpoint, cost=len(request))
 
         raw = await self._fetch("POST", self._base_url, endpoint, payload, signed=True)
         return self._batch_order_response_decoder.decode(raw)
@@ -562,7 +551,7 @@ class BybitApiClient(ApiClient):
         }
         payload = {k: v for k, v in payload.items() if v is not None}
 
-        self._limiter_sync("public").limit(key=endpoint, cost=1)
+        self._limiter_sync.public_limit(endpoint)
         raw = self._fetch_sync("GET", self._base_url, endpoint, payload, signed=False)
         return self._tickers_response_decoder.decode(raw)
 
@@ -586,6 +575,6 @@ class BybitApiClient(ApiClient):
             "symbol": symbol,
         }
 
-        self._limiter_sync("50/s").limit(key=endpoint, cost=1)
+        self._limiter_sync.query_limit(endpoint)
         raw = self._fetch_sync("GET", self._base_url, endpoint, payload, signed=True)
         return self._msg_decoder.decode(raw)

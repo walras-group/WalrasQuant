@@ -15,6 +15,7 @@ from nexustrader.constants import (
     RateLimiterSync,
 )
 from nexustrader.error import KlineSupportedError
+from nexustrader.exchange.bitget.error import BitgetRateLimitError
 
 
 class BitgetAccountType(AccountType):
@@ -319,77 +320,133 @@ class BitgetEnumParser:
 
 class BitgetRateLimiter(RateLimiter):
     def __init__(self, enable_rate_limit: bool = True):
+        self._enabled = enable_rate_limit
+        self._global_ip = Throttled(
+            quota=rate_limiter.per_min(6000),
+            timeout=-1,
+            using=RateLimiterType.FIXED_WINDOW.value,
+        )
         self._throttled: dict[str, Throttled] = {
             "/api/v2/mix/order/place-order": Throttled(
                 quota=rate_limiter.per_sec(10),
-                timeout=60 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
+                timeout=-1,
+                using=RateLimiterType.FIXED_WINDOW.value,
             ),
             "/api/v2/spot/trade/place-order": Throttled(
                 quota=rate_limiter.per_sec(10),
-                timeout=60 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
+                timeout=-1,
+                using=RateLimiterType.FIXED_WINDOW.value,
             ),
             "/api/v2/mix/order/cancel-order": Throttled(
                 quota=rate_limiter.per_sec(10),
-                timeout=60 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
+                timeout=-1,
+                using=RateLimiterType.FIXED_WINDOW.value,
             ),
             "/api/v2/spot/trade/cancel-order": Throttled(
                 quota=rate_limiter.per_sec(10),
-                timeout=60 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
+                timeout=-1,
+                using=RateLimiterType.FIXED_WINDOW.value,
             ),
             "/api/v3/trade/place-order": Throttled(
                 quota=rate_limiter.per_sec(10),
-                timeout=60 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
+                timeout=-1,
+                using=RateLimiterType.FIXED_WINDOW.value,
             ),
             "/api/v3/trade/cancel-order": Throttled(
                 quota=rate_limiter.per_sec(10),
-                timeout=60 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
+                timeout=-1,
+                using=RateLimiterType.FIXED_WINDOW.value,
             ),
             "/api/v3/trade/cancel-symbol-order": Throttled(
                 quota=rate_limiter.per_sec(5),
-                timeout=60 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
+                timeout=-1,
+                using=RateLimiterType.FIXED_WINDOW.value,
             ),
         }
 
-    def __call__(self, rate_limit_type: str) -> Throttled:
-        return self._throttled[rate_limit_type]
+    @staticmethod
+    def _raise_if_limited(
+        result, message: str, scope: str, endpoint: str | None = None
+    ):
+        if result.limited:
+            raise BitgetRateLimitError(
+                message,
+                retry_after=result.state.retry_after,
+                scope=scope,
+                endpoint=endpoint,
+            )
+
+    async def ip_limit(self):
+        if not self._enabled:
+            return
+        result = await self._global_ip.limit(key="ip", cost=1, timeout=120)
+        self._raise_if_limited(result, "Bitget IP rate limit exceeded", scope="ip")
+
+    async def order_limit(self, endpoint: str, cost: int = 1):
+        if not self._enabled:
+            return
+        result = await self._throttled[endpoint].limit(
+            key=endpoint, cost=cost, timeout=-1
+        )
+        self._raise_if_limited(
+            result,
+            f"Bitget order rate limit exceeded: {endpoint}",
+            scope="uid",
+            endpoint=endpoint,
+        )
 
 
 class BitgetRateLimiterSync(RateLimiterSync):
     def __init__(self, enable_rate_limit: bool = True):
+        self._enabled = enable_rate_limit
+        self._global_ip = ThrottledSync(
+            quota=rate_limiter_sync.per_min(6000),
+            timeout=-1,
+            using=RateLimiterType.FIXED_WINDOW.value,
+        )
         self._throttled: dict[str, ThrottledSync] = {
-            "/api/v2/mix/order/place-order": ThrottledSync(
-                quota=rate_limiter_sync.per_sec(10),
-                timeout=60 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
-            "/api/v2/spot/trade/place-order": ThrottledSync(
-                quota=rate_limiter_sync.per_sec(10),
-                timeout=60 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
             "/api/v2/mix/position/all-position": ThrottledSync(
                 quota=rate_limiter_sync.per_sec(10),
-                timeout=60 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
+                timeout=-1,
+                using=RateLimiterType.FIXED_WINDOW.value,
             ),
             "/api/v3/market/tickers": ThrottledSync(
                 quota=rate_limiter_sync.per_sec(20),
-                timeout=60 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
+                timeout=-1,
+                using=RateLimiterType.FIXED_WINDOW.value,
             ),
             "/api/v3/position/current-position": ThrottledSync(
                 quota=rate_limiter_sync.per_sec(20),
-                timeout=60 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
+                timeout=-1,
+                using=RateLimiterType.FIXED_WINDOW.value,
             ),
         }
 
-    def __call__(self, rate_limit_type: str) -> ThrottledSync:
-        return self._throttled[rate_limit_type]
+    @staticmethod
+    def _raise_if_limited(
+        result, message: str, scope: str, endpoint: str | None = None
+    ):
+        if result.limited:
+            raise BitgetRateLimitError(
+                message,
+                retry_after=result.state.retry_after,
+                scope=scope,
+                endpoint=endpoint,
+            )
+
+    def ip_limit(self):
+        if not self._enabled:
+            return
+        result = self._global_ip.limit(key="ip", cost=1, timeout=120)
+        self._raise_if_limited(result, "Bitget IP rate limit exceeded", scope="ip")
+
+    def query_limit(self, endpoint: str, cost: int = 1):
+        if not self._enabled:
+            return
+        result = self._throttled[endpoint].limit(key=endpoint, cost=cost, timeout=60)
+        self._raise_if_limited(
+            result,
+            f"Bitget query rate limit exceeded: {endpoint}",
+            scope="uid",
+            endpoint=endpoint,
+        )

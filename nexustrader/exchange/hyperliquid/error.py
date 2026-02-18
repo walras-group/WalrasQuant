@@ -28,3 +28,21 @@ class HyperLiquidOrderError(Exception):
         return f"{type(self).__name__}(error_type={self.error_type}, message='{self.message}')"
 
     __str__ = __repr__
+
+
+class HyperliquidRateLimitError(Exception):
+    """
+    Raised when Hyperliquid API rate limit is exceeded.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        retry_after: float = 0.0,
+        scope: str | None = None,
+        cost: int | None = None,
+    ):
+        super().__init__(message)
+        self.retry_after = retry_after
+        self.scope = scope
+        self.cost = cost

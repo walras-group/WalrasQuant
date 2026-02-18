@@ -41,3 +41,23 @@ class OkxRequestError(Exception):
 def retry_check(exc: Exception) -> bool:
     if isinstance(exc, OkxRequestError):
         return exc.code in [50001, 50013, 50026, 51054, 51149, 51412]
+
+
+class OkxRateLimitError(Exception):
+    """
+    Raised when OKX API rate limit is exceeded.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        retry_after: float = 0.0,
+        scope: str | None = None,
+        endpoint: str | None = None,
+        code: int | None = None,
+    ):
+        super().__init__(message)
+        self.retry_after = retry_after
+        self.scope = scope
+        self.endpoint = endpoint
+        self.code = code

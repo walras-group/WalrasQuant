@@ -20,7 +20,7 @@ class ExecAlgorithmCommandType(Enum):
     def is_execute(self) -> bool:
         """Return True if command is EXECUTE."""
         return self == ExecAlgorithmCommandType.EXECUTE
-    
+
     @property
     def is_cancel(self) -> bool:
         """Return True if command is CANCEL."""

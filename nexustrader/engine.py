@@ -100,6 +100,7 @@ class Engine:
             public_connectors=self._public_connectors,
             task_manager=self._task_manager,
             clock=self._clock,
+            sms_maxsize=self._config.queue_config.sms_maxsize,
         )
 
         self._push_service = FlashDutyPushService(
@@ -279,6 +280,7 @@ class Engine:
                 cache=self._cache,
                 registry=self._registry,
                 is_mock=self._config.is_mock,
+                queue_maxsize=self._config.queue_config.ems_maxsize,
             )
 
             for (
@@ -342,6 +344,7 @@ class Engine:
             cache=self._cache,
             registry=self._registry,
             is_mock=self._config.is_mock,
+            queue_maxsize=self._config.queue_config.ems_maxsize,
         )
 
         for exchange_id, exchange in self._exchanges.items():
@@ -355,6 +358,7 @@ class Engine:
                     task_manager=self._task_manager,
                     registry=self._registry,
                     is_mock=self._config.is_mock,
+                    queue_maxsize=self._config.queue_config.ems_maxsize,
                 )
                 self._ems[exchange_id]._build(self._private_connectors)
                 continue

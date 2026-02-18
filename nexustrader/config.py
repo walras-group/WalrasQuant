@@ -150,6 +150,12 @@ class MockConnectorConfig:
 
 
 @dataclass
+class QueueConfig:
+    ems_maxsize: int = 100_000
+    sms_maxsize: int = 100_000
+
+
+@dataclass
 class Config:
     """
     Represents the configuration for a trading system.
@@ -201,6 +207,7 @@ class Config:
     web_config: WebConfig = field(default_factory=WebConfig)
     exit_after_cancel: bool = True
     flashduty_integration_key: str | None = None
+    queue_config: QueueConfig = field(default_factory=QueueConfig)
 
     def __post_init__(self):
         # Check if any connector is mock, then all must be mock

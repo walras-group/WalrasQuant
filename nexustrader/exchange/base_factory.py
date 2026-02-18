@@ -32,6 +32,7 @@ class BuildContext:
     cache: Any
     registry: Any  # OrderRegistry
     is_mock: bool
+    queue_maxsize: int = 0
 
 
 class ExchangeFactory(ABC):

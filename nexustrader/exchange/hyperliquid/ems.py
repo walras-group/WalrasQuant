@@ -36,6 +36,7 @@ class HyperLiquidExecutionManagementSystem(ExecutionManagementSystem):
         task_manager: TaskManager,
         registry: OrderRegistry,
         is_mock: bool = False,
+        queue_maxsize: int = 100_000,
     ):
         super().__init__(
             market=market,
@@ -45,13 +46,16 @@ class HyperLiquidExecutionManagementSystem(ExecutionManagementSystem):
             task_manager=task_manager,
             registry=registry,
             is_mock=is_mock,
+            queue_maxsize=queue_maxsize,
         )
         self._hyperliquid_account_type: HyperLiquidAccountType = None
 
     def _build_order_submit_queues(self):
         for account_type in self._private_connectors.keys():
             if isinstance(account_type, HyperLiquidAccountType):
-                self._order_submit_queues[account_type] = asyncio.Queue()
+                self._order_submit_queues[account_type] = asyncio.Queue(
+                    maxsize=self._queue_maxsize
+                )
                 break
 
     def _set_account_type(self):
@@ -89,11 +93,15 @@ class HyperLiquidExecutionManagementSystem(ExecutionManagementSystem):
             # Split batch orders into chunks of 20
             for i in range(0, len(order), 20):
                 batch = order[i : i + 20]
-                self._order_submit_queues[account_type].put_nowait((batch, submit_type))
+                self._safe_put(
+                    self._order_submit_queues[account_type], (batch, submit_type)
+                )
         else:
             if not account_type:
                 account_type = self._instrument_id_to_account_type(order.instrument_id)
-            self._order_submit_queues[account_type].put_nowait((order, submit_type))
+            self._safe_put(
+                self._order_submit_queues[account_type], (order, submit_type)
+            )
 
     def _get_min_order_amount(
         self, symbol: str, market: HyperLiquidMarket, px: float

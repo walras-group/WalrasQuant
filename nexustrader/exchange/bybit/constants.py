@@ -17,6 +17,7 @@ from nexustrader.constants import (
 )
 from enum import Enum
 from nexustrader.error import KlineSupportedError
+from nexustrader.exchange.bybit.error import BybitRateLimitError
 
 
 class BybitOpType(Enum):
@@ -409,107 +410,119 @@ class BybitEnumParser:
 
 class BybitRateLimiter(RateLimiter):
     def __init__(self, enable_rate_limit: bool = True):
-        self._throttled: dict[str, Throttled] = {
-            "5/s": Throttled(
-                quota=rate_limiter.per_sec(5),
-                timeout=60 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
-            "10/s": Throttled(
-                quota=rate_limiter.per_sec(10),
-                timeout=60 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
-            "20/s": Throttled(
-                quota=rate_limiter.per_sec(20),
-                timeout=60 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
-            "50/s": Throttled(
-                quota=rate_limiter.per_sec(50),
-                timeout=60 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
-            "60/min": Throttled(
-                quota=rate_limiter.per_min(60),
-                timeout=120 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
-            "100/min": Throttled(
-                quota=rate_limiter.per_min(100),
-                timeout=120 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
-            "300/min": Throttled(
-                quota=rate_limiter.per_min(300),
-                timeout=120 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
-            "600/min": Throttled(
-                quota=rate_limiter.per_min(600),
-                timeout=120 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
-            "public": Throttled(
-                quota=rate_limiter.per_duration(timedelta(seconds=5), limit=600),
-                timeout=60 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
-        }
+        self._enabled = enable_rate_limit
+        self._global_ip = Throttled(
+            quota=rate_limiter.per_duration(timedelta(seconds=5), limit=600),
+            timeout=-1,
+            using=RateLimiterType.GCRA.value,
+        )
+        self._spot_order = Throttled(
+            quota=rate_limiter.per_sec(20),
+            timeout=-1,
+            using=RateLimiterType.GCRA.value,
+        )
+        self._futures_order = Throttled(
+            quota=rate_limiter.per_sec(10),
+            timeout=-1,
+            using=RateLimiterType.GCRA.value,
+        )
 
-    def __call__(self, rate: str) -> Throttled:
-        return self._throttled[rate]
+    @staticmethod
+    def _raise_if_limited(
+        result, message: str, scope: str, endpoint: str | None = None
+    ):
+        if result.limited:
+            raise BybitRateLimitError(
+                message,
+                retry_after=result.state.retry_after,
+                scope=scope,
+                endpoint=endpoint,
+            )
+
+    async def ip_limit(self):
+        if not self._enabled:
+            return
+        result = await self._global_ip.limit(key="ip", cost=1, timeout=60)
+        self._raise_if_limited(result, "Bybit IP rate limit exceeded", scope="ip")
+
+    async def order_limit(self, category: str, endpoint: str, cost: int = 1):
+        if not self._enabled:
+            return
+        if category == "spot":
+            result = await self._spot_order.limit(key=endpoint, cost=cost, timeout=-1)
+            self._raise_if_limited(
+                result,
+                f"Bybit spot order rate limit exceeded: {endpoint}",
+                scope="uid",
+                endpoint=endpoint,
+            )
+        else:
+            result = await self._futures_order.limit(
+                key=endpoint, cost=cost, timeout=-1
+            )
+            self._raise_if_limited(
+                result,
+                f"Bybit futures order rate limit exceeded: {endpoint}",
+                scope="uid",
+                endpoint=endpoint,
+            )
 
 
 class BybitRateLimiterSync(RateLimiterSync):
     def __init__(self, enable_rate_limit: bool = True):
-        self._throttled: dict[str, ThrottledSync] = {
-            "5/s": ThrottledSync(
-                quota=rate_limiter_sync.per_sec(5),
-                timeout=2 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
-            "10/s": ThrottledSync(
-                quota=rate_limiter_sync.per_sec(10),
-                timeout=2 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
-            "20/s": ThrottledSync(
-                quota=rate_limiter_sync.per_sec(20),
-                timeout=2 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
-            "50/s": ThrottledSync(
-                quota=rate_limiter_sync.per_sec(50),
-                timeout=2 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
-            "60/min": ThrottledSync(
-                quota=rate_limiter_sync.per_min(60),
-                timeout=120 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
-            "100/min": ThrottledSync(
-                quota=rate_limiter_sync.per_min(100),
-                timeout=120 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
-            "300/min": ThrottledSync(
-                quota=rate_limiter_sync.per_min(300),
-                timeout=120 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
-            "600/min": ThrottledSync(
-                quota=rate_limiter_sync.per_min(600),
-                timeout=120 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
-            "public": ThrottledSync(
-                quota=rate_limiter_sync.per_duration(timedelta(seconds=5), limit=600),
-                timeout=5 if enable_rate_limit else -1,
-                using=RateLimiterType.GCRA.value,
-            ),
-        }
+        self._enabled = enable_rate_limit
+        self._global_ip = ThrottledSync(
+            quota=rate_limiter_sync.per_duration(timedelta(seconds=5), limit=600),
+            timeout=-1,
+            using=RateLimiterType.GCRA.value,
+        )
+        self._position = ThrottledSync(
+            quota=rate_limiter_sync.per_sec(50),
+            timeout=-1,
+            using=RateLimiterType.GCRA.value,
+        )
+        self._public = ThrottledSync(
+            quota=rate_limiter_sync.per_duration(timedelta(seconds=5), limit=600),
+            timeout=-1,
+            using=RateLimiterType.GCRA.value,
+        )
 
-    def __call__(self, rate: str) -> ThrottledSync:
-        return self._throttled[rate]
+    @staticmethod
+    def _raise_if_limited(
+        result, message: str, scope: str, endpoint: str | None = None
+    ):
+        if result.limited:
+            raise BybitRateLimitError(
+                message,
+                retry_after=result.state.retry_after,
+                scope=scope,
+                endpoint=endpoint,
+            )
+
+    def ip_limit(self):
+        if not self._enabled:
+            return
+        result = self._global_ip.limit(key="ip", cost=1, timeout=5)
+        self._raise_if_limited(result, "Bybit IP rate limit exceeded", scope="ip")
+
+    def query_limit(self, endpoint: str, cost: int = 1):
+        if not self._enabled:
+            return
+        result = self._position.limit(key=endpoint, cost=cost, timeout=5)
+        self._raise_if_limited(
+            result,
+            f"Bybit query rate limit exceeded: {endpoint}",
+            scope="uid",
+            endpoint=endpoint,
+        )
+
+    def public_limit(self, endpoint: str, cost: int = 1):
+        if not self._enabled:
+            return
+        result = self._public.limit(key=endpoint, cost=cost, timeout=5)
+        self._raise_if_limited(
+            result,
+            f"Bybit public rate limit exceeded: {endpoint}",
+            scope="ip",
+            endpoint=endpoint,
+        )
