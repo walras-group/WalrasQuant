@@ -269,6 +269,7 @@ class HyperLiquidOrderManagementSystem(OrderManagementSystem):
                     filled=Decimal(0),
                     remaining=amount,
                     reduce_only=reduce_only,
+                    reason=error_msg,
                 )
             else:
                 order_status = status.resting or status.filled
@@ -307,6 +308,7 @@ class HyperLiquidOrderManagementSystem(OrderManagementSystem):
                 filled=Decimal(0),
                 remaining=amount,
                 reduce_only=reduce_only,
+                reason=error_msg,
             )
         self.order_status_update(order)
 
@@ -396,6 +398,7 @@ class HyperLiquidOrderManagementSystem(OrderManagementSystem):
                         filled=Decimal(0),
                         remaining=order.amount,
                         reduce_only=order.reduce_only,
+                        reason=error_msg,
                     )
                 else:
                     order_status = status.resting or status.filled
@@ -435,6 +438,7 @@ class HyperLiquidOrderManagementSystem(OrderManagementSystem):
                     filled=Decimal(0),
                     remaining=order.amount,
                     reduce_only=order.reduce_only,
+                    reason=error_msg,
                 )
                 self.order_status_update(order)
 
@@ -697,6 +701,7 @@ class HyperLiquidOrderManagementSystem(OrderManagementSystem):
                 filled=Decimal(0),
                 remaining=temp_order.amount,
                 reduce_only=temp_order.reduce_only,
+                reason=status.error,
             )
             self.order_status_update(order)
         else:

@@ -217,7 +217,8 @@ class BitgetOrderManagementSystem(OrderManagementSystem):
                 f"[{tmp_order.symbol}] new order failed: oid: {oid} {ws_msg.error_msg}"
             )
             order = self._create_order_from_tmp(
-                tmp_order, oid, None, OrderStatus.FAILED, ts
+                tmp_order, oid, None, OrderStatus.FAILED, ts,
+                reason=ws_msg.error_msg,
             )
             self.order_status_update(order)
 
@@ -273,7 +274,8 @@ class BitgetOrderManagementSystem(OrderManagementSystem):
                 f"[{tmp_order.symbol}] new order failed: oid: {oid} {ws_msg.error_msg}"
             )
             order = self._create_order_from_tmp(
-                tmp_order, oid, None, OrderStatus.FAILED, ts
+                tmp_order, oid, None, OrderStatus.FAILED, ts,
+                reason=ws_msg.error_msg,
             )
             self.order_status_update(order)  # INITIALIZED -> FAILED
 
@@ -800,6 +802,7 @@ class BitgetOrderManagementSystem(OrderManagementSystem):
                     remaining=amount,
                     reduce_only=reduce_only,
                     timestamp=self._clock.timestamp_ms(),
+                    reason=error_msg,
                 )
             self.order_status_update(order)
         else:
@@ -893,6 +896,7 @@ class BitgetOrderManagementSystem(OrderManagementSystem):
                     remaining=amount,
                     reduce_only=reduce_only,
                     timestamp=self._clock.timestamp_ms(),
+                    reason=error_msg,
                 )
             self.order_status_update(order)
 

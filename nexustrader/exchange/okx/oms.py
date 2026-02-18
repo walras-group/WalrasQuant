@@ -175,6 +175,7 @@ class OkxOrderManagementSystem(OrderManagementSystem):
                             timestamp=ts,
                             time_in_force=time_in_force,
                             reduce_only=reduce_only,
+                            reason=msg.error_msg,
                         )
                         self.order_status_update(order)
                 elif msg.op.is_cancel_order:
@@ -535,6 +536,7 @@ class OkxOrderManagementSystem(OrderManagementSystem):
                 status=OrderStatus.FAILED,
                 filled=Decimal(0),
                 remaining=amount,
+                reason=error_msg,
             )
             return order
 
@@ -643,6 +645,7 @@ class OkxOrderManagementSystem(OrderManagementSystem):
                         filled=Decimal(0),
                         remaining=order.amount,
                         reduce_only=order.reduce_only,
+                        reason=f"code={res_order.sCode}, msg={res_order.sMsg}",
                     )
                     self._log.error(
                         f"Failed to create order for {order.symbol}: {res_order.sMsg}: {res_order.sCode}: {order.oid}"
@@ -667,6 +670,7 @@ class OkxOrderManagementSystem(OrderManagementSystem):
                     status=OrderStatus.FAILED,
                     filled=Decimal(0),
                     remaining=order.amount,
+                    reason=error_msg,
                 )
                 self.order_status_update(order_result)
 
@@ -845,6 +849,7 @@ class OkxOrderManagementSystem(OrderManagementSystem):
                 status=OrderStatus.FAILED,
                 filled=Decimal(0),
                 remaining=amount,
+                reason=error_msg,
             )
         self.order_status_update(order)
 
@@ -963,6 +968,7 @@ class OkxOrderManagementSystem(OrderManagementSystem):
                 timestamp=self._clock.timestamp_ms(),
                 symbol=symbol,
                 status=OrderStatus.FAILED,
+                reason=error_msg,
             )
         self.order_status_update(order)
 
