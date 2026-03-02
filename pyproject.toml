@@ -1,6 +1,6 @@
 [project]
-name = "nexustrader"
-version = "0.2.52"
+name = "nexusquant"
+version = "0.3.0"
 description = "fastest python trading bot"
 authors = [
     {name = "River-Shi",email = "nachuan.shi.quant@gmail.com"}
@@ -42,11 +42,11 @@ dependencies = [
 ]
 
 [project.scripts]
-nexustrader-cli = "nexustrader.cli.main:main"
+nexusquant-cli = "nexusquant.cli.main:main"
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build>=0.10.7,<0.11.0"]
+build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
