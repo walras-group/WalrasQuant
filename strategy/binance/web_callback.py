@@ -1,16 +1,16 @@
 from typing import Any
 
-from nexustrader.config import (
+from walrasquant.config import (
     BasicConfig,
     Config,
     PublicConnectorConfig,
     WebConfig,
 )
-from nexustrader.constants import ExchangeType
-from nexustrader.exchange.binance import BinanceAccountType
-from nexustrader.strategy import Strategy
-from nexustrader.engine import Engine
-from nexustrader.web import create_strategy_app
+from walrasquant.constants import ExchangeType
+from walrasquant.exchange.binance import BinanceAccountType
+from walrasquant.strategy import Strategy
+from walrasquant.engine import Engine
+from walrasquant.web import create_strategy_app
 
 
 class BinanceWebCallbackStrategy(Strategy):

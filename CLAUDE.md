@@ -1,211 +1,216 @@
-# CLAUDE.md
+# NexusTrader Project Guide
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Overview
 
-## Project Overview
+NexusTrader is a high-performance, professional-grade quantitative trading platform designed for cryptocurrency trading across multiple exchanges (Binance, Bybit, OKX, Hyperliquid, Bitget). The platform is built with Python 3.11+ and optimized for low-latency execution using async/await patterns.
 
-NexusTrader is a professional-grade quantitative trading platform built with Python 3.11+ that focuses on high-performance, low-latency trading across multiple exchanges. It features a modular, event-driven architecture with Rust-powered core components for maximum performance.
+**Key Design Philosophy:**
+- **Performance First**: Uses uvloop, picows (Cython-based WebSocket), and msgspec for maximum throughput
+- **Event-Driven Architecture**: Built on Rust-powered MessageBus and Clock from nautilius framework
+- **Modular Design**: Clear separation between connectors, execution systems, and strategy logic
 
-## Development Commands
+## Project Structure
 
-### Dependencies and Setup
-```bash
-# Install with uv (package manager used in this project)
-uv sync
-
-# Install development dependencies
-uv sync --group dev
-
-# Install pre-commit hooks (required for contributions)
-uv add --dev pre-commit
-pre-commit install
+```
+nexustrader/
+├── base/           # Base connector classes and management systems
+├── core/           # Core utilities (cache, entity, nautilus integration)
+├── exchange/       # Exchange-specific implementations
+├── execution/      # Execution algorithms (TWAP, custom algos)
+├── cli/            # Command-line interface and monitoring
+├── web/            # FastAPI integration for strategy webhooks
+├── backends/       # Storage backends (SQLite, PostgreSQL)
+└── *.py            # Main modules (engine, strategy, schema, config, etc.)
 ```
 
-### Testing
-```bash
-# Run all tests with async support
-uv run pytest
+## Core Architecture
 
-# Run specific test modules
-uv run pytest test/core/
-uv run pytest test/core/test_entity.py
+### 1. Engine (`engine.py`)
+The central orchestrator that:
+- Initializes all components (connectors, cache, message bus, clock)
+- Manages the event loop (uvloop on non-Windows platforms)
+- Coordinates between public/private connectors and strategies
+- Handles strategy lifecycle (start, stop, dispose)
 
-# Test configuration: pytest.ini enables asyncio_mode = auto
-```
+### 2. Strategy (`strategy.py`)
+Base class for all trading strategies. Key features:
+- **Event callbacks**: `on_bookl1`, `on_trade`, `on_kline`, `on_filled_order`, etc.
+- **Timer mode**: Schedule logic with `schedule()`
+- **Custom signals**: External signal integration via `on_custom_signal()`
+- **Indicators**: Built-in indicator manager with warmup support
+- **Order management**: `create_order`, `create_algo_order`, `cancel_order`
 
-### Code Quality
-```bash
-# Linting and formatting (via ruff)
-uv run ruff check
-uv run ruff format
-```
+### 3. Connectors (`base/`)
+- **PublicConnector**: Market data (orderbook, trades, klines)
+- **PrivateConnector**: Account data, order execution
+- **ExchangeManager**: Per-exchange coordinator
+- **ExecutionManagementSystem (EMS)**: Order submission
+- **OrderManagementSystem (OMS)**: Order state tracking
+- **SubscriptionManagementSystem (SMS)**: Data subscription management
 
-### Development Infrastructure
-```bash
-# Start Redis, PostgreSQL, Loki logging stack
-docker-compose up -d
+### 4. Exchange Implementations (`exchange/`)
+Each exchange has its own subdirectory with:
+- Exchange-specific connectors
+- Account type definitions
+- Market metadata handling
+- WebSocket/REST protocol handling
 
-# Clear log files
-./clear.sh
+### 5. Schema (`schema.py`)
+Data structures using `msgspec.Struct` for performance:
+- Market data: `BookL1`, `BookL2`, `Trade`, `Kline`
+- Orders: `Order`, `CreateOrderSubmit`, `ModifyOrderSubmit`
+- Account: `AccountBalance`, `Position`
+- Instruments: `InstrumentId`, `BaseMarket`
 
-# Process management (production)
-pm2 start ecosystem.config.js
-```
+### 6. Execution Algorithms (`execution/`)
+- Built-in `TWAPExecAlgorithm` for time-weighted execution
+- Base `ExecAlgorithm` class for custom algorithm development
 
-## Architecture Overview
+## Development Guidelines
 
-### Core Components
-- **Engine**: Central orchestrator managing all trading systems (`nexustrader/engine.py`)
-- **Strategy**: Base class for trading logic with multiple execution modes (`nexustrader/strategy.py`)
-- **Connectors**: Exchange-specific public (market data) and private (trading) connectors
-- **EMS** (Execution Management System): Order submission and execution
-- **OMS** (Order Management System): Order state tracking and management
-- **Cache**: High-performance data caching layer (`nexustrader/core/cache.py`)
-- **Registry**: Order and component tracking (`nexustrader/core/registry.py`)
+### Adding a New Exchange
 
-### Exchange Integration
-Each exchange follows a consistent pattern in `nexustrader/exchange/{exchange}/`:
-- **PublicConnector**: Market data WebSocket streams
-- **PrivateConnector**: Account data and order execution
-- **EMS/OMS**: Exchange-specific order management
-- **ExchangeManager**: Coordinate connectors and systems
+1. Create directory in `nexustrader/exchange/<exchange_name>/`
+2. Implement `PublicConnector` and `PrivateConnector` inheriting from base classes
+3. Add `ExchangeType` enum in `constants.py`
+4. Register in `exchange/registry.py`
+5. Implement exchange-specific account types
 
-Supported exchanges:
-- **Primary**: Binance, Bybit, OKX (full implementation)
-- **Additional**: Bitget, Hyperliquid
-
-### Strategy Execution Modes
-1. **Event-Driven**: React to market events (`on_bookl1`, `on_trade`, `on_kline`)
-2. **Timer-Based**: Scheduled execution using `schedule()` method
-3. **Signal-Based**: Custom signal processing (`on_custom_signal`)
-
-### Performance Optimizations
-- **uvloop**: High-performance event loop (2-4x faster than asyncio)
-- **picows**: Cython-based WebSocket library (C++ performance)
-- **msgspec**: Ultra-fast serialization/deserialization
-- **nautilus-trader**: Rust-powered MessageBus and Clock components
-
-## Key File Locations
-
-### Core Framework
-- `nexustrader/engine.py` - Main trading engine
-- `nexustrader/strategy.py` - Strategy base class
-- `nexustrader/config.py` - Configuration management
-- `nexustrader/schema.py` - Data structures and schemas
-- `nexustrader/indicator.py` - Technical indicators framework
-
-### Base Classes
-- `nexustrader/base/connector.py` - Base connector implementations
-- `nexustrader/base/ems.py` - Base execution management
-- `nexustrader/base/oms.py` - Base order management
-
-### Exchange Implementations
-Each exchange directory contains:
-- `connector.py` - Public/Private connectors
-- `ems.py` - Exchange-specific execution management
-- `oms.py` - Exchange-specific order management
-- `schema.py` - Exchange data structures
-- `websockets.py` - WebSocket implementations
-- `rest_api.py` - REST API client
-
-### Configuration and Data
-- `nexustrader/constants.py` - Enums and constants
-- `nexustrader/backends/` - Database backends (Redis, PostgreSQL, SQLite)
-- `strategy/` - Example strategies organized by exchange
-
-## Environment Configuration
-
-Copy `env.example` to `.env` and configure:
-```bash
-# Redis Configuration
-NEXUS_REDIS_HOST=127.0.0.1
-NEXUS_REDIS_PORT=6379
-NEXUS_REDIS_DB=0
-NEXUS_REDIS_PASSWORD=your_redis_password
-
-# PostgreSQL Configuration  
-NEXUS_PG_HOST=localhost
-NEXUS_PG_PORT=5432
-NEXUS_PG_USER=postgres
-NEXUS_PG_PASSWORD=your_postgres_password
-NEXUS_PG_DATABASE=postgres
-```
-
-## Custom Indicator Development
-
-Indicators support automatic warmup with historical data:
+### Creating a Strategy
 
 ```python
-class CustomIndicator(Indicator):
-    def __init__(self, period: int = 20):
-        super().__init__(
-            params={"period": period},
-            name=f"Custom_{period}",
-            warmup_period=period * 2,  # Required historical periods
-            warmup_interval=KlineInterval.MINUTE_1,  # Data interval
-        )
-    
-    def handle_kline(self, kline: Kline):
-        # Process kline data
+from nexustrader.strategy import Strategy
+
+class MyStrategy(Strategy):
+    def __init__(self):
+        super().__init__()
+        # Subscriptions
+        self.subscribe_bookl1(symbols=["BTCUSDT-PERP.BINANCE"])
+
+    def on_bookl1(self, bookl1: BookL1):
+        # Trading logic here
         pass
 ```
 
-Register indicators in strategy:
+### Creating Custom Indicators
+
 ```python
-self.register_indicator(
-    symbols="BTCUSDT-PERP.BINANCE",
-    indicator=self.custom_indicator,
-    data_type=DataType.KLINE,
-    account_type=BinanceAccountType.USD_M_FUTURE_TESTNET,
-)
+from nexustrader.indicator import Indicator
+
+class MyIndicator(Indicator):
+    def __init__(self):
+        super().__init__(
+            params={"period": 20},
+            name="MyIndicator",
+            warmup_period=40,
+            warmup_interval=KlineInterval.MINUTE_1,
+        )
+
+    def handle_kline(self, kline: Kline):
+        # Process data
+        pass
 ```
 
-## Symbol Format
+### Creating Execution Algorithms
 
-All symbols follow the pattern: `{base}{quote}-{instrument_type}.{exchange}`
+```python
+from nexustrader.execution.algorithm import ExecAlgorithm
 
-Examples:
-- `BTCUSDT-PERP.BINANCE` (Binance perpetual futures)
-- `BTCUSDT-PERP.OKX` (OKX perpetual futures)
-- `BTCUSDT-PERP.BYBIT` (Bybit perpetual futures)
+class MyAlgo(ExecAlgorithm):
+    def on_order(self, exec_order: ExecAlgorithmOrder):
+        # Split order and spawn child orders
+        self.spawn_market(exec_order, quantity)
+```
 
-## Configuration Management
+## Key Design Patterns
 
-Configuration uses `dynaconf` for environment-based settings:
-- API credentials stored in `settings` system
-- Environment variables via `.env` files
-- Exchange account types specify testnet/mainnet and account categories
+### 1. Message-Driven Communication
+- Uses Rust-powered MessageBus for pub/sub
+- Topics for different data types (bookl1, trade, kline, etc.)
+- Decouples producers from consumers
 
-## Contributing Guidelines
+### 2. Async/Await Everywhere
+- All I/O operations are async
+- Use `asyncio` for concurrency
+- Avoid blocking operations in strategy callbacks
 
-From CONTRIBUTING.md:
-1. Open GitHub issues before implementing changes
-2. Fork from main branch and keep synced
-3. Install pre-commit hooks (mandatory)
-4. Small, focused pull requests with clear descriptions
-5. Reference GitHub issues in PR descriptions
-6. Target main branch for all PRs
+### 3. State Management
+- `AsyncCache`: Centralized state for positions, balances, orders
+- Persists to SQLite/PostgreSQL
+- Redis support for distributed scenarios
 
-## Infrastructure Services
+### 4. Precision Handling
+- Use `Decimal` for all price/amount calculations
+- Exchange-specific precision via `amount_to_precision` / `price_to_precision`
 
-Development stack includes:
-- **Redis**: Data caching and pub/sub messaging
-- **PostgreSQL**: Persistent data storage
-- **Grafana Loki**: Centralized logging
-- **Promtail**: Log shipping agent
+## Important Constants
 
-Start with: `docker-compose up -d`
+### ExchangeType
+- `BINANCE`, `BYBIT`, `OKX`, `HYPERLIQUID`, `BITGET`
 
-## Development Conventions
+### OrderSide / OrderType / OrderStatus
+- Side: `BUY`, `SELL`
+- Type: `LIMIT`, `MARKET`, `STOP_MARKET`, `STOP_LIMIT`
+- Status: `PENDING`, `ACCEPTED`, `PARTIALLY_FILLED`, `FILLED`, `CANCELED`, `FAILED`
 
-### Import Guidelines
-- Always use absolute path imports
+### DataType
+- `BOOKL1`, `BOOKL2`, `TRADE`, `KLINE`, `FUNDING_RATE`, etc.
 
-## Claude Code Memories
+## Configuration System
 
-### CLI Usage Warnings
-- Do not run nexustrader-cli moniter in claude code
+Strategy configuration via `Config` class:
+- `strategy_id`: Unique strategy identifier
+- `user_id`: User identifier
+- `basic_config`: Exchange API credentials
+- `public_conn_config`: Public connector settings
+- `private_conn_config`: Private connector settings
+- `storage_backend`: `REDIS` or `MEMORY`
+- `web_config`: Optional FastAPI server
 
-### Ruff Usage
-- Lint all files in the current directory with `uvx ruff check`
-- Format all files in the current directory with `uvx ruff format`
+## Testing
+
+- Unit tests in `test/`
+- Mock connector available: `MockLinearConnector`
+- Strategy examples in `strategy/` directory
+
+## Performance Considerations
+
+1. **WebSocket**: Use picows-based connectors for best performance
+2. **Serialization**: msgspec is ~10x faster than json
+3. **Event Loop**: uvloop provides 2-4x speedup on Linux/macOS
+4. **Database**: Async drivers (aiosqlite, asyncpg) for non-blocking I/O
+
+## Common Patterns
+
+### Multi-Exchange Strategy
+```python
+# Subscribe to same symbol on multiple exchanges
+self.subscribe_bookl1(symbols=["BTCUSDT-PERP.BINANCE", "BTCUSDT-PERP.OKX"])
+```
+
+### Arbitrage Pattern
+```python
+def on_bookl1(self, bookl1: BookL1):
+    if bookl1.exchange == ExchangeType.BINANCE:
+        self.binance_price = bookl1.best_bid
+    elif bookl1.exchange == ExchangeType.OKX:
+        self.okx_price = bookl1.best_ask
+    # Check arbitrage opportunity
+```
+
+### Position Management
+```python
+# Get current position
+position = self.cache.position.get("BTCUSDT-PERP.BINANCE")
+if position and position.quantity > 0:
+    # Close position
+    self.create_order(..., reduce_only=True)
+```
+
+## Important Notes
+
+1. **Symbol Format**: Always use `<SYMBOL>.<EXCHANGE>` format (e.g., `BTCUSDT-PERP.BINANCE`)
+2. **Time Awareness**: Use `self.clock.utc_now()` for consistent timestamps
+3. **Logging**: Use `self.log.info/warning/error` from strategy context
+4. **Error Handling**: Always handle `on_failed_order` callbacks
+5. **Cleanup**: Call `engine.dispose()` in finally blocks for graceful shutdown

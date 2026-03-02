@@ -1,16 +1,16 @@
-from nexustrader.constants import settings
+from walrasquant.constants import settings
 from decimal import Decimal
-from nexustrader.config import (
+from walrasquant.config import (
     Config,
     PublicConnectorConfig,
     PrivateConnectorConfig,
     BasicConfig,
 )
-from nexustrader.strategy import Strategy
-from nexustrader.constants import ExchangeType, OrderSide, OrderType
-from nexustrader.exchange import HyperLiquidAccountType
-from nexustrader.schema import BookL1, Order
-from nexustrader.engine import Engine
+from walrasquant.strategy import Strategy
+from walrasquant.constants import ExchangeType, OrderSide, OrderType
+from walrasquant.exchange import HyperLiquidAccountType
+from walrasquant.schema import BookL1, Order
+from walrasquant.engine import Engine
 
 
 HYPER_API_KEY = settings.HYPER.TESTNET.API_KEY

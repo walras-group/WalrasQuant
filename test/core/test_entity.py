@@ -1,6 +1,6 @@
 import pytest
 import asyncio
-from nexustrader.core.entity import TaskManager
+from walrasquant.core.entity import TaskManager
 
 
 @pytest.mark.asyncio

@@ -1,17 +1,17 @@
-from nexustrader.constants import settings
-from nexustrader.config import (
+from walrasquant.constants import settings
+from walrasquant.config import (
     Config,
     PublicConnectorConfig,
     BasicConfig,
 )
-from nexustrader.strategy import Strategy
-from nexustrader.constants import ExchangeType
-from nexustrader.exchange import BybitAccountType
-from nexustrader.engine import Engine
+from walrasquant.strategy import Strategy
+from walrasquant.constants import ExchangeType
+from walrasquant.exchange import BybitAccountType
+from walrasquant.engine import Engine
 
-from nexustrader.indicator import Indicator
-from nexustrader.constants import DataType
-from nexustrader.schema import Kline, BookL1, BookL2, Trade
+from walrasquant.indicator import Indicator
+from walrasquant.constants import DataType
+from walrasquant.schema import Kline, BookL1, BookL2, Trade
 
 
 BYBIT_API_KEY = settings.BYBIT.LIVE.ACCOUNT1.API_KEY

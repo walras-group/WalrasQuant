@@ -1,13 +1,13 @@
-from nexustrader.constants import settings
-from nexustrader.config import (
+from walrasquant.constants import settings
+from walrasquant.config import (
     Config,
     PublicConnectorConfig,
     BasicConfig,
 )
-from nexustrader.strategy import Strategy
-from nexustrader.constants import ExchangeType, KlineInterval
-from nexustrader.exchange import BybitAccountType
-from nexustrader.engine import Engine
+from walrasquant.strategy import Strategy
+from walrasquant.constants import ExchangeType, KlineInterval
+from walrasquant.exchange import BybitAccountType
+from walrasquant.engine import Engine
 
 from datetime import datetime, timedelta
 

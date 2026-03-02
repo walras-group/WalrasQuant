@@ -1,18 +1,18 @@
 import numpy as np
 from decimal import Decimal
-from nexustrader.constants import settings
-from nexustrader.config import (
+from walrasquant.constants import settings
+from walrasquant.config import (
     Config,
     PublicConnectorConfig,
     PrivateConnectorConfig,
     BasicConfig,
     LogConfig,
 )
-from nexustrader.constants import ExchangeType, OrderSide, OrderType
-from nexustrader.strategy import Strategy
-from nexustrader.exchange import OkxAccountType
-from nexustrader.engine import Engine
-from nexustrader.indicator import RingBuffer
+from walrasquant.constants import ExchangeType, OrderSide, OrderType
+from walrasquant.strategy import Strategy
+from walrasquant.exchange import OkxAccountType
+from walrasquant.engine import Engine
+from walrasquant.indicator import RingBuffer
 
 OKX_API_KEY = settings.OKX.DEMO_1.API_KEY
 OKX_SECRET = settings.OKX.DEMO_1.SECRET

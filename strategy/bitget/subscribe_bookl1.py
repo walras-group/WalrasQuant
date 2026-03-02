@@ -1,13 +1,13 @@
-from nexustrader.config import (
+from walrasquant.config import (
     Config,
     PublicConnectorConfig,
     BasicConfig,
 )
-from nexustrader.strategy import Strategy
-from nexustrader.constants import ExchangeType
-from nexustrader.exchange import BitgetAccountType
-from nexustrader.schema import BookL1
-from nexustrader.engine import Engine
+from walrasquant.strategy import Strategy
+from walrasquant.constants import ExchangeType
+from walrasquant.exchange import BitgetAccountType
+from walrasquant.schema import BookL1
+from walrasquant.engine import Engine
 
 
 class Demo(Strategy):

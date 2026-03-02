@@ -2,8 +2,8 @@ import pytest
 import types
 from decimal import Decimal
 from typing import List
-from nexustrader.exchange.binance import BinanceExecutionManagementSystem
-from nexustrader.schema import BaseMarket
+from walrasquant.exchange.binance import BinanceExecutionManagementSystem
+from walrasquant.schema import BaseMarket
 
 
 @pytest.fixture

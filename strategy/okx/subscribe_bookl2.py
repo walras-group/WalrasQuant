@@ -1,14 +1,14 @@
-from nexustrader.config import (
+from walrasquant.config import (
     Config,
     PublicConnectorConfig,
     BasicConfig,
 )
-from nexustrader.strategy import Strategy
-from nexustrader.constants import ExchangeType
-from nexustrader.constants import BookLevel
-from nexustrader.exchange import OkxAccountType
-from nexustrader.schema import BookL2
-from nexustrader.engine import Engine
+from walrasquant.strategy import Strategy
+from walrasquant.constants import ExchangeType
+from walrasquant.constants import BookLevel
+from walrasquant.exchange import OkxAccountType
+from walrasquant.schema import BookL2
+from walrasquant.engine import Engine
 
 
 class Demo(Strategy):

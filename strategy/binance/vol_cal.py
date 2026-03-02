@@ -1,11 +1,11 @@
 import numpy as np
-from nexustrader.config import Config, PublicConnectorConfig, BasicConfig
-from nexustrader.strategy import Strategy
-from nexustrader.constants import ExchangeType
-from nexustrader.exchange import BinanceAccountType
-from nexustrader.schema import BookL1
-from nexustrader.engine import Engine
-from nexustrader.indicator import RingBuffer
+from walrasquant.config import Config, PublicConnectorConfig, BasicConfig
+from walrasquant.strategy import Strategy
+from walrasquant.constants import ExchangeType
+from walrasquant.exchange import BinanceAccountType
+from walrasquant.schema import BookL1
+from walrasquant.engine import Engine
+from walrasquant.indicator import RingBuffer
 
 
 class VolatilityIndicator:

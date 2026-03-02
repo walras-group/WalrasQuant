@@ -1,8 +1,8 @@
-from nexustrader.config import Config, PublicConnectorConfig, BasicConfig
-from nexustrader.strategy import Strategy
-from nexustrader.constants import ExchangeType, settings
-from nexustrader.exchange import BinanceAccountType
-from nexustrader.engine import Engine
+from walrasquant.config import Config, PublicConnectorConfig, BasicConfig
+from walrasquant.strategy import Strategy
+from walrasquant.constants import ExchangeType, settings
+from walrasquant.exchange import BinanceAccountType
+from walrasquant.engine import Engine
 
 
 class Demo(Strategy):

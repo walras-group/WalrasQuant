@@ -1,9 +1,9 @@
 import pytest
 import asyncio
 import time
-from nexustrader.schema import Order, ExchangeType
-from nexustrader.constants import OrderStatus, OrderSide, OrderType
-from nexustrader.core.registry import OrderRegistry
+from walrasquant.schema import Order, ExchangeType
+from walrasquant.constants import OrderStatus, OrderSide, OrderType
+from walrasquant.core.registry import OrderRegistry
 
 
 @pytest.fixture

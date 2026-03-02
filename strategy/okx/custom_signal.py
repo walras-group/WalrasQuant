@@ -3,18 +3,18 @@ import msgspec
 from zmq.asyncio import Context
 from decimal import Decimal
 
-from nexustrader.constants import settings
-from nexustrader.config import (
+from walrasquant.constants import settings
+from walrasquant.config import (
     Config,
     PublicConnectorConfig,
     PrivateConnectorConfig,
     BasicConfig,
     ZeroMQSignalConfig,
 )
-from nexustrader.strategy import Strategy
-from nexustrader.constants import ExchangeType, OrderSide
-from nexustrader.exchange import OkxAccountType
-from nexustrader.engine import Engine
+from walrasquant.strategy import Strategy
+from walrasquant.constants import ExchangeType, OrderSide
+from walrasquant.exchange import OkxAccountType
+from walrasquant.engine import Engine
 from collections import defaultdict
 
 

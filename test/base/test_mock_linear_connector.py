@@ -1,10 +1,10 @@
 import pytest
 from decimal import Decimal
 from typing import Dict
-from nexustrader.schema import PositionSide
-from nexustrader.constants import OrderStatus, OrderSide, OrderType
-from nexustrader.exchange.binance.constants import BinanceAccountType
-from nexustrader.base import MockLinearConnector
+from walrasquant.schema import PositionSide
+from walrasquant.constants import OrderStatus, OrderSide, OrderType
+from walrasquant.exchange.binance.constants import BinanceAccountType
+from walrasquant.base import MockLinearConnector
 
 
 @pytest.fixture

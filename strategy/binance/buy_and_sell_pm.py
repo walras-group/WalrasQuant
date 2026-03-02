@@ -14,18 +14,18 @@
 ##################################################################################################
 
 from decimal import Decimal
-from nexustrader.constants import settings
-from nexustrader.config import (
+from walrasquant.constants import settings
+from walrasquant.config import (
     Config,
     PublicConnectorConfig,
     PrivateConnectorConfig,
     BasicConfig,
 )
-from nexustrader.strategy import Strategy
-from nexustrader.constants import ExchangeType, OrderSide, OrderType
-from nexustrader.exchange import BinanceAccountType
-from nexustrader.schema import BookL1, Order
-from nexustrader.engine import Engine
+from walrasquant.strategy import Strategy
+from walrasquant.constants import ExchangeType, OrderSide, OrderType
+from walrasquant.exchange import BinanceAccountType
+from walrasquant.schema import BookL1, Order
+from walrasquant.engine import Engine
 
 
 BINANCE_API_KEY = settings.BINANCE.PM.ACCOUNT1.API_KEY

@@ -1,16 +1,16 @@
 from collections import deque
-from nexustrader.config import (
+from walrasquant.config import (
     Config,
     PublicConnectorConfig,
     BasicConfig,
 )
-from nexustrader.strategy import Strategy
-from nexustrader.constants import ExchangeType, KlineInterval, DataType
-from nexustrader.exchange import BybitAccountType
-from nexustrader.engine import Engine
+from walrasquant.strategy import Strategy
+from walrasquant.constants import ExchangeType, KlineInterval, DataType
+from walrasquant.exchange import BybitAccountType
+from walrasquant.engine import Engine
 
-from nexustrader.indicator import Indicator
-from nexustrader.schema import Kline, BookL1, BookL2, Trade
+from walrasquant.indicator import Indicator
+from walrasquant.schema import Kline, BookL1, BookL2, Trade
 
 
 class MovingAverageIndicator(Indicator):

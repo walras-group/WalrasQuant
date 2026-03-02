@@ -1,13 +1,13 @@
-from nexustrader.config import (
+from walrasquant.config import (
     Config,
     PublicConnectorConfig,
     BasicConfig,
 )
-from nexustrader.strategy import Strategy
-from nexustrader.constants import ExchangeType
-from nexustrader.exchange import BybitAccountType
-from nexustrader.schema import FundingRate, IndexPrice, MarkPrice
-from nexustrader.engine import Engine
+from walrasquant.strategy import Strategy
+from walrasquant.constants import ExchangeType
+from walrasquant.exchange import BybitAccountType
+from walrasquant.schema import FundingRate, IndexPrice, MarkPrice
+from walrasquant.engine import Engine
 
 
 class Demo(Strategy):

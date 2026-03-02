@@ -1,14 +1,14 @@
-from nexustrader.config import (
+from walrasquant.config import (
     Config,
     PublicConnectorConfig,
     BasicConfig,
 )
-from nexustrader.strategy import Strategy
-from nexustrader.constants import ExchangeType
-from nexustrader.constants import KlineInterval
-from nexustrader.exchange import OkxAccountType
-from nexustrader.schema import Kline
-from nexustrader.engine import Engine
+from walrasquant.strategy import Strategy
+from walrasquant.constants import ExchangeType
+from walrasquant.constants import KlineInterval
+from walrasquant.exchange import OkxAccountType
+from walrasquant.schema import Kline
+from walrasquant.engine import Engine
 
 
 class Demo(Strategy):

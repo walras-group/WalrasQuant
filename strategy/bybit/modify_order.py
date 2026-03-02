@@ -1,17 +1,17 @@
 from decimal import Decimal
 
-from nexustrader.constants import settings
-from nexustrader.config import (
+from walrasquant.constants import settings
+from walrasquant.config import (
     Config,
     PublicConnectorConfig,
     PrivateConnectorConfig,
     BasicConfig,
 )
-from nexustrader.strategy import Strategy
-from nexustrader.constants import ExchangeType, OrderSide, OrderType
-from nexustrader.exchange import BybitAccountType
-from nexustrader.schema import BookL1, Order
-from nexustrader.engine import Engine
+from walrasquant.strategy import Strategy
+from walrasquant.constants import ExchangeType, OrderSide, OrderType
+from walrasquant.exchange import BybitAccountType
+from walrasquant.schema import BookL1, Order
+from walrasquant.engine import Engine
 
 
 BYBIT_API_KEY = settings.BYBIT.TESTNET.API_KEY

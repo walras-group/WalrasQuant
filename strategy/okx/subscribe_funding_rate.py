@@ -1,15 +1,15 @@
-from nexustrader.constants import settings
-from nexustrader.config import (
+from walrasquant.constants import settings
+from walrasquant.config import (
     Config,
     PublicConnectorConfig,
     PrivateConnectorConfig,
     BasicConfig,
 )
-from nexustrader.strategy import Strategy
-from nexustrader.constants import ExchangeType
-from nexustrader.exchange import OkxAccountType
-from nexustrader.schema import FundingRate, IndexPrice, MarkPrice
-from nexustrader.engine import Engine
+from walrasquant.strategy import Strategy
+from walrasquant.constants import ExchangeType
+from walrasquant.exchange import OkxAccountType
+from walrasquant.schema import FundingRate, IndexPrice, MarkPrice
+from walrasquant.engine import Engine
 
 
 OKX_API_KEY = settings.OKX.DEMO_1.API_KEY

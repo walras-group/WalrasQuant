@@ -1,5 +1,5 @@
 [project]
-name = "nexusquant"
+name = "walrasquant"
 version = "0.3.0"
 description = "fastest python trading bot"
 authors = [
@@ -42,7 +42,7 @@ dependencies = [
 ]
 
 [project.scripts]
-nexusquant-cli = "nexusquant.cli.main:main"
+walrasquant-cli = "walrasquant.cli.main:main"
 
 [build-system]
 requires = ["uv_build>=0.10.7,<0.11.0"]
