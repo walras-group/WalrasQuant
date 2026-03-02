@@ -1148,89 +1148,6 @@ wheels = [
 ]
 
 [[package]]
-name = "walrasquant"
-version = "0.3.0"
-source = { editable = "." }
-dependencies = [
-    { name = "aiosqlite" },
-    { name = "apscheduler" },
-    { name = "asyncpg" },
-    { name = "bcrypt" },
-    { name = "ccxt" },
-    { name = "certifi" },
-    { name = "click" },
-    { name = "cython" },
-    { name = "dynaconf", extra = ["redis"] },
-    { name = "eth-account" },
-    { name = "fastapi" },
-    { name = "flashduty-sdk" },
-    { name = "httpx" },
-    { name = "msgspec" },
-    { name = "nexuslog" },
-    { name = "numpy" },
-    { name = "pandas" },
-    { name = "pathlib" },
-    { name = "picows" },
-    { name = "psycopg2-binary" },
-    { name = "pycryptodome" },
-    { name = "redis" },
-    { name = "returns" },
-    { name = "textual" },
-    { name = "throttled-py" },
-    { name = "typing-extensions" },
-    { name = "uvicorn" },
-    { name = "uvloop" },
-    { name = "walras-nexuscore" },
-    { name = "zmq" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiosqlite", specifier = ">=0.21.0,<0.22.0" },
-    { name = "apscheduler", specifier = ">=3.11.0,<4.0.0" },
-    { name = "asyncpg", specifier = ">=0.30.0" },
-    { name = "bcrypt", specifier = ">=4.2.1,<5.0.0" },
-    { name = "ccxt", specifier = ">=4.5.34" },
-    { name = "certifi", specifier = ">=2025.1.31,<2026.0.0" },
-    { name = "click", specifier = ">=8.1.0" },
-    { name = "cython", specifier = ">=3.0.11,<4.0.0" },
-    { name = "dynaconf", extras = ["redis"], specifier = ">=3.2.12" },
-    { name = "eth-account", specifier = ">=0.13.7" },
-    { name = "fastapi", specifier = ">=0.117.1" },
-    { name = "flashduty-sdk", specifier = ">=0.1.1" },
-    { name = "httpx", specifier = ">=0.28.1" },
-    { name = "msgspec", specifier = ">=0.19.0,<0.20.0" },
-    { name = "nexuslog", specifier = ">=0.4.4" },
-    { name = "numpy", specifier = ">=1.26.4,<2.2.1" },
-    { name = "pandas", specifier = ">=2.3.3,<3.0.0" },
-    { name = "pathlib", specifier = ">=1.0.1,<2.0.0" },
-    { name = "picows", specifier = ">=1.10.2" },
-    { name = "psycopg2-binary", specifier = ">=2.9.10" },
-    { name = "pycryptodome", specifier = ">=3.23.0" },
-    { name = "redis", specifier = ">=5.2.1,<6.0.0" },
-    { name = "returns", specifier = ">=0.24.0,<0.25.0" },
-    { name = "textual", specifier = ">=0.85.0" },
-    { name = "throttled-py", specifier = ">=2.2.3" },
-    { name = "typing-extensions", specifier = ">=4.12.2" },
-    { name = "uvicorn", specifier = ">=0.36.0" },
-    { name = "uvloop", specifier = ">=0.21.0" },
-    { name = "walras-nexuscore", specifier = ">=0.1.3" },
-    { name = "zmq", specifier = ">=0.0.0,<0.0.1" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=8.3.5" },
-    { name = "ruff", specifier = ">=0.11.10" },
-]
-
-[[package]]
 name = "numpy"
 version = "2.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2111,6 +2028,89 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/01/f7/ac8a01fbd111189b0e1c4a9f5121dedc15489c54a6e0e11a32d706b41caf/walras_nexuscore-0.1.3-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:59cd72ba7015cad8ac53fd29b13dd102cbef04bd3bc04c30313b19e04d940646", size = 11047315, upload-time = "2026-01-28T09:40:05.012Z" },
     { url = "https://files.pythonhosted.org/packages/ef/6d/2cfadf7687dde2242c107e01bff452591696c2ed07674644ee70cd374e4e/walras_nexuscore-0.1.3-cp313-cp313-macosx_11_0_universal2.whl", hash = "sha256:2aac9e044622832698df477493dc66fe7e836ac54366625897dbebc9187dd816", size = 10011537, upload-time = "2026-01-28T09:40:07.314Z" },
     { url = "https://files.pythonhosted.org/packages/91/c1/4342e2c32af07e64368719f419d22e76446480ab243f7e982cfd7140a361/walras_nexuscore-0.1.3-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:716247f6415fd68d13936881757e73529ee8dff313db1af4e0486f3d77799c84", size = 11033079, upload-time = "2026-01-28T09:40:09.513Z" },
+]
+
+[[package]]
+name = "walrasquant"
+version = "0.3.2"
+source = { editable = "." }
+dependencies = [
+    { name = "aiosqlite" },
+    { name = "apscheduler" },
+    { name = "asyncpg" },
+    { name = "bcrypt" },
+    { name = "ccxt" },
+    { name = "certifi" },
+    { name = "click" },
+    { name = "cython" },
+    { name = "dynaconf", extra = ["redis"] },
+    { name = "eth-account" },
+    { name = "fastapi" },
+    { name = "flashduty-sdk" },
+    { name = "httpx" },
+    { name = "msgspec" },
+    { name = "nexuslog" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "pathlib" },
+    { name = "picows" },
+    { name = "psycopg2-binary" },
+    { name = "pycryptodome" },
+    { name = "redis" },
+    { name = "returns" },
+    { name = "textual" },
+    { name = "throttled-py" },
+    { name = "typing-extensions" },
+    { name = "uvicorn" },
+    { name = "uvloop" },
+    { name = "walras-nexuscore" },
+    { name = "zmq" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiosqlite", specifier = ">=0.21.0,<0.22.0" },
+    { name = "apscheduler", specifier = ">=3.11.0,<4.0.0" },
+    { name = "asyncpg", specifier = ">=0.30.0" },
+    { name = "bcrypt", specifier = ">=4.2.1,<5.0.0" },
+    { name = "ccxt", specifier = ">=4.5.34" },
+    { name = "certifi", specifier = ">=2025.1.31,<2026.0.0" },
+    { name = "click", specifier = ">=8.1.0" },
+    { name = "cython", specifier = ">=3.0.11,<4.0.0" },
+    { name = "dynaconf", extras = ["redis"], specifier = ">=3.2.12" },
+    { name = "eth-account", specifier = ">=0.13.7" },
+    { name = "fastapi", specifier = ">=0.117.1" },
+    { name = "flashduty-sdk", specifier = ">=0.1.1" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "msgspec", specifier = ">=0.19.0,<0.20.0" },
+    { name = "nexuslog", specifier = ">=0.4.4" },
+    { name = "numpy", specifier = ">=1.26.4,<2.2.1" },
+    { name = "pandas", specifier = ">=2.3.3,<3.0.0" },
+    { name = "pathlib", specifier = ">=1.0.1,<2.0.0" },
+    { name = "picows", specifier = ">=1.10.2" },
+    { name = "psycopg2-binary", specifier = ">=2.9.10" },
+    { name = "pycryptodome", specifier = ">=3.23.0" },
+    { name = "redis", specifier = ">=5.2.1,<6.0.0" },
+    { name = "returns", specifier = ">=0.24.0,<0.25.0" },
+    { name = "textual", specifier = ">=0.85.0" },
+    { name = "throttled-py", specifier = ">=2.2.3" },
+    { name = "typing-extensions", specifier = ">=4.12.2" },
+    { name = "uvicorn", specifier = ">=0.36.0" },
+    { name = "uvloop", specifier = ">=0.21.0" },
+    { name = "walras-nexuscore", specifier = ">=0.1.3" },
+    { name = "zmq", specifier = ">=0.0.0,<0.0.1" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=8.3.5" },
+    { name = "ruff", specifier = ">=0.11.10" },
 ]
 
 [[package]]
