@@ -356,7 +356,7 @@ class HyperLiquidWSApiClient(WSClient):
             "signature": signature,
         }
         cost = self._get_rate_limit_cost(length=len(orders), cost=1)
-        await self._limiter("/exchange").limit(key="order", cost=cost)
+        await self._limiter.exchange_limit(cost=cost)
         self._submit(oid=id, request_type="action", payload=payload)
 
     async def cancel_order(
@@ -378,7 +378,7 @@ class HyperLiquidWSApiClient(WSClient):
             "signature": signature,
         }
         cost = self._get_rate_limit_cost(length=len(cancels), cost=1)
-        await self._limiter("/exchange").limit(key="cancel", cost=cost)
+        await self._limiter.exchange_limit(cost=cost)
         self._submit(oid=id, request_type="action", payload=payload)
 
     async def cancel_orders_by_cloid(
@@ -398,7 +398,7 @@ class HyperLiquidWSApiClient(WSClient):
             "signature": signature,
         }
         cost = self._get_rate_limit_cost(length=len(cancels), cost=1)
-        await self._limiter("/exchange").limit(key="cancel", cost=cost)
+        await self._limiter.exchange_limit(cost=cost)
         self._submit(oid=id, request_type="action", payload=payload)
 
 

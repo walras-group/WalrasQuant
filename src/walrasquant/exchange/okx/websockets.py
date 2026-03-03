@@ -349,7 +349,7 @@ class OkxWSApiClient(WSClient):
             "sz": sz,
             **kwargs,
         }
-        await self._limiter("/ws/order").limit("order", cost=1)
+        await self._limiter.order_limit("/ws/order")
         self._submit(id, "order", params)
 
     async def cancel_order(self, id: str, instIdCode: int, clOrdId: str):
@@ -357,7 +357,7 @@ class OkxWSApiClient(WSClient):
             "instIdCode": instIdCode,
             "clOrdId": clOrdId,
         }
-        await self._limiter("/ws/cancel").limit("cancel", cost=1)
+        await self._limiter.order_limit("/ws/cancel")
         self._submit(id, "cancel-order", params)
 
 

@@ -280,10 +280,7 @@ class BybitWSApiClient(WSClient):
             **kwargs,
         }
         op = "order.create"
-        if category == "spot":
-            await self._limiter("20/s").limit(key=op, cost=1)
-        else:
-            await self._limiter("10/s").limit(key=op, cost=1)
+        await self._limiter.order_limit(category=category, endpoint=op)
         self._submit(reqId=f"n{id}", op=op, args=[arg])
 
     async def cancel_order(
@@ -296,10 +293,7 @@ class BybitWSApiClient(WSClient):
             **kwargs,
         }
         op = "order.cancel"
-        if category == "spot":
-            await self._limiter("20/s").limit(key=op, cost=1)
-        else:
-            await self._limiter("10/s").limit(key=op, cost=1)
+        await self._limiter.order_limit(category=category, endpoint=op)
         self._submit(reqId=f"c{id}", op=op, args=[arg])
 
     async def _resubscribe_for_client(self, client_id: int, subscriptions: List[str]):

@@ -438,9 +438,7 @@ class BitgetWSApiClient(WSClient):
             **kwargs,
         }
 
-        await self._limiter("/api/v2/spot/trade/place-order").limit(
-            key="spot_place_order"
-        )
+        await self._limiter.order_limit("/api/v2/spot/trade/place-order")
         self._submit(
             id=id, instType="SPOT", instId=instId, channel="place-order", params=params
         )
@@ -455,9 +453,7 @@ class BitgetWSApiClient(WSClient):
             "clientOid": clientOid,
         }
 
-        await self._limiter("/api/v2/spot/trade/cancel-order").limit(
-            key="spot_cancel_order"
-        )
+        await self._limiter.order_limit("/api/v2/spot/trade/cancel-order")
         self._submit(
             id=id, instType="SPOT", instId=instId, channel="cancel-order", params=params
         )
@@ -485,9 +481,7 @@ class BitgetWSApiClient(WSClient):
             **kwargs,
         }
 
-        await self._limiter("/api/v2/mix/order/place-order").limit(
-            key="future_place_order"
-        )
+        await self._limiter.order_limit("/api/v2/mix/order/place-order")
         self._submit(
             id=id,
             instType=instType,
@@ -507,9 +501,7 @@ class BitgetWSApiClient(WSClient):
             "clientOid": clientOid,
         }
 
-        await self._limiter("/api/v2/mix/order/cancel-order").limit(
-            key="future_cancel_order"
-        )
+        await self._limiter.order_limit("/api/v2/mix/order/cancel-order")
         self._submit(
             id=id,
             instType=instType,
@@ -540,7 +532,7 @@ class BitgetWSApiClient(WSClient):
             }
         ]
 
-        await self._limiter("/api/v3/trade/place-order").limit(key="uta_place_order")
+        await self._limiter.order_limit("/api/v3/trade/place-order")
         self._uta_submit(id=f"n{id}", topic="place-order", category=category, args=args)
 
     async def uta_cancel_order(
@@ -554,7 +546,7 @@ class BitgetWSApiClient(WSClient):
             }
         ]
 
-        await self._limiter("/api/v3/trade/cancel-order").limit(key="uta_cancel_order")
+        await self._limiter.order_limit("/api/v3/trade/cancel-order")
         self._uta_submit(
             id=f"c{id}",
             topic="cancel-order",
