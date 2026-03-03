@@ -54,7 +54,7 @@ class Demo(Strategy):
                 self.price_to_precision(symbol, bid * 0.998),
                 self.price_to_precision(symbol, bid * 0.997),
                 self.price_to_precision(symbol, bid * 0.996),
-            ]
+            ] * 100
 
             for price in prices:
                 self.create_order(
@@ -91,7 +91,7 @@ config = Config(
         ExchangeType.BINANCE: [
             PublicConnectorConfig(
                 account_type=BinanceAccountType.SPOT_TESTNET,
-                enable_rate_limit=True,
+                enable_rate_limit=False,
             )
         ]
     },
@@ -99,7 +99,7 @@ config = Config(
         ExchangeType.BINANCE: [
             PrivateConnectorConfig(
                 account_type=BinanceAccountType.SPOT_TESTNET,
-                enable_rate_limit=True,
+                enable_rate_limit=False,
             )
         ]
     },

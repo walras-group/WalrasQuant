@@ -412,6 +412,8 @@ class AsyncCache:
                     self._mem_open_orders[order.exchange].add(order.oid)
                     self._mem_symbol_orders[order.symbol].add(order.oid)
                     self._mem_symbol_open_orders[order.symbol].add(order.oid)
+                    if order.is_cancel_failed:
+                        self._cancel_intent_oids.discard(order.oid)
                 else:
                     self._mem_open_orders[order.exchange].discard(order.oid)
                     self._mem_symbol_open_orders[order.symbol].discard(order.oid)
