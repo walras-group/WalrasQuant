@@ -1,6 +1,6 @@
 [project]
 name = "walrasquant"
-version = "0.3.4"
+version = "0.3.5"
 description = "fastest python trading bot"
 authors = [
     {name = "River-Shi",email = "nachuan.shi.quant@gmail.com"}
@@ -39,10 +39,12 @@ dependencies = [
     "flashduty-sdk>=0.1.1",
     "httpx>=0.28.1",
     "ccxt>=4.5.34",
+    "rich>=14.0.0",
 ]
 
 [project.scripts]
 walrasquant-cli = "walrasquant.cli.main:main"
+wq-pm2 = "walrasquant.tools.pm2_wrapper:main"
 
 [build-system]
 requires = ["uv_build>=0.10.7,<0.11.0"]
