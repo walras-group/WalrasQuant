@@ -1,729 +1,128 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/source/_static/logo-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="docs/source/_static/logo-light.png">
-  <img alt="nexustrader Logo" src="docs/source/_static/logo-light.png">
-</picture>
+# walrasquant
 
+`walrasquant` is a high-performance Python framework for quantitative trading.
+It is designed for low-latency execution, multi-exchange connectivity, and strategy development at scale.
 
----
+## Highlights
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)![Python](https://img.shields.io/badge/python-3.11%20|%203.12%20|%203.13-blue)![Version](https://img.shields.io/pypi/v/nexustrader?&color=blue)
-
-- **WebSite**: https://nexustrader.quantweb3.ai/
-- **Docs**: https://nexustrader.readthedocs.io/en/latest/
-- **Support**: [quantweb3.ai@gmail.com](mailto:quantweb3.ai@gmail.com)
-
-```python
-                ###############################################################
-                ##                                                           ##
-                ##                                                           ##
-                ##         ███    ██ ███████ ██   ██ ██    ██ ███████        ##
-                ##         ████   ██ ██       ██ ██  ██    ██ ██             ##
-                ##         ██ ██  ██ █████     ███   ██    ██ ███████        ##
-                ##         ██  ██ ██ ██       ██ ██  ██    ██      ██        ##
-                ##         ██   ████ ███████ ██   ██  ██████  ███████        ##
-                ##                                                           ##
-                ##                                                           ##
-                ##     ████████ ██████   █████  ██████   ███████ ██████      ##
-                ##        ██    ██   ██ ██   ██ ██   ██  ██      ██   ██     ##
-                ##        ██    ██████  ███████ ██   ██  █████   ██████      ##
-                ##        ██    ██   ██ ██   ██ ██   ██  ██      ██   ██     ##
-                ##        ██    ██   ██ ██   ██ ██████   ███████ ██   ██     ##
-                ##                                                           ##
-                ##                                                           ##
-                ###############################################################
-```
-## Introduction
-
-NexusTrader is a professional-grade open-source quantitative trading platform, specifically designed for **large capital
-management** and **complex strategy development**, dedicated to providing high-performance, scalable, and user-friendly
-quantitative trading solutions.
-
-## Overview
-
-### Core Advantages
-
-- 🚀 **Professionally Optimized Order Algorithms：** Deep optimization for algorithmic orders including TWAP, effectively
-   reducing market impact costs. Users can easily integrate their own execution signals to achieve more efficient and
-   precise order execution.
-- 💰 **Professional Arbitrage Strategy Support：** Provides professional optimization for various arbitrage strategies,
-   including funding rate arbitrage and cross-exchange arbitrage, supporting real-time tracking and trading of thousands
-   of trading pairs to help users easily capture arbitrage opportunities.
-- 🚧 **Full-Featured Quantitative Trading Framework：** Users don't need to build frameworks or handle complex exchange
-   interface details themselves. NexusTrader has integrated professional position management, order management, fund
-   management, and statistical analysis modules, allowing users to focus on writing strategy logic and quickly implement
-   quantitative trading.
-- 🚀 **Multi-Market Support and High Scalability：** Supports large-scale multi-market tracking and high-frequency strategy
-   execution, covering a wide range of trading instruments, making it an ideal choice for professional trading needs.
-
-### Why NexusTrader Is More Efficient?
-
-  - **Enhanced Event Loop Performance**: NexusTrader leverages [uvloop](https://github.com/MagicStack/uvloop), a high-performance event loop, delivering speeds up to 2-4 times faster than Python's default asyncio loop.
-
-  - **High-Performance WebSocket Framework**: Built with [picows](https://github.com/tarasko/picows), a Cython-based WebSocket library that matches the speed of C++'s Boost.Beast, significantly outperforming Python alternatives like websockets and aiohttp.
-
-  - **Optimized Data Serialization**: Utilizing `msgspec` for serialization and deserialization, NexusTrader achieves unmatched efficiency, surpassing tools like `orjson`, `ujson`, and `json`. All data classes are implemented with `msgspec.Struct` for maximum performance.
-
-  - **Scalable Order Management**: Orders are handled efficiently using `asyncio.Queue`, ensuring seamless processing even at high volumes.
-
-  - **Rust-Powered Core Components**: Core modules such as the MessageBus and Clock are implemented in Rust, combining Rust's speed and reliability with Python's flexibility through the [nautilius](https://github.com/nautilius/nautilius) framework.
-
-### Comparison with Other Frameworks
-
-| Framework                                                    | Websocket Package                                            | Data Serialization                                 | Strategy Support | Advantages                                         | Disadvantages                                     |
-| ------------------------------------------------------------ | ------------------------------------------------------------ | -------------------------------------------------- | ---------------- | -------------------------------------------------- | ------------------------------------------------- |
-| **NexusTrader**                                              | [picows](https://picows.readthedocs.io/en/stable/introduction.html#installation) | [msgspec](https://jcristharif.com/msgspec/)        | ✅                | Professionally optimized for speed and low latency | Requires some familiarity with async workflows    |
-| [HummingBot](https://github.com/hummingbot/hummingbot?tab=readme-ov-file) | aiohttp                                                      | [ujson](https://pypi.org/project/ujson/)           | ✅                | Widely adopted with robust community support       | Slower WebSocket handling and limited flexibility |
-| [Freqtrade](https://github.com/freqtrade/freqtrade)          | websockets                                                   | [orjson](https://github.com/ijl/orjson)            | ✅                | Flexible strategy support                          | Higher resource consumption                       |
-| [crypto-feed](https://github.com/bmoscon/cryptofeed)         | [websockets](https://websockets.readthedocs.io/en/stable/)   | [yapic.json](https://pypi.org/project/yapic.json/) | ❌                | Simple design for feed-only use                    | Lacks trading support and advanced features       |
-| [ccxt](https://github.com/bmoscon/cryptofeed)                | [aiohttp](https://docs.aiohttp.org/en/stable/client_reference.html) | json                                               | ❌                | Great REST API support                             | Limited WebSocket performance                     |
-| [binance-futures-connector](https://github.com/binance/binance-futures-connector-python) | [websocket-client](https://websocket-client.readthedocs.io/en/latest/examples.html) | json                                               | ❌                | Optimized for Binance-specific integration         | Limited to Binance Futures                        |
-| [python-okx](https://github.com/okxapi/python-okx)           | websockets                                                   | json                                               | ❌                | Dedicated to OKX trading                           | Limited to OKX platform                           |
-| [unicorn-binance-websocket-api](https://github.com/LUCIT-Systems-and-Development/unicorn-binance-websocket-api) | websockets                                                   | [ujson](https://pypi.org/project/ujson/)           | ❌                | Easy-to-use for Binance users                      | Restricted to Binance and resource-heavy          |
-
-### Architecture (data flow)
-The core of Tradebot is the `Connector`, which is responsible for connecting to the exchange and data flow. Through the `PublicConnector`, users can access market data from the exchange, and through the `PrivateConnector`, users can execute trades and receive callbacks for trade data. Orders are submitted through the ``OrderExecutionSystem``, which is responsible for submitting orders to the exchange and obtaining the order ID from the exchange. Order status management is handled by the `OrderManagementSystem`, which is responsible for managing the status of orders and sending them to the `Strategy`.
-
-![Architecture](docs/source/_static/arch.png "architecture")
-
-### Features
-
-- 🌍 Multi-Exchange Integration: Effortlessly connect to top exchanges like Binance, Bybit, and OKX, with an extensible design to support additional platforms.
-- ⚡ Asynchronous Operations: Built on asyncio for highly efficient, scalable performance, even during high-frequency trading.
-- 📡 Real-Time Data Streaming: Reliable WebSocket support for live market data, order book updates, and trade execution notifications.
-- 📊 Advanced Order Management: Execute diverse order types (limit, market, stop) with optimized, professional-grade order handling.
-- 📋 Account Monitoring: Real-time tracking of balances, positions, and PnL across multiple exchanges with integrated monitoring tools.
-- 🛠️ Modular Architecture: Flexible framework to add exchanges, instruments, or custom strategies with ease.
-- 🔄 Strategy Execution & Backtesting: Seamlessly transition from strategy testing to live trading with built-in tools.
-- 📈 Scalability: Designed to handle large-scale, multi-market operations for retail and institutional traders alike.
-- 💰 Risk & Fund Management: Optimize capital allocation and control risk exposure with integrated management tools.
-- 🔔 Instant Notifications: Stay updated with alerts for trades, market changes, and custom conditions.
-
-### Supported Exchanges
-
-| OKX  | Binance  | BYBIT    | HYPERLIQUID | BITGET |
-| --------| ------ | ------- | ------- | ------- |
-| <img src="https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/9a411426-3711-47d4-9c1a-dcf72973ddfc/dfj37e6-d8b49926-d115-4368-9de8-09a80077fb4f.png/v1/fill/w_1280,h_1280/okx_okb_logo_by_saphyl_dfj37e6-fullview.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTI4MCIsInBhdGgiOiJcL2ZcLzlhNDExNDI2LTM3MTEtNDdkNC05YzFhLWRjZjcyOTczZGRmY1wvZGZqMzdlNi1kOGI0OTkyNi1kMTE1LTQzNjgtOWRlOC0wOWE4MDA3N2ZiNGYucG5nIiwid2lkdGgiOiI8PTEyODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.kH6v6nu55xLephOzAFFhD2uCYkmFdLsBoTkSuQvtBpo" width="100"> | <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Binance_Logo.svg/768px-Binance_Logo.svg.png" width="100"> | <img src="https://brandlogo.org/wp-content/uploads/2024/02/Bybit-Logo.png" width="100"> | <img src="https://avatars.githubusercontent.com/u/129421375?s=280&v=4" width="100"> | <img src="https://s2.coinmarketcap.com/static/img/coins/200x200/11092.png" width="100"> |
+- Async-first architecture for real-time trading workflows
+- Multi-exchange support (OKX, Binance, Bybit, Hyperliquid, Bitget)
+- Built-in order and position lifecycle management
+- Strategy framework with execution algorithms (including TWAP)
+- Optional web API integration with FastAPI
+- CLI and PM2 tooling for monitoring and operations
 
 ## Installation
 
-### Prerequisites
+### Requirements
 
-- Python 3.11+
-- Redis
-- Poetry (recommended)
-- build-essential
-
-### Install Build Essentials
-
-```bash
-sudo apt-get update
-sudo apt-get install build-essential
-```
+- Python `>=3.11,<3.14`
+- Redis (recommended for monitoring and shared runtime state)
 
 ### From PyPI
 
 ```bash
-pip install nexustrader
+pip install walrasquant
 ```
 
-### From Source
+### From source
 
 ```bash
-git clone https://github.com/RiverTrading/NexusTrader
-cd NexusTrader
-poetry install
+git clone https://github.com/walras-group/WalrasQuant.git
+cd WalrasQuant
+uv pip install -e .
 ```
 
-> **Note**
-> more details can be found in the [installation guide](https://nexustrader.readthedocs.io/en/latest/installation.html)
-
-### Quick Start
-
-Here's a basic example of how to use nexustrader, demonstrating a simple buy and sell strategy on OKX.
+## Quick start
 
 ```python
 from decimal import Decimal
 
-from nexustrader.constants import settings
-from nexustrader.config import Config, PublicConnectorConfig, PrivateConnectorConfig, BasicConfig
-from nexustrader.strategy import Strategy
-from nexustrader.constants import ExchangeType, OrderSide, OrderType
-from nexustrader.exchange.okx import OkxAccountType
-from nexustrader.schema import BookL1, Order
-from nexustrader.engine import Engine
+from walrasquant.constants import settings, ExchangeType, OrderSide, OrderType
+from walrasquant.config import Config, BasicConfig, PublicConnectorConfig, PrivateConnectorConfig
+from walrasquant.engine import Engine
+from walrasquant.exchange.okx import OkxAccountType
+from walrasquant.schema import BookL1, Order
+from walrasquant.strategy import Strategy
 
-# Retrieve API credentials from settings
+
 OKX_API_KEY = settings.OKX.DEMO_1.api_key
 OKX_SECRET = settings.OKX.DEMO_1.secret
 OKX_PASSPHRASE = settings.OKX.DEMO_1.passphrase
 
 
-class Demo(Strategy):
+class DemoStrategy(Strategy):
     def __init__(self):
         super().__init__()
-        self.subscribe_bookl1(symbols=["BTCUSDT-PERP.OKX"])  # Subscribe to the order book for the specified symbol
-        self.signal = True  # Initialize signal to control order execution
-
-    def on_failed_order(self, order: Order):
-        print(order)  # Log failed orders
-
-    def on_pending_order(self, order: Order):
-        print(order)  # Log pending orders
-
-    def on_accepted_order(self, order: Order):
-        print(order)  # Log accepted orders
-
-    def on_partially_filled_order(self, order: Order):
-        print(order)  # Log partially filled orders
+        self.subscribe_bookl1(symbols=["BTCUSDT-PERP.OKX"])
+        self.signal = True
 
     def on_filled_order(self, order: Order):
-        print(order)  # Log filled orders
+        print(order)
 
     def on_bookl1(self, bookl1: BookL1):
-        if self.signal:  # Check if the signal is active
-            # Create a market buy order
-            self.create_order(
-                symbol="BTCUSDT-PERP.OKX",
-                side=OrderSide.BUY,
-                type=OrderType.MARKET,
-                amount=Decimal("0.1"),
-            )
-            # Create a market sell order
-            self.create_order(
-                symbol="BTCUSDT-PERP.OKX",
-                side=OrderSide.SELL,
-                type=OrderType.MARKET,
-                amount=Decimal("0.1"),
-            )
-            self.signal = False  # Deactivate the signal after placing orders
+        if not self.signal:
+            return
+
+        self.create_order(
+            symbol="BTCUSDT-PERP.OKX",
+            side=OrderSide.BUY,
+            type=OrderType.MARKET,
+            amount=Decimal("0.1"),
+        )
+        self.create_order(
+            symbol="BTCUSDT-PERP.OKX",
+            side=OrderSide.SELL,
+            type=OrderType.MARKET,
+            amount=Decimal("0.1"),
+        )
+        self.signal = False
 
 
-# Configuration for the trading strategy
 config = Config(
-    strategy_id="okx_buy_and_sell",
+    strategy_id="okx_demo_buy_sell",
     user_id="user_test",
-    strategy=Demo(),
+    strategy=DemoStrategy(),
     basic_config={
         ExchangeType.OKX: BasicConfig(
             api_key=OKX_API_KEY,
             secret=OKX_SECRET,
             passphrase=OKX_PASSPHRASE,
-            testnet=True,  # Use testnet for safe trading
+            testnet=True,
         )
     },
     public_conn_config={
-        ExchangeType.OKX: [
-            PublicConnectorConfig(
-                account_type=OkxAccountType.DEMO,  # Specify demo account type
-            )
-        ]
+        ExchangeType.OKX: [PublicConnectorConfig(account_type=OkxAccountType.DEMO)]
     },
     private_conn_config={
-        ExchangeType.OKX: [
-            PrivateConnectorConfig(
-                account_type=OkxAccountType.DEMO,  # Specify demo account type
-            )
-        ]
-    }
+        ExchangeType.OKX: [PrivateConnectorConfig(account_type=OkxAccountType.DEMO)]
+    },
 )
 
-# Initialize the trading engine with the configuration
 engine = Engine(config)
 
 if __name__ == "__main__":
     try:
-        engine.start()  # Start the trading engine
+        engine.start()
     finally:
-        engine.dispose()  # Ensure resources are cleaned up
-
+        engine.dispose()
 ```
 
-### Web Callbacks
+## CLI tools
 
-NexusTrader can host FastAPI endpoints alongside a running strategy. Define an application with
-`nexustrader.web.create_strategy_app`, decorate a method that accepts `self`, and enable the web server in your config.
+After installation, the following commands are available:
 
-```python
-from fastapi import Body
+- `walrasquant-cli` for monitoring and management workflows
+- `wq-pm2` for PM2-based strategy process operations
 
-from nexustrader.web import create_strategy_app
-from nexustrader.config import WebConfig
+## Documentation
 
-
-class Demo(Strategy):
-    web_app = create_strategy_app(title="Demo strategy API")
-
-    @web_app.post("/toggle")
-    async def on_web_cb(self, payload: dict = Body(...)):
-        self.signal = payload.get("signal", True)
-        return {"signal": self.signal}
-
-
-config = Config(
-    strategy_id="demo",
-    user_id="user",
-    strategy=Demo(),
-    basic_config={...},
-    public_conn_config={...},
-    private_conn_config={...},
-    web_config=WebConfig(enabled=True, host="127.0.0.1", port=9000),
-)
-```
-
-When the engine starts, it binds the strategy instance to the FastAPI routes and serves them in the background using
-Uvicorn. Routes automatically disappear once the engine stops.
-
-This example illustrates how easy it is to switch between different exchanges and strategies by modifying the `config`
-class. For instance, to switch to Binance, you can adjust the configuration as follows, and change the symbol to
-`BTCUSDT-PERP.BINANCE`.
-
-```python
-from nexustrader.exchange.binance import BinanceAccountType
-
-config = Config(
-    strategy_id="buy_and_sell_binance",
-    user_id="user_test",
-    strategy=Demo(),
-    basic_config={
-        ExchangeType.BINANCE: BasicConfig(
-            api_key=BINANCE_API_KEY,
-            secret=BINANCE_SECRET,
-            testnet=True,  # Use testnet for safe trading
-        )
-    },
-    public_conn_config={
-        ExchangeType.BINANCE: [
-            PublicConnectorConfig(
-                account_type=BinanceAccountType.USD_M_FUTURE_TESTNET,  # Specify account type for Binance
-            )
-        ]
-    },
-    private_conn_config={
-        ExchangeType.BINANCE: [
-            PrivateConnectorConfig(
-                account_type=BinanceAccountType.USD_M_FUTURE_TESTNET,  # Specify account type for Binance
-            )
-        ]
-    }
-)
-```
-
-## Multi-Mode Support
-
-nexustrader supports multiple modes of operation to cater to different trading strategies and requirements. Each mode
-allows for flexibility in how trading logic is executed based on market conditions or specific triggers.
-
-### Event-Driven Mode
-
-In this mode, trading logic is executed in response to real-time market events. The methods `on_bookl1`, `on_trade`, and
-`on_kline` are triggered whenever relevant data is updated, allowing for immediate reaction to market changes.
-
-```python
-class Demo(Strategy):
-    def __init__(self):
-        super().__init__()
-        self.subscribe_bookl1(symbols=["BTCUSDT-PERP.BINANCE"])
-
-    def on_bookl1(self, bookl1: BookL1):
-        # implement the trading logic Here
-        pass
-```
-
-### Timer Mode
-
-This mode allows you to schedule trading logic to run at specific intervals. You can use the `schedule` method to define
-when your trading algorithm should execute, making it suitable for strategies that require periodic checks or actions.
-
-```python
-class Demo2(Strategy):
-    def __init__(self):
-        super().__init__()
-        self.schedule(self.algo, trigger="interval", seconds=1)
-
-    def algo(self):
-        # run every 1 second
-        # implement the trading logic Here
-        pass
-```
-
-### Custom Signal Mode
-
-In this mode, trading logic is executed based on custom signals. You can define your own signals and use the
-`on_custom_signal` method to trigger trading actions when these signals are received. This is particularly useful for
-integrating with external systems or custom event sources.
-
-```python
-class Demo3(Strategy):
-    def __init__(self):
-        super().__init__()
-        self.signal = True
-
-    def on_custom_signal(self, signal: object):
-        # implement the trading logic Here,
-        # signal can be any object, it is up to you to define the signal
-        pass
-```
-
-## Define Your Own Indicator
-
-NexusTrader provides a powerful framework for creating custom indicators with built-in warmup functionality. This allows your indicators to automatically fetch historical data and prepare themselves before live trading begins.
-
-Here's an example of creating a custom Moving Average indicator with automatic warmup:
-
-```python
-from collections import deque
-from nexustrader.indicator import Indicator
-from nexustrader.constants import KlineInterval, DataType
-from nexustrader.schema import Kline, BookL1, BookL2, Trade
-from nexustrader.strategy import Strategy
-from nexustrader.exchange.bybit import BybitAccountType
-
-class MovingAverageIndicator(Indicator):
-    def __init__(self, period: int = 20):
-        super().__init__(
-            params={"period": period},
-            name=f"MA_{period}",
-            warmup_period=period * 2,  # Define warmup period
-            warmup_interval=KlineInterval.MINUTE_1,  # Define warmup interval
-        )
-        self.period = period
-        self.prices = deque(maxlen=period)
-        self.current_ma = None
-
-    def handle_kline(self, kline: Kline):
-        if not kline.confirm:  # Only process confirmed klines
-            return
-
-        self.prices.append(kline.close)
-
-        # Calculate moving average if we have enough data
-        if len(self.prices) >= self.period:
-            self.current_ma = sum(self.prices) / len(self.prices)
-
-    def handle_bookl1(self, bookl1: BookL1):
-        pass  # Implement if needed
-
-    def handle_bookl2(self, bookl2: BookL2):
-        pass  # Implement if needed
-
-    def handle_trade(self, trade: Trade):
-        pass  # Implement if needed
-
-    @property
-    def value(self):
-        return self.current_ma
-
-class MyStrategy(Strategy):
-    def __init__(self):
-        super().__init__()
-        self.symbol = "UNIUSDT-PERP.BYBIT"
-        self.ma_20 = MovingAverageIndicator(period=20)
-        self.ma_50 = MovingAverageIndicator(period=50)
-
-    def on_start(self):
-        # Subscribe to kline data
-        self.subscribe_kline(
-            symbols=self.symbol,
-            interval=KlineInterval.MINUTE_1,
-        )
-
-        # Register indicators with automatic warmup
-        self.register_indicator(
-            symbols=self.symbol,
-            indicator=self.ma_20,
-            data_type=DataType.KLINE,
-            account_type=BybitAccountType.LINEAR,
-        )
-
-        self.register_indicator(
-            symbols=self.symbol,
-            indicator=self.ma_50,
-            data_type=DataType.KLINE,
-            account_type=BybitAccountType.LINEAR,
-        )
-
-    def on_kline(self, kline: Kline):
-        # Wait for indicators to warm up
-        if not self.ma_20.is_warmed_up or not self.ma_50.is_warmed_up:
-            self.log.info("Indicators still warming up...")
-            return
-
-        if not kline.confirm:
-            return
-
-        if self.ma_20.value and self.ma_50.value:
-            self.log.info(
-                f"MA20: {self.ma_20.value:.4f}, MA50: {self.ma_50.value:.4f}, "
-                f"Current Price: {kline.close:.4f}"
-            )
-
-            # Simple golden cross strategy
-            if self.ma_20.value > self.ma_50.value:
-                self.log.info("Golden Cross - Bullish signal!")
-            elif self.ma_20.value < self.ma_50.value:
-                self.log.info("Death Cross - Bearish signal!")
-```
-
-#### Key Features of Custom Indicators:
-
-1. **Automatic Warmup**: Set `warmup_period` and `warmup_interval` to automatically fetch historical data
-2. **Data Handlers**: Implement `handle_kline`, `handle_bookl1`, `handle_bookl2`, and `handle_trade` as needed
-3. **Value Property**: Expose your indicator's current value through the `value` property
-4. **Warmup Status**: Check `is_warmed_up` property to ensure indicator is ready before using
-5. **Flexible Parameters**: Pass custom parameters through the `params` dictionary
-
-This approach ensures your indicators have sufficient historical data before making trading decisions, improving the reliability and accuracy of your trading strategies.
-
-## Execution Algorithms
-
-NexusTrader provides a powerful execution algorithm framework for implementing advanced order execution strategies like TWAP, VWAP, iceberg orders, and more. This allows you to split large orders into smaller chunks and execute them over time to minimize market impact.
-
-### Using TWAP (Time-Weighted Average Price)
-
-The built-in `TWAPExecAlgorithm` splits a large order into smaller slices and executes them at regular intervals over a specified time horizon.
-
-```python
-from decimal import Decimal
-from datetime import timedelta
-from nexustrader.constants import OrderSide
-from nexustrader.strategy import Strategy
-from nexustrader.engine import Engine
-from nexustrader.execution import TWAPExecAlgorithm
-
-class MyStrategy(Strategy):
-    def __init__(self):
-        super().__init__()
-        self.symbol = "BTCUSDT-PERP.BINANCE"
-
-    def on_start(self):
-        self.subscribe_bookl1(self.symbol)
-        # Schedule TWAP order placement
-        self.schedule(
-            func=self.place_twap_order,
-            trigger="date",
-            run_date=self.clock.utc_now() + timedelta(seconds=10),
-        )
-
-    def place_twap_order(self):
-        # Execute 1 BTC over 5 minutes with 30-second intervals (10 slices)
-        self.create_algo_order(
-            symbol=self.symbol,
-            side=OrderSide.BUY,
-            amount=Decimal("1.0"),
-            exec_algorithm_id="TWAP",
-            exec_params={
-                "horizon_secs": 300,    # Total execution time: 5 minutes
-                "interval_secs": 30,    # Interval between slices: 30 seconds
-            },
-        )
-
-# Register the execution algorithm with the engine
-engine = Engine(config)
-engine.add_exec_algorithm(algorithm=TWAPExecAlgorithm())
-```
-
-#### TWAP Parameters
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `horizon_secs` | int | Yes | Total execution time horizon in seconds |
-| `interval_secs` | int | Yes | Interval between order slices in seconds |
-| `use_limit` | bool | No | If True, use limit orders instead of market orders (default: False) |
-| `n_tick_sz` | int | No | Number of tick sizes to offset from best bid/ask for limit orders. Positive = more passive, Negative = more aggressive (default: 0) |
-
-#### TWAP with Limit Orders
-
-For better price execution, you can use limit orders with price offsets:
-
-```python
-self.create_algo_order(
-    symbol="BTCUSDT-PERP.OKX",
-    side=OrderSide.BUY,
-    amount=Decimal("2.0"),
-    exec_algorithm_id="TWAP",
-    exec_params={
-        "horizon_secs": 100,
-        "interval_secs": 10,
-        "use_limit": True,      # Use limit orders
-        "n_tick_sz": 1,         # Place 1 tick below best ask (for buy)
-    },
-    reduce_only=True,           # Optional: only reduce existing position
-)
-```
-
-### Creating Custom Execution Algorithms
-
-You can create your own execution algorithms by subclassing `ExecAlgorithm`. The key method to implement is `on_order()`, which is called when a new algorithmic order is received.
-
-```python
-from decimal import Decimal
-from nexustrader.execution.algorithm import ExecAlgorithm
-from nexustrader.execution.config import ExecAlgorithmConfig
-from nexustrader.execution.schema import ExecAlgorithmOrder
-from nexustrader.execution.constants import ExecAlgorithmStatus
-from nexustrader.schema import Order
-
-
-class MyAlgoConfig(ExecAlgorithmConfig, kw_only=True, frozen=True):
-    """Configuration for custom algorithm."""
-    exec_algorithm_id: str = "MY_ALGO"
-
-
-class MyExecAlgorithm(ExecAlgorithm):
-    """Custom execution algorithm example."""
-
-    def __init__(self, config: MyAlgoConfig | None = None):
-        if config is None:
-            config = MyAlgoConfig()
-        super().__init__(config)
-
-    def on_order(self, exec_order: ExecAlgorithmOrder):
-        """
-        Main entry point - called when create_algo_order() is invoked.
-
-        Parameters
-        ----------
-        exec_order : ExecAlgorithmOrder
-            Contains: primary_oid, symbol, side, total_amount, remaining_amount, params
-        """
-        # Access custom parameters
-        params = exec_order.params
-        my_param = params.get("my_param", "default")
-
-        # Spawn child orders using available methods:
-        # - spawn_market(exec_order, quantity)
-        # - spawn_limit(exec_order, quantity, price)
-        # - spawn_market_ws / spawn_limit_ws for WebSocket submission
-
-        # Example: split into two market orders
-        half = self.amount_to_precision(
-            exec_order.symbol,
-            exec_order.total_amount / 2,
-            mode="floor"
-        )
-        self.spawn_market(exec_order, half)
-        self.spawn_market(exec_order, exec_order.total_amount - half)
-
-    def on_spawned_order_filled(self, exec_order: ExecAlgorithmOrder, order: Order):
-        """Called when a spawned order is filled."""
-        if exec_order.remaining_amount <= 0:
-            self.mark_complete(exec_order)
-
-    def on_cancel(self, exec_order: ExecAlgorithmOrder):
-        """Handle cancellation request."""
-        exec_order.status = ExecAlgorithmStatus.CANCELED
-```
-
-#### Key Methods to Override
-
-| Method | Description |
-|--------|-------------|
-| `on_order(exec_order)` | **Required.** Main entry point when a new order is received |
-| `on_start()` | Called when the algorithm starts |
-| `on_stop()` | Called when the algorithm stops |
-| `on_cancel(exec_order)` | Called when cancellation is requested |
-| `on_execution_complete(exec_order)` | Called when execution completes |
-| `on_spawned_order_filled(exec_order, order)` | Called when a spawned order is filled |
-| `on_spawned_order_failed(exec_order, order)` | Called when a spawned order fails |
-
-#### Utility Methods
-
-| Method | Description |
-|--------|-------------|
-| `spawn_market(exec_order, quantity)` | Spawn a market order |
-| `spawn_limit(exec_order, quantity, price)` | Spawn a limit order |
-| `cancel_spawned_order(exec_order, spawned_oid)` | Cancel a spawned order |
-| `mark_complete(exec_order)` | Mark execution as complete |
-| `set_timer(name, interval, callback)` | Set a timer for scheduled execution |
-| `amount_to_precision(symbol, amount)` | Convert amount to market precision |
-| `price_to_precision(symbol, price)` | Convert price to market precision |
-| `min_order_amount(symbol)` | Get minimum order amount |
-| `cache.bookl1(symbol)` | Get current L1 order book |
-
-#### Register and Use
-
-```python
-engine = Engine(config)
-engine.add_exec_algorithm(algorithm=MyExecAlgorithm())
-
-# In strategy:
-self.create_algo_order(
-    symbol="BTCUSDT-PERP.BINANCE",
-    side=OrderSide.BUY,
-    amount=Decimal("1.0"),
-    exec_algorithm_id="MY_ALGO",
-    exec_params={"my_param": "value"},
-)
-```
+- Local docs source: `docs/`
 
 ## Contributing
 
-Thank you for considering contributing to nexustrader! We greatly appreciate any effort to help improve the project. If
-you have an idea for an enhancement or a bug fix, the first step is to open
-an [issue](https://github.com/Quantweb3-ai/tradebot-pro/issues) on GitHub. This allows us to discuss your proposal and
-ensure it aligns with the project's goals, while also helping to avoid duplicate efforts.
-
-When you're ready to start working on your contribution, please review the guidelines in
-the [CONTRIBUTING.md](./CONTRIBUTING.md) file. Depending on the nature of your contribution, you may also need to sign a
-Contributor License Agreement (CLA) to ensure it can be included in the project.
-
-> **Note**
-> Pull requests should be directed to the `main` branch (the default branch), where new features and improvements are
-> integrated before release.
-
-Thank you again for your interest in nexustrader! We look forward to reviewing your contributions and collaborating with
-you to make the project even better.
-
-## VIP Privileges
-
-Trading on our platform is free. Become a VIP customer to enjoy exclusive technical support privileges for $499 per month ([Subscription Here](https://quantweb3.ai/subscribe/ ))—or get VIP status at no cost by opening an account through our partnership links.
-
-Our partners include global leading trading platforms like Bybit, OKX, ZFX, Bison and others. By opening an account through our referral links, you'll enjoy these benefits:
-
-Instant Account Benefits
-
-1. Trading Fee Discounts: Exclusive discounts to lower your trading costs.
-2. VIP Service Support: Contact us after opening your account to become our VIP customer. Enjoy exclusive events and benefits for the ultimate VIP experience.
-
-Act now and join our VIP program!
-
-> Click the links below to register
-
-- [Bybit](https://partner.bybit.com/b/90899)
-- [OKX](http://www.okx.com/join/80353297)
-- [ZFX](https://zfx.link/46dFByp)
-- [Bison](https://m.bison.com/#/register?invitationCode=1002)
-
-## Social
-
-Connect with us on your favorite platforms:
-
-[![X (Twitter)](https://img.shields.io/badge/X_(Twitter)-000000?logo=x&logoColor=white)](https://x.com/quantweb3_ai) Stay updated with our latest news, features, and announcements.
-
-[![Discord](https://img.shields.io/badge/Discord-5865F2?logo=discord&logoColor=white)](https://discord.gg/BR8VGRrXFr) Join our community to discuss ideas, get support, and connect with other users.
-
-[![Telegram](https://img.shields.io/badge/Telegram-26A5E4?logo=telegram&logoColor=white)](https://t.me/+6e2MtXxoibM2Yzlk) Receive instant updates and engage in real-time discussions.
-
-## See Also
-
-We recommend exploring related tools and projects that can enhance your trading workflows:
-
-- **[Nexus](https://github.com/Quantweb3-ai/nexus):** A robust exchange interface optimization solution that integrates
-  seamlessly with trading bots like nexustrader, enabling faster and more reliable trading execution.
+Contributions are welcome. Please open an issue or submit a PR.
 
 ## License
 
-Nexustrader is available on GitHub under the MIT License. Contributions to the project are welcome and require the
-completion of a Contributor License Agreement (CLA). Please review the contribution guidelines and submit a pull
-request. See the [LICENSE](./LICENSE) file for details.
-
-## Star History
-
-<a href="https://www.star-history.com/#Quantweb3-com/NexusTrader&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Quantweb3-com/NexusTrader&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Quantweb3-com/NexusTrader&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Quantweb3-com/NexusTrader&type=Date" />
- </picture>
-</a>
+MIT License
