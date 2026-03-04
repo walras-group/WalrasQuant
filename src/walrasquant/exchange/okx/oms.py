@@ -3,7 +3,11 @@ import warnings
 from typing import Dict, List
 from decimal import Decimal
 from walrasquant.error import PositionModeError
-from walrasquant.exchange.okx.error import OkxRateLimitError, OkxHttpError, OkxRequestError
+from walrasquant.exchange.okx.error import (
+    OkxRateLimitError,
+    OkxHttpError,
+    OkxRequestError,
+)
 from walrasquant.exchange.okx import OkxAccountType
 from walrasquant.exchange.okx.websockets import OkxWSClient, OkxWSApiClient
 from walrasquant.exchange.okx.schema import OkxWsGeneralMsg

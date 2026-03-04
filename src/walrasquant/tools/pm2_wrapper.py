@@ -25,7 +25,9 @@ def _pm2_jlist() -> list[dict]:
         )
         return json.loads(result.stdout)
     except FileNotFoundError:
-        click.echo("Error: pm2 not found. Install it with: npm install -g pm2", err=True)
+        click.echo(
+            "Error: pm2 not found. Install it with: npm install -g pm2", err=True
+        )
         sys.exit(1)
     except subprocess.CalledProcessError as e:
         click.echo(f"Error running pm2 jlist: {e.stderr}", err=True)
@@ -184,8 +186,18 @@ def _extract_config_field(script_path: str, field: str) -> str | None:
 
 @cli.command("start")
 @click.argument("script")
-@click.option("--strategy-id", "-s", default=None, help="Strategy identifier (extracted from script if omitted)")
-@click.option("--user-id", "-u", default=None, help="User identifier (extracted from script if omitted)")
+@click.option(
+    "--strategy-id",
+    "-s",
+    default=None,
+    help="Strategy identifier (extracted from script if omitted)",
+)
+@click.option(
+    "--user-id",
+    "-u",
+    default=None,
+    help="User identifier (extracted from script if omitted)",
+)
 def start_cmd(script: str, strategy_id: str | None, user_id: str | None):
     """Start a strategy script via PM2.
 
@@ -221,12 +233,25 @@ def start_cmd(script: str, strategy_id: str | None, user_id: str | None):
             )
             sys.exit(1)
 
+    log_filename = _extract_log_filename(str(script_path))
+    if log_filename is None:
+        click.echo(
+            "Error: could not find LogConfig(filename=...) in script. "
+            "A log path is required to start a strategy.",
+            err=True,
+        )
+        sys.exit(1)
+
     name = f"{strategy_id}.{user_id}"
 
     # Duplicate check
     processes = _pm2_jlist()
     if any(p.get("name") == name for p in processes):
-        status = next(p.get("pm2_env", {}).get("status", "unknown") for p in processes if p.get("name") == name)
+        status = next(
+            p.get("pm2_env", {}).get("status", "unknown")
+            for p in processes
+            if p.get("name") == name
+        )
         click.echo(
             f"Error: PM2 process '{name}' already exists (status: {status}). "
             "Use 'wq restart' or 'wq delete' first.",
@@ -283,10 +308,23 @@ def list_cmd():
     console.print(table)
 
 
-@cli.command("logs", context_settings={"ignore_unknown_options": True, "allow_extra_args": True})
+@cli.command(
+    "logs", context_settings={"ignore_unknown_options": True, "allow_extra_args": True}
+)
 @click.argument("name")
-@click.option("-F", "--follow", is_flag=True, help="Live-tail mode (passes -F to hl, disables pager)")
-@click.option("-d", "--days", default=1, show_default=True, help="Include last N days of rotated files")
+@click.option(
+    "-F",
+    "--follow",
+    is_flag=True,
+    help="Live-tail mode (passes -F to hl, disables pager)",
+)
+@click.option(
+    "-d",
+    "--days",
+    default=1,
+    show_default=True,
+    help="Include last N days of rotated files",
+)
 @click.pass_context
 def logs_cmd(ctx: click.Context, name: str, follow: bool, days: int):
     """View logs for a PM2 process using hl.
@@ -341,7 +379,10 @@ def logs_cmd(ctx: click.Context, name: str, follow: bool, days: int):
     try:
         os.execvp("hl", hl_cmd)
     except FileNotFoundError:
-        click.echo("Error: hl not found. Install it from: https://github.com/pamburus/hl", err=True)
+        click.echo(
+            "Error: hl not found. Install it from: https://github.com/pamburus/hl",
+            err=True,
+        )
         sys.exit(1)
 
 

@@ -349,7 +349,7 @@ class Order(Struct):
     @property
     def is_partially_canceled(self) -> bool:
         return self.status == OrderStatus.CANCELED and self.filled > Decimal("0")
-    
+
     @property
     def is_canceling(self) -> bool:
         return self.status == OrderStatus.CANCELING

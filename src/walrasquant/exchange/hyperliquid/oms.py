@@ -2,7 +2,11 @@ import msgspec
 from decimal import Decimal
 from typing import Dict, List
 from walrasquant.error import PositionModeError
-from walrasquant.exchange.hyperliquid.error import HyperliquidRateLimitError, HyperLiquidHttpError, HyperLiquidOrderError
+from walrasquant.exchange.hyperliquid.error import (
+    HyperliquidRateLimitError,
+    HyperLiquidHttpError,
+    HyperLiquidOrderError,
+)
 from walrasquant.constants import (
     ExchangeType,
     OrderSide,

@@ -202,7 +202,11 @@ class BybitApiClient(ApiClient):
             raw = response.content
             if response.status_code >= 400:
                 error_data = self._msg_decoder.decode(raw) if raw else {}
-                ret_msg = error_data.get("retMsg", "Unknown error") if isinstance(error_data, dict) else str(error_data)
+                ret_msg = (
+                    error_data.get("retMsg", "Unknown error")
+                    if isinstance(error_data, dict)
+                    else str(error_data)
+                )
                 raise BybitError(
                     code=response.status_code,
                     message=ret_msg,
@@ -270,7 +274,11 @@ class BybitApiClient(ApiClient):
             raw = response.content
             if response.status_code >= 400:
                 error_data = self._msg_decoder.decode(raw) if raw else {}
-                ret_msg = error_data.get("retMsg", "Unknown error") if isinstance(error_data, dict) else str(error_data)
+                ret_msg = (
+                    error_data.get("retMsg", "Unknown error")
+                    if isinstance(error_data, dict)
+                    else str(error_data)
+                )
                 raise BybitError(
                     code=response.status_code,
                     message=ret_msg,

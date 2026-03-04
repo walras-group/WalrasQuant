@@ -17,7 +17,11 @@ from walrasquant.base import OrderManagementSystem
 from walrasquant.core.registry import OrderRegistry
 from walrasquant.core.entity import TaskManager
 from walrasquant.error import PositionModeError
-from walrasquant.exchange.binance.error import BinanceRateLimitError, BinanceClientError, BinanceServerError
+from walrasquant.exchange.binance.error import (
+    BinanceRateLimitError,
+    BinanceClientError,
+    BinanceServerError,
+)
 from walrasquant.exchange.binance.schema import (
     BinanceMarket,
     BinanceFuturesPositionInfo,
