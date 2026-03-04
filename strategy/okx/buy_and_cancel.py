@@ -77,10 +77,10 @@ class Demo(Strategy):
 
 
 config = Config(
-    strategy_id="demo_buy_and_cancel",
+    strategy_id="okx_buy_and_cancel",
     user_id="user_test",
     strategy=Demo(),
-    log_config=LogConfig(level="INFO"),
+    log_config=LogConfig(level="INFO", filename="logs/okx_buy_and_cancel.log"),
     basic_config={
         ExchangeType.OKX: BasicConfig(
             api_key=OKX_API_KEY,

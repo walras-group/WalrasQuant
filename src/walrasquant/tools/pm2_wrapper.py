@@ -58,6 +58,16 @@ def _find_process(processes: list[dict], name: str) -> dict | None:
     return online[0] if online else matches[0]
 
 
+def _resolve_settings_attr(attr_path: str):
+    """Traverse a dotted attribute path on the walrasquant settings object."""
+    from walrasquant.constants import settings
+
+    obj = settings
+    for part in attr_path.split("."):
+        obj = getattr(obj, part)
+    return obj
+
+
 def _extract_log_filename(script_path: str) -> str | None:
     """Extract LogConfig filename from a Python script via regex."""
     try:
@@ -69,6 +79,13 @@ def _extract_log_filename(script_path: str) -> str | None:
         )
         if match:
             return match.group(1)
+        match = re.search(
+            r'LogConfig\s*\(.*?filename\s*=\s*settings\.([\w.]+)',
+            src,
+            re.DOTALL,
+        )
+        if match:
+            return str(_resolve_settings_attr(match.group(1)))
     except (OSError, PermissionError):
         pass
     return None
@@ -167,8 +184,7 @@ def cli():
 def _extract_config_field(script_path: str, field: str) -> str | None:
     """Extract a string field from Config(...) in a Python script via regex.
 
-    Anchors the search to inside Config(...) so that bare assignments like
-    `strategy_id = "..."` outside of Config are not mistakenly matched.
+    Tries string literals first, then falls back to settings.<path>.<field>.
     """
     try:
         src = Path(script_path).read_text()
@@ -179,6 +195,13 @@ def _extract_config_field(script_path: str, field: str) -> str | None:
         )
         if match:
             return match.group(1)
+        match = re.search(
+            rf'Config\s*\(.*?{field}\s*=\s*settings\.([\w.]+)',
+            src,
+            re.DOTALL,
+        )
+        if match:
+            return str(_resolve_settings_attr(match.group(1)))
     except (OSError, PermissionError):
         pass
     return None

@@ -76,7 +76,7 @@ class Demo(Strategy):
 
 
 config = Config(
-    strategy_id="buy_and_sell_binance",
+    strategy_id="binance_buy_and_sell",
     user_id="user_test",
     strategy=Demo(),
     log_config=LogConfig(level="INFO", filename="logs/app.log"),
