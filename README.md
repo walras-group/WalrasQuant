@@ -112,8 +112,7 @@ if __name__ == "__main__":
 
 After installation, the following commands are available:
 
-- `walrasquant-cli` for monitoring and management workflows
-- `wq-pm2` for PM2-based strategy process operations
+- `wq` for PM2-based strategy process operations
 
 ## Documentation
 

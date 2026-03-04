@@ -125,7 +125,6 @@ class Engine:
             exec_algorithms=self._exec_algorithms,
             strategy_id=config.strategy_id,
             user_id=config.user_id,
-            enable_cli=config.enable_cli,
         )
 
         self._web_app: StrategyFastAPI | None = None

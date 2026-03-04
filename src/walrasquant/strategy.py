@@ -9,7 +9,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import nexuslog as logging
 from walrasquant.base import ExchangeManager
 from walrasquant.indicator import IndicatorManager, Indicator, IndicatorProxy
-from walrasquant.core.entity import TaskManager, is_redis_available
+from walrasquant.core.entity import TaskManager
 from walrasquant.core.cache import AsyncCache
 from walrasquant.error import StrategyBuildError
 from walrasquant.base import (
@@ -96,7 +96,6 @@ class Strategy:
         exec_algorithms: Dict[str, ExecAlgorithm] | None = None,
         strategy_id: str = None,
         user_id: str = None,
-        enable_cli: bool = False,
     ):
         if self._initialized:
             return
@@ -117,23 +116,6 @@ class Strategy:
         self._indicator_manager = IndicatorManager(self._msgbus)
         self._push_service = push_service
         self._exec_algorithms = exec_algorithms if exec_algorithms is not None else {}
-
-        # Initialize state exporter if IDs are provided and Redis is fully available
-        self._state_exporter = None
-        if strategy_id and user_id and is_redis_available() and enable_cli:
-            try:
-                from walrasquant.cli.monitor.state_exporter import StrategyStateExporter
-
-                self._state_exporter = StrategyStateExporter(
-                    strategy_id=strategy_id, user_id=user_id, cache=cache, clock=clock
-                )
-                self._sys_log.debug("CLI monitoring enabled with Redis")
-            except Exception as e:
-                self._sys_log.debug(
-                    f"State exporter initialization failed, CLI monitoring disabled: {e}"
-                )
-        elif strategy_id and user_id:
-            self._sys_log.debug("Redis not available, CLI monitoring disabled")
 
         self._msgbus.register(endpoint="pending", handler=self.on_pending_order)
         self._msgbus.register(endpoint="accepted", handler=self.on_accepted_order)
@@ -1401,15 +1383,9 @@ class Strategy:
         pass
 
     def _on_start(self):
-        # Start state exporter if available
-        if self._state_exporter:
-            self._state_exporter.start()
         self.on_start()
 
     def _on_stop(self):
-        # Stop state exporter if available
-        if self._state_exporter:
-            self._state_exporter.stop()
         self.on_stop()
 
     def on_trade(self, trade: Trade):

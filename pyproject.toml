@@ -1,6 +1,6 @@
 [project]
 name = "walrasquant"
-version = "0.3.5"
+version = "0.3.6"
 description = "fastest python trading bot"
 authors = [
     {name = "River-Shi",email = "nachuan.shi.quant@gmail.com"}
@@ -12,23 +12,17 @@ dependencies = [
     "numpy (>=1.26.4,<2.2.1)",
     "redis (>=5.2.1,<6.0.0)",
     "msgspec (>=0.19.0,<0.20.0)",
-    "cython (>=3.0.11,<4.0.0)",
-    "certifi (>=2025.1.31,<2026.0.0)",
-    "bcrypt (>=4.2.1,<5.0.0)",
     "zmq (>=0.0.0,<0.0.1)",
     "apscheduler (>=3.11.0,<4.0.0)",
     "returns (>=0.24.0,<0.25.0)",
-    "pathlib (>=1.0.1,<2.0.0)",
     "aiosqlite (>=0.21.0,<0.22.0)",
     "uvloop>=0.21.0",
     "throttled-py>=2.2.3",
     "asyncpg>=0.30.0",
     "psycopg2-binary>=2.9.10",
-    "textual>=0.85.0",
     "click>=8.1.0",
     "pycryptodome>=3.23.0",
     "eth-account>=0.13.7",
-    "typing-extensions>=4.12.2",
     "fastapi>=0.117.1",
     "uvicorn>=0.36.0",
     "picows>=1.10.2",
@@ -43,8 +37,7 @@ dependencies = [
 ]
 
 [project.scripts]
-walrasquant-cli = "walrasquant.cli.main:main"
-wq-pm2 = "walrasquant.tools.pm2_wrapper:main"
+wq = "walrasquant.tools.pm2_wrapper:main"
 
 [build-system]
 requires = ["uv_build>=0.10.7,<0.11.0"]

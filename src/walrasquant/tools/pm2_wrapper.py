@@ -158,7 +158,7 @@ def _proc_log_summary(proc: dict) -> str:
 
 @click.group()
 def cli():
-    """wq-pm2: PM2 + hl wrapper for WalrasQuant strategies."""
+    """wq: PM2 + hl wrapper for WalrasQuant strategies."""
     pass
 
 
@@ -215,13 +215,13 @@ def logs_cmd(ctx: click.Context, name: str, follow: bool, days: int):
     All unrecognised options are forwarded verbatim to hl.
 
     Examples:\n
-      wq-pm2 logs buy_and_sell\n
-      wq-pm2 logs buy_and_sell -F\n
-      wq-pm2 logs buy_and_sell -d 3\n
-      wq-pm2 logs buy_and_sell -l e\n
-      wq-pm2 logs buy_and_sell -q 'level > info'\n
-      wq-pm2 logs buy_and_sell --since -1h --until now\n
-      wq-pm2 logs buy_and_sell -f component=tsdb
+      wq logs buy_and_sell\n
+      wq logs buy_and_sell -F\n
+      wq logs buy_and_sell -d 3\n
+      wq logs buy_and_sell -l e\n
+      wq logs buy_and_sell -q 'level > info'\n
+      wq logs buy_and_sell --since -1h --until now\n
+      wq logs buy_and_sell -f component=tsdb
     """
     processes = _pm2_jlist()
     proc = _find_process(processes, name)
@@ -287,7 +287,7 @@ cli.add_command(list_cmd, name="ls")
 
 
 def main():
-    """Entry point for wq-pm2 command."""
+    """Entry point for wq command."""
     cli()
 
 

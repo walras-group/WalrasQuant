@@ -178,7 +178,6 @@ class Config:
         cache_expired_time (int): Time in seconds after which cache entries expire. Defaults to 3600.
         is_mock (bool): Flag indicating if the system is running in mock mode. Defaults to False.
         log_config (LogConfig): Configuration for logging. Defaults to a new LogConfig instance.
-        enable_cli (bool): Flag to enable command-line interface. Defaults to False.
         web_config (WebConfig): Settings for the optional FastAPI web interface.
         flashduty_integration_key (str | None): FlashDuty integration key for push alerts. Defaults to None.
         exit_after_cancel (bool): Whether to cancel all open orders when the engine is disposed (e.g., on Ctrl+C). Defaults to True.
@@ -203,7 +202,6 @@ class Config:
     cache_expired_time: int = 3600
     is_mock: bool = False
     log_config: LogConfig = field(default_factory=LogConfig)
-    enable_cli: bool = False
     web_config: WebConfig = field(default_factory=WebConfig)
     exit_after_cancel: bool = True
     flashduty_integration_key: str | None = None
