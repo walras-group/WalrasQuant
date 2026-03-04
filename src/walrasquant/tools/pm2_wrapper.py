@@ -59,7 +59,7 @@ def _find_process(processes: list[dict], name: str) -> dict | None:
 def _extract_log_filename(script_path: str) -> str | None:
     """Extract LogConfig filename from a Python script via regex."""
     try:
-        src = Path(script_path).read_text()
+        src = Path(script_path).read_text(encoding="utf-8", errors="ignore")
         match = re.search(
             r'LogConfig\s*\(.*?filename\s*=\s*["\']([^"\']+)["\']',
             src,
@@ -162,6 +162,83 @@ def cli():
     pass
 
 
+def _extract_config_field(script_path: str, field: str) -> str | None:
+    """Extract a string field from Config(...) in a Python script via regex.
+
+    Anchors the search to inside Config(...) so that bare assignments like
+    `strategy_id = "..."` outside of Config are not mistakenly matched.
+    """
+    try:
+        src = Path(script_path).read_text()
+        match = re.search(
+            rf'Config\s*\(.*?{field}\s*=\s*["\']([^"\']+)["\']',
+            src,
+            re.DOTALL,
+        )
+        if match:
+            return match.group(1)
+    except (OSError, PermissionError):
+        pass
+    return None
+
+
+@cli.command("start")
+@click.argument("script")
+@click.option("--strategy-id", "-s", default=None, help="Strategy identifier (extracted from script if omitted)")
+@click.option("--user-id", "-u", default=None, help="User identifier (extracted from script if omitted)")
+def start_cmd(script: str, strategy_id: str | None, user_id: str | None):
+    """Start a strategy script via PM2.
+
+    The PM2 process name will be set to STRATEGY_ID.USER_ID.
+    If --strategy-id or --user-id are omitted they are extracted from
+    the Config(...) definition inside the script.
+
+    Examples:\n
+      wq start strategy/buy_and_sell.py\n
+      wq start strategy/buy_and_sell.py -s buy_and_sell -u user_test\n
+      wq start /abs/path/to/strategy.py --strategy-id arb --user-id alice
+    """
+    script_path = Path(script).resolve()
+    if not script_path.exists():
+        click.echo(f"Error: script '{script}' not found.", err=True)
+        sys.exit(1)
+
+    if strategy_id is None:
+        strategy_id = _extract_config_field(str(script_path), "strategy_id")
+        if strategy_id is None:
+            click.echo(
+                "Error: could not extract strategy_id from script. Pass it explicitly with -s.",
+                err=True,
+            )
+            sys.exit(1)
+
+    if user_id is None:
+        user_id = _extract_config_field(str(script_path), "user_id")
+        if user_id is None:
+            click.echo(
+                "Error: could not extract user_id from script. Pass it explicitly with -u.",
+                err=True,
+            )
+            sys.exit(1)
+
+    name = f"{strategy_id}.{user_id}"
+
+    # Duplicate check
+    processes = _pm2_jlist()
+    if any(p.get("name") == name for p in processes):
+        status = next(p.get("pm2_env", {}).get("status", "unknown") for p in processes if p.get("name") == name)
+        click.echo(
+            f"Error: PM2 process '{name}' already exists (status: {status}). "
+            "Use 'wq restart' or 'wq delete' first.",
+            err=True,
+        )
+        sys.exit(1)
+
+    cmd = ["pm2", "start", str(script_path), "--name", name]
+    result = subprocess.run(cmd)
+    sys.exit(result.returncode)
+
+
 @cli.command("list")
 def list_cmd():
     """List PM2 processes with resolved log file paths."""
@@ -179,7 +256,8 @@ def list_cmd():
 
     table = Table(box=box.ROUNDED, show_header=True, header_style="bold cyan")
     table.add_column("ID", style="dim", width=5)
-    table.add_column("Name", style="bold")
+    table.add_column("Strategy ID", style="bold")
+    table.add_column("User ID", style="bold")
     table.add_column("Status", width=10)
     table.add_column("PID", width=8)
     table.add_column("Log File", style="dim")
@@ -187,6 +265,7 @@ def list_cmd():
     for proc, _ in wq_procs:
         pm_id = str(proc.get("pm_id", "-"))
         name = proc.get("name", "")
+        strategy_id, _, user_id = name.partition(".")
         pm2_env = proc.get("pm2_env", {})
         status = pm2_env.get("status", "unknown")
         pid = str(proc.get("pid", "-"))
@@ -199,7 +278,7 @@ def list_cmd():
         else:
             status_str = f"[yellow]{status}[/yellow]"
 
-        table.add_row(pm_id, name, status_str, pid, log_file)
+        table.add_row(pm_id, strategy_id, user_id or "-", status_str, pid, log_file)
 
     console.print(table)
 
@@ -259,7 +338,11 @@ def logs_cmd(ctx: click.Context, name: str, follow: bool, days: int):
 
     hl_cmd.extend(str(f) for f in log_files)
 
-    os.execvp("hl", hl_cmd)
+    try:
+        os.execvp("hl", hl_cmd)
+    except FileNotFoundError:
+        click.echo("Error: hl not found. Install it from: https://github.com/pamburus/hl", err=True)
+        sys.exit(1)
 
 
 @cli.command("stop")
@@ -284,6 +367,7 @@ def delete_cmd(name: str):
 
 
 cli.add_command(list_cmd, name="ls")
+cli.add_command(logs_cmd, name="log")
 
 
 def main():
