@@ -1,5 +1,5 @@
 walrasquant.exchange.binance.websockets
-=================================
+=======================================
 
 .. currentmodule:: walrasquant.exchange.binance.websockets
 

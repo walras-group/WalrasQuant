@@ -1,5 +1,5 @@
 walrasquant.exchange.binance.constants
-=================================
+======================================
 
 .. currentmodule:: walrasquant.exchange.binance.constants
 

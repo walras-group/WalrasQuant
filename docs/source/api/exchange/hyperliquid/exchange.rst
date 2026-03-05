@@ -1,5 +1,5 @@
 walrasquant.exchange.hyperliquid.exchange
-=================================
+=========================================
 
 .. currentmodule:: walrasquant.exchange.hyperliquid.exchange
 

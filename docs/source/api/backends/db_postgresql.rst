@@ -1,5 +1,5 @@
 walrasquant.backends.db_postgresql
-=================================
+==================================
 
 .. currentmodule:: walrasquant.backends.db_postgresql
 

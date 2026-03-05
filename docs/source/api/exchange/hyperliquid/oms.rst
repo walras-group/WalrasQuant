@@ -1,5 +1,5 @@
 walrasquant.exchange.hyperliquid.oms
-=================================
+====================================
 
 .. currentmodule:: walrasquant.exchange.hyperliquid.oms
 

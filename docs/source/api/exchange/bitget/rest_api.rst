@@ -1,5 +1,5 @@
 walrasquant.exchange.bitget.rest_api
-=================================
+====================================
 
 .. currentmodule:: walrasquant.exchange.bitget.rest_api
 

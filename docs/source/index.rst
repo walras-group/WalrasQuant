@@ -1,5 +1,5 @@
 Welcome to WalrasQuant's documentation!
-======================================
+=======================================
 
 .. |python-versions| image:: https://img.shields.io/badge/python-3.11%20|%203.12%20|%203.13-blue
    :alt: Python Versions

@@ -1,5 +1,5 @@
 walrasquant.exchange.okx.websockets
-=================================
+===================================
 
 .. currentmodule:: walrasquant.exchange.okx.websockets
 

@@ -1,5 +1,5 @@
 walrasquant.exchange.hyperliquid.constants
-=================================
+==========================================
 
 .. currentmodule:: walrasquant.exchange.hyperliquid.constants
 

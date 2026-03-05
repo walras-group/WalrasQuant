@@ -1,5 +1,5 @@
 walrasquant.exchange.hyperliquid.rest_api
-=================================
+=========================================
 
 .. currentmodule:: walrasquant.exchange.hyperliquid.rest_api
 

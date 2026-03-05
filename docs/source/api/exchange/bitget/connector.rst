@@ -1,5 +1,5 @@
 walrasquant.exchange.bitget.connector
-=================================
+=====================================
 
 .. currentmodule:: walrasquant.exchange.bitget.connector
 

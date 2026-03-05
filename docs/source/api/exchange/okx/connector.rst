@@ -1,5 +1,5 @@
 walrasquant.exchange.okx.connector
-=================================
+==================================
 
 .. currentmodule:: walrasquant.exchange.okx.connector
 

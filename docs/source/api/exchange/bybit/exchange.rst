@@ -1,5 +1,5 @@
 walrasquant.exchange.bybit.exchange
-=================================
+===================================
 
 .. currentmodule:: walrasquant.exchange.bybit.exchange
 

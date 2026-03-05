@@ -1,5 +1,5 @@
 walrasquant.exchange.binance.connector
-=================================
+======================================
 
 .. currentmodule:: walrasquant.exchange.binance.connector
 

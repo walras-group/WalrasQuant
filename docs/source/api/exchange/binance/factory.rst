@@ -1,5 +1,5 @@
 walrasquant.exchange.binance.factory
-=================================
+====================================
 
 .. currentmodule:: walrasquant.exchange.binance.factory
 

@@ -1,5 +1,5 @@
 walrasquant.exchange.okx.constants
-=================================
+==================================
 
 .. currentmodule:: walrasquant.exchange.okx.constants
 

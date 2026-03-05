@@ -1,5 +1,5 @@
 walrasquant.exchange.bybit.websockets
-=================================
+=====================================
 
 .. currentmodule:: walrasquant.exchange.bybit.websockets
 

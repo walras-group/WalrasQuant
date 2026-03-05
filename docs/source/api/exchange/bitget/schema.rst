@@ -1,5 +1,5 @@
 walrasquant.exchange.bitget.schema
-=================================
+==================================
 
 .. currentmodule:: walrasquant.exchange.bitget.schema
 

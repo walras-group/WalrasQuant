@@ -1,5 +1,5 @@
 walrasquant.exchange.binance.exchange
-=================================
+=====================================
 
 .. currentmodule:: walrasquant.exchange.binance.exchange
 

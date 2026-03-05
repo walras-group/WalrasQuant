@@ -1,5 +1,5 @@
 walrasquant.exchange.bybit.rest_api
-=================================
+===================================
 
 .. currentmodule:: walrasquant.exchange.bybit.rest_api
 

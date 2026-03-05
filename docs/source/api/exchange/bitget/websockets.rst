@@ -1,5 +1,5 @@
 walrasquant.exchange.bitget.websockets
-=================================
+======================================
 
 .. currentmodule:: walrasquant.exchange.bitget.websockets
 

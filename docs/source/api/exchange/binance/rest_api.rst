@@ -1,5 +1,5 @@
 walrasquant.exchange.binance.rest_api
-=================================
+=====================================
 
 .. currentmodule:: walrasquant.exchange.binance.rest_api
 

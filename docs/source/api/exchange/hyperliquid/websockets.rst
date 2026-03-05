@@ -1,5 +1,5 @@
 walrasquant.exchange.hyperliquid.websockets
-=================================
+===========================================
 
 .. currentmodule:: walrasquant.exchange.hyperliquid.websockets
 

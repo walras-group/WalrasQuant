@@ -2,10 +2,12 @@
 
 import os
 import sys
+from pathlib import Path
 
-# sys.path.insert(0, os.path.abspath("."))
-# sys.path.insert(0, os.path.abspath("../"))
-sys.path.insert(0, os.path.abspath("../.."))
+# Allow autodoc to import from src-layout package on RTD.
+ROOT_DIR = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT_DIR / "src"))
+sys.path.insert(0, str(ROOT_DIR))
 
 project = "WalrasQuant"
 copyright = "2026, WalrasQuant"

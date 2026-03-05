@@ -1,5 +1,5 @@
 walrasquant.exchange.hyperliquid.error
-=================================
+======================================
 
 .. currentmodule:: walrasquant.exchange.hyperliquid.error
 

@@ -1,5 +1,5 @@
 walrasquant.exchange.bybit.connector
-=================================
+====================================
 
 .. currentmodule:: walrasquant.exchange.bybit.connector
 

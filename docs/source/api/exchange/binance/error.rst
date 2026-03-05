@@ -1,5 +1,5 @@
 walrasquant.exchange.binance.error
-=================================
+==================================
 
 .. currentmodule:: walrasquant.exchange.binance.error
 

@@ -7,7 +7,7 @@ The weighted mid price is calculated as follows:
 
 .. math::
 
-    \text{weighted_mid} = \frac{P_a \times V_b}{V_a + V_b} + \frac{P_b \times V_a}{V_a + V_b}
+    \mathrm{weighted\_mid} = \frac{P_a \times V_b}{V_a + V_b} + \frac{P_b \times V_a}{V_a + V_b}
 
 Where:
     - :math:`P_a` is the ask price

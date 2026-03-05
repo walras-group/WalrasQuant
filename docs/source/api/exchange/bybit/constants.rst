@@ -1,5 +1,5 @@
 walrasquant.exchange.bybit.constants
-=================================
+====================================
 
 .. currentmodule:: walrasquant.exchange.bybit.constants
 

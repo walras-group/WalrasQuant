@@ -1,5 +1,5 @@
 walrasquant.exchange.bitget.constants
-=================================
+=====================================
 
 .. currentmodule:: walrasquant.exchange.bitget.constants
 
