@@ -33,7 +33,7 @@ latex_elements = {
         \usepackage{fontspec}
         \setmainfont{Noto Serif}
         \setsansfont{Noto Sans}
-        \setmonofont{Noto Mono}
+        \setmonofont{DejaVu Sans Mono}
     """,
     "figure_align": "H",
     "extraclassoptions": "openany,oneside",
@@ -50,6 +50,9 @@ html_theme_options = {
     "light_logo": "logo-light-crop.png",
     "dark_logo": "logo-dark-crop.png",
 }
+
+# Avoid LaTeX makeindex/xindy failures on RTD PDF builds.
+latex_domain_indices = False
 
 # Napoleon settings
 napoleon_google_docstring = True
