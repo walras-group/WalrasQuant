@@ -32,8 +32,6 @@ latex_elements = {
         \setmainfont{Noto Serif}
         \setsansfont{Noto Sans}
         \setmonofont{Noto Mono}
-        \usepackage{emoji}
-        \setemojifont{Noto Color Emoji}
     """,
     "figure_align": "H",
     "extraclassoptions": "openany,oneside",
@@ -89,6 +87,19 @@ autodoc_mock_imports = [
     "certifi",
     "bcrypt",
     "pathlib",
+    "nexuslog",
+    "walras_nexuscore",
+    "flashduty_sdk",
+    "httpx",
+    "fastapi",
+    "uvicorn",
+    "eth_account",
+    "Crypto",
+    "click",
+    "rich",
+    "psycopg2",
+    "psycopg2_binary",
+    "asyncpg",
 ]
 
 # Docutils settings

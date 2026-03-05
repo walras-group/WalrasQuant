@@ -10,7 +10,9 @@ Welcome to WalrasQuant's documentation!
 .. |version| image:: https://img.shields.io/pypi/v/walrasquant?&color=blue
    :alt: Version
 
-|python-versions| |docs| |version|
+.. only:: html
+
+   |python-versions| |docs| |version|
 
 Introduction
 ------------
@@ -54,11 +56,17 @@ Contact
 .. |telegram| image:: https://img.shields.io/badge/Telegram-2CA5E0?&logo=telegram&logoColor=white
    :target: https://t.me/+6e2MtXxoibM2Yzlk
 
-|twitter| Stay updated with our latest news, features, and announcements.
+.. only:: html
 
-|discord| Join our community to discuss ideas, get support, and connect with other users.
+   |twitter| Stay updated with our latest news, features, and announcements.
 
-|telegram| Receive instant updates and engage in real-time discussions.
+.. only:: html
+
+   |discord| Join our community to discuss ideas, get support, and connect with other users.
+
+.. only:: html
+
+   |telegram| Receive instant updates and engage in real-time discussions.
 
 Contents
 --------
