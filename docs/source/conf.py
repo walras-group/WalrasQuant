@@ -105,6 +105,10 @@ autodoc_mock_imports = [
     "psycopg2",
     "psycopg2_binary",
     "asyncpg",
+    "pandas",
+    "numpy",
+    "throttled",
+    "nexuscore",
 ]
 
 # Docutils settings
