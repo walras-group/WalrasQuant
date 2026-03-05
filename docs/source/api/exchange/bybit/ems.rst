@@ -1,14 +1,11 @@
-nexustrader.exchange.bybit.ems
-=====================================
+walrasquant.exchange.bybit.ems
+=================================
 
-.. currentmodule:: nexustrader.exchange.bybit.ems
+.. currentmodule:: walrasquant.exchange.bybit.ems
 
-The Bybit Execution Management System (EMS) handles order execution and management for the Bybit exchange. It provides functionality for submitting orders and managing minimum order amounts.
+Bybit ems module reference.
 
-Class Overview
------------------
-
-.. autoclass:: BybitExecutionManagementSystem
+.. automodule:: walrasquant.exchange.bybit.ems
    :members:
    :undoc-members:
    :show-inheritance:

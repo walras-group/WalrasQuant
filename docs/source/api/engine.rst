@@ -1,9 +1,9 @@
-nexustrader.engine
+walrasquant.engine
 ====================
 
-.. currentmodule:: nexustrader.engine
+.. currentmodule:: walrasquant.engine
 
-.. automodule:: nexustrader.engine
+.. automodule:: walrasquant.engine
     :members:
     :undoc-members:
     :show-inheritance:

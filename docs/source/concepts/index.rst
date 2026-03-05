@@ -12,4 +12,4 @@ Concepts
    
 
 
-Explore the foundational concepts of nexustrader through the following guides.
+Explore the foundational concepts of walrasquant through the following guides.

@@ -1,4 +1,4 @@
-nexustrader.exchange.bybit
+walrasquant.exchange.bybit
 =================================
 
 .. toctree::
@@ -13,3 +13,4 @@ nexustrader.exchange.bybit
    rest_api
    schema
    websockets
+   factory

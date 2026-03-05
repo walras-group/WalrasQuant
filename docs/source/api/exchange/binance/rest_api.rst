@@ -1,14 +1,11 @@
-nexustrader.exchange.binance.rest_api
-=========================================
+walrasquant.exchange.binance.rest_api
+=================================
 
-.. currentmodule:: nexustrader.exchange.binance.rest_api
+.. currentmodule:: walrasquant.exchange.binance.rest_api
 
-The Binance REST API client implements API endpoints for Binance exchange, providing methods for order management, market data, and account operations. It supports both mainnet and testnet environments.
+Binance rest_api module reference.
 
-Class Overview
------------------
-
-.. autoclass:: BinanceApiClient
+.. automodule:: walrasquant.exchange.binance.rest_api
    :members:
    :undoc-members:
    :show-inheritance:

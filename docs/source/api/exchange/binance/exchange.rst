@@ -1,19 +1,11 @@
-nexustrader.exchange.binance.exchange
-===========================================
+walrasquant.exchange.binance.exchange
+=================================
 
-.. currentmodule:: nexustrader.exchange.binance.exchange
+.. currentmodule:: walrasquant.exchange.binance.exchange
 
-This module implements the exchange manager for Binance, handling market data synchronization and trading operations.
+Binance exchange module reference.
 
-Class Overview
------------------
-
-.. autoclass:: BinanceExchangeManager
+.. automodule:: walrasquant.exchange.binance.exchange
    :members:
    :undoc-members:
    :show-inheritance:
-
-Functions
------------------
-
-.. autofunction:: check

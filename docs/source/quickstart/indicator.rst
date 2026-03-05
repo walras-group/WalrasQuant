@@ -20,8 +20,8 @@ Where:
 
 .. code-block:: python
 
-    from nexustrader.indicator import Indicator
-    from nexustrader.schema import Kline, BookL1, BookL2, Trade
+    from walrasquant.indicator import Indicator
+    from walrasquant.schema import Kline, BookL1, BookL2, Trade
 
     class WeightedMidIndicator(Indicator):
         def __init__(self):

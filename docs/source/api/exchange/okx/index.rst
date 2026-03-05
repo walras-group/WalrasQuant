@@ -1,4 +1,4 @@
-nexustrader.exchange.okx
+walrasquant.exchange.okx
 ===========================
 
 .. toctree::
@@ -13,3 +13,4 @@ nexustrader.exchange.okx
    rest_api
    schema
    websockets
+   factory

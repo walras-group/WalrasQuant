@@ -1,14 +1,11 @@
-nexustrader.exchange.bybit.error
-=====================================
+walrasquant.exchange.bybit.error
+=================================
 
-.. currentmodule:: nexustrader.exchange.bybit.error
+.. currentmodule:: walrasquant.exchange.bybit.error
 
-The Bybit error module provides custom exception classes for handling Bybit-specific errors.
+Bybit error module reference.
 
-Class Overview
------------------
-
-.. autoclass:: BybitError
+.. automodule:: walrasquant.exchange.bybit.error
    :members:
    :undoc-members:
    :show-inheritance:

@@ -1,14 +1,11 @@
-nexustrader.exchange.bybit.exchange
-=====================================
+walrasquant.exchange.bybit.exchange
+=================================
 
-.. currentmodule:: nexustrader.exchange.bybit.exchange
+.. currentmodule:: walrasquant.exchange.bybit.exchange
 
-The BybitExchangeManager is responsible for managing Bybit exchange operations, including market data handling and symbol management.
+Bybit exchange module reference.
 
-Class Overview
------------------
-
-.. autoclass:: BybitExchangeManager
+.. automodule:: walrasquant.exchange.bybit.exchange
    :members:
    :undoc-members:
    :show-inheritance:

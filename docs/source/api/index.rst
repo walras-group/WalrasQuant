@@ -6,7 +6,13 @@ API Reference
 
    core/index
    base/index
+   backends/index
+   execution/index
    exchange/index
+   web/index
+   tools/index
+   aggregation
+   push
    error
    schema
    strategy
@@ -14,4 +20,3 @@ API Reference
    constants
    engine
    indicator
-

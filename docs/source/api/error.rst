@@ -1,13 +1,13 @@
-nexustrader.error
+walrasquant.error
 ====================
 
-.. currentmodule:: nexustrader.error
+.. currentmodule:: walrasquant.error
 
 
-NexusTraderError
+WalrasQuantError
 ~~~~~~~~~~~~~~~~~~
 
-.. automodule:: nexustrader.error
+.. automodule:: walrasquant.error
     :members:
     :undoc-members:
     :show-inheritance:

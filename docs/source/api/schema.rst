@@ -1,9 +1,9 @@
-nexustrader.schema
+walrasquant.schema
 ====================
 
-.. currentmodule:: nexustrader.schema
+.. currentmodule:: walrasquant.schema
 
-.. automodule:: nexustrader.schema
+.. automodule:: walrasquant.schema
     :members:
     :undoc-members:
     :show-inheritance:

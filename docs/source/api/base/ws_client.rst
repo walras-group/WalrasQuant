@@ -1,7 +1,7 @@
-nexustrader.base.ws_client
+walrasquant.base.ws_client
 ===============================
 
-.. currentmodule:: nexustrader.base.ws_client
+.. currentmodule:: walrasquant.base.ws_client
 
 This module contains the WSClient class, which is responsible for managing WebSocket connections and message handling.
 

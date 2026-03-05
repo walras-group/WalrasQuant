@@ -1,9 +1,9 @@
-nexustrader.indicator
+walrasquant.indicator
 =======================
 
-.. currentmodule:: nexustrader.indicator
+.. currentmodule:: walrasquant.indicator
 
-.. automodule:: nexustrader.indicator
+.. automodule:: walrasquant.indicator
     :members:
     :undoc-members:
     :show-inheritance:

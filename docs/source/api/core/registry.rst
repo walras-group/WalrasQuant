@@ -1,7 +1,7 @@
-nexustrader.core.registry
+walrasquant.core.registry
 ===============================
 
-.. currentmodule:: nexustrader.core.registry
+.. currentmodule:: walrasquant.core.registry
 
 The OrderRegistry class is used to manage the mapping relationship between order IDs and UUIDs. In the trading system, each order has two identifiers:
 

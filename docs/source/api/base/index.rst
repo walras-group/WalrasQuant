@@ -1,4 +1,4 @@
-nexustrader.base
+walrasquant.base
 =================
 
 .. toctree::
@@ -8,5 +8,7 @@ nexustrader.base
    connector
    ems
    oms
+   retry
+   sms
    ws_client
    exchange

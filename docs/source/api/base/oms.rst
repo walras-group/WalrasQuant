@@ -1,7 +1,7 @@
-nexustrader.base.oms
+walrasquant.base.oms
 ========================
 
-.. currentmodule:: nexustrader.base.oms
+.. currentmodule:: walrasquant.base.oms
 
 This module contains the OrderManagementSystem class, which is responsible for managing the execution of trading orders.
 

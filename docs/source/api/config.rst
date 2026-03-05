@@ -1,7 +1,7 @@
-nexustrader.config
+walrasquant.config
 ====================
 
-.. currentmodule:: nexustrader.config
+.. currentmodule:: walrasquant.config
 
 Configuration Classes
 -------------------------
@@ -9,7 +9,7 @@ Configuration Classes
 Config
 ~~~~~~
 
-.. automodule:: nexustrader.config
+.. automodule:: walrasquant.config
     :members:
     :undoc-members:
     :show-inheritance:

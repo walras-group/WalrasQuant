@@ -1,86 +1,11 @@
-nexustrader.exchange.bybit.constants
-===========================================
+walrasquant.exchange.bybit.constants
+=================================
 
-.. currentmodule:: nexustrader.exchange.bybit.constants
+.. currentmodule:: walrasquant.exchange.bybit.constants
 
-This module contains all Bybit-specific constants and enums used throughout the Bybit connector implementation.
+Bybit constants module reference.
 
-Enums
------
-
-.. autoclass:: BybitAccountType
+.. automodule:: walrasquant.exchange.bybit.constants
    :members:
    :undoc-members:
    :show-inheritance:
-
-.. autoclass:: BybitBaseUrl
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: BybitOrderSide
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: BybitOrderStatus
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: BybitTimeInForce
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: BybitPositionIdx
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: BybitPositionSide
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: BybitOrderType
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: BybitProductType
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: BybitTriggerType
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: BybitTriggerDirection
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: BybitStopOrderType
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Utility Classes
---------------------
-
-.. autoclass:: BybitEnumParser
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Constants
----------------
-
-.. autodata:: WS_PUBLIC_URL
-   :annotation:
-
-.. autodata:: REST_API_URL
-   :annotation:

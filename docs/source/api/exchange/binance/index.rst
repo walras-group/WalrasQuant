@@ -1,4 +1,4 @@
-nexustrader.exchange.binance
+walrasquant.exchange.binance
 ===============================
 
 .. toctree::
@@ -13,3 +13,4 @@ nexustrader.exchange.binance
    rest_api
    schema
    websockets
+   factory

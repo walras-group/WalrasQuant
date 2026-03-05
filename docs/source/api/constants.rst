@@ -1,9 +1,9 @@
-nexustrader.constants
+walrasquant.constants
 ===========================
 
-.. currentmodule:: nexustrader.constants
+.. currentmodule:: walrasquant.constants
 
-.. automodule:: nexustrader.constants
+.. automodule:: walrasquant.constants
     :members:
     :undoc-members:
     :show-inheritance:

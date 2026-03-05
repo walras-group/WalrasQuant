@@ -1,11 +1,13 @@
-TradingBot Supported Exchanges
-===============================
+Supported Exchanges
+===================
 
-Currently, TradingBot supports the following exchanges:
+WalrasQuant currently includes exchange connectors for:
 
 - Binance
 - OKX
 - Bybit
+- Bitget
+- HyperLiquid
 
 Reference
 ---------
@@ -16,6 +18,5 @@ Reference
    okx
    bybit
    binance
-
-
-
+   bitget
+   hyperliquid

@@ -1,7 +1,7 @@
-nexustrader.strategy
+walrasquant.strategy
 ====================
 
-.. currentmodule:: nexustrader.strategy
+.. currentmodule:: walrasquant.strategy
 
 Strategy
 --------

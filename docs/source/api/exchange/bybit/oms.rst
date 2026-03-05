@@ -1,17 +1,11 @@
-nexustrader.exchange.bybit.oms
-=====================================
+walrasquant.exchange.bybit.oms
+=================================
 
-.. currentmodule:: nexustrader.exchange.bybit.oms
+.. currentmodule:: walrasquant.exchange.bybit.oms
 
-The Bybit Order Management System (OMS) handles order processing and management for the Bybit exchange, including order message handling and status tracking.
+Bybit oms module reference.
 
-Class Overview
------------------
-
-.. autoclass:: BybitOrderManagementSystem
+.. automodule:: walrasquant.exchange.bybit.oms
    :members:
    :undoc-members:
    :show-inheritance:
-
-   .. note::
-      This class inherits from :class:`OrderManagementSystem` and provides Bybit-specific order management functionality.

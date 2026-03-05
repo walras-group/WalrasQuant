@@ -3,16 +3,16 @@ Simple Buy and Sell
 
 Let's start with a simple buy and sell(cancel) strategy.
 
-First, we need to create a strategy class. You can subscribe the ``bookl1`` data of the ``BTCUSDT.OKX`` symbol in the ``__init__`` method.
+First, we need to create a strategy class. You can subscribe the ``bookl1`` data of the ``BTCUSDT-PERP.OKX`` symbol in the ``__init__`` method.
 
 .. code-block:: python
 
-        from nexustrader.strategy import Strategy
+        from walrasquant.strategy import Strategy
 
         class Demo(Strategy):
             def __init__(self):
                 super().__init__()
-                self.subscribe_bookl1(symbols=["BTCUSDT.OKX"])
+                self.subscribe_bookl1(symbols=["BTCUSDT-PERP.OKX"])
                 self.signal = True
 
 Then we need to implement the ``on_bookl1`` method to handle the ``bookl1`` data.
@@ -26,17 +26,17 @@ Then we need to implement the ``on_bookl1`` method to handle the ``bookl1`` data
             def on_bookl1(self, bookl1: BookL1):
                 if self.signal:
                     uuid = self.create_order(
-                        symbol="BTCUSDT.OKX",
+                        symbol="BTCUSDT-PERP.OKX",
                         side=OrderSide.BUY,
                         type=OrderType.LIMIT,
-                        price=self.price_to_precision("BTCUSDT.OKX", bookl1.bid),
+                        price=self.price_to_precision("BTCUSDT-PERP.OKX", bookl1.bid),
                         amount=Decimal("0.01"),
                     )
                     
                     # You can also use the `self.create_order` method to create a `SELL` order.
 
                     self.cancel_order(
-                        symbol="BTCUSDT.OKX",
+                        symbol="BTCUSDT-PERP.OKX",
                         uuid=uuid,
                     )
                     

@@ -1,74 +1,61 @@
 Process Management
-====================
+==================
 
-In this section, you'll learn: 🎯
+In this section, you'll learn how to manage strategy processes with ``wq``.
 
-- How to manage the process using `pm2` 📦
+Prerequisites
+-------------
 
-
-Install pm2
-------------
-
-.. code-block:: bash
-
-    npm install -g pm2
-
-Start the process
-------------------
-
-create a process named "trader" and when stopping the process, wait for 10 seconds before killing the process. (need some time to release the resources)
+Install PM2 (required by ``wq``):
 
 .. code-block:: bash
 
-   pm2 start trader.py --name "trader" --kill-timeout 10000
+   npm install -g pm2
 
-List all processes
-------------------
-
-.. code-block:: bash
-
-   pm2 ls
-
-Stop the process
------------------
+Install ``hl`` for log viewing (optional, used by ``wq logs``):
 
 .. code-block:: bash
 
-   pm2 stop trader
+   # https://github.com/pamburus/hl
+   hl --version
 
-Using Config File
----------------
+Start a strategy
+----------------
+
+``wq start`` runs your strategy script via PM2.
+If ``strategy_id`` and ``user_id`` are not passed, ``wq`` extracts them from ``Config(...)`` in the script.
+
+.. code-block:: bash
+
+   wq start strategy/okx/buy_and_cancel.py
+
+You can also pass ids explicitly:
 
 .. code-block:: bash
 
-   pm2 init
+   wq start strategy/okx/buy_and_cancel.py -s okx_buy_and_sell -u user_test
 
-
-.. code-block:: bash
-
-   pm2 start ecosystem.config.js
-
-.. code-block:: bash
-   module.exports = {
-      apps : [
-         {
-            name: 'demo',
-            interpreter: '/root/NexusTrader/.venv/bin/python',
-            cmd: 'demo.py',
-            args: '--name test --age 25 --city shanghai',
-            instances: 1,
-            kill_timeout: 20000,
-            max_memory_restart: '8G',
-            autorestart: true,
-         },
-      ]
-   };
-
-
-More resources
+List processes
 --------------
 
-- `pm2 documentation <https://pm2.keymetrics.io/docs/usage/process-management/>`_
--  `pm2 python <https://pm2.io/blog/2018/09/19/Manage-Python-Processes>`_
-- `pm2 github <https://github.com/Unitech/pm2>`_
+.. code-block:: bash
 
+   wq ls
+
+View logs
+---------
+
+.. code-block:: bash
+
+   wq log okx_buy_and_sell.user_test
+   wq log okx_buy_and_sell.user_test -F
+   wq log okx_buy_and_sell.user_test -d 3
+
+Stop / restart / delete
+-----------------------
+
+.. code-block:: bash
+
+   wq stop okx_buy_and_sell.user_test
+   wq restart okx_buy_and_sell.user_test
+   wq delete okx_buy_and_sell.user_test

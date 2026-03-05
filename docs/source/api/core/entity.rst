@@ -1,7 +1,7 @@
-nexustrader.core.entity
+walrasquant.core.entity
 ===============================
 
-.. currentmodule:: nexustrader.core.entity
+.. currentmodule:: walrasquant.core.entity
 
 This module contains classes and functions for managing tasks, events, and data readiness in the trading system.
 

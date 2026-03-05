@@ -1,19 +1,11 @@
-nexustrader.exchange.binance.connector
-=======================================
+walrasquant.exchange.binance.connector
+=================================
 
-.. currentmodule:: nexustrader.exchange.binance.connector
+.. currentmodule:: walrasquant.exchange.binance.connector
 
-The Binance connector is used to interact with the Binance exchange. The PublicConnector is used to retrieve public market data, and the PrivateConnector is used for private account operations.
+Binance connector module reference.
 
-Class Overview
------------------
-
-.. autoclass:: BinancePublicConnector
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: BinancePrivateConnector
+.. automodule:: walrasquant.exchange.binance.connector
    :members:
    :undoc-members:
    :show-inheritance:

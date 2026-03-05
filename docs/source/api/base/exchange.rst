@@ -1,7 +1,7 @@
-nexustrader.base.exchange
+walrasquant.base.exchange
 =============================
 
-.. currentmodule:: nexustrader.base.exchange
+.. currentmodule:: walrasquant.base.exchange
 
 This module contains the Exchange class, which is responsible for interacting with the exchange.
 

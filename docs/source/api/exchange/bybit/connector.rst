@@ -1,19 +1,11 @@
-nexustrader.exchange.bybit.connector
-=====================================
+walrasquant.exchange.bybit.connector
+=================================
 
-.. currentmodule:: nexustrader.exchange.bybit.connector
+.. currentmodule:: walrasquant.exchange.bybit.connector
 
-The Bybit connector is used to interact with the Bybit exchange. The PublicConnector is used to retrieve public market data, and the PrivateConnector is used for private account operations.
+Bybit connector module reference.
 
-Class Overview
------------------
-
-.. autoclass:: BybitPublicConnector
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: BybitPrivateConnector
+.. automodule:: walrasquant.exchange.bybit.connector
    :members:
    :undoc-members:
    :show-inheritance:

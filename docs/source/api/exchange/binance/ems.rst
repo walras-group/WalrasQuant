@@ -1,14 +1,11 @@
-nexustrader.exchange.binance.ems
-====================================
+walrasquant.exchange.binance.ems
+=================================
 
-.. currentmodule:: nexustrader.exchange.binance.ems
+.. currentmodule:: walrasquant.exchange.binance.ems
 
-This module implements the Binance-specific Execution Management System (EMS) which handles order routing and execution across different Binance account types.
+Binance ems module reference.
 
-Class Overview
------------------
-
-.. autoclass:: BinanceExecutionManagementSystem
+.. automodule:: walrasquant.exchange.binance.ems
    :members:
    :undoc-members:
    :show-inheritance:

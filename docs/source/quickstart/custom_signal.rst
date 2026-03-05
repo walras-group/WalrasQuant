@@ -13,7 +13,7 @@ You need to send your trading signal to a zmq server. Here we are using the ``ip
     import time
     import sys
 
-    # data is a list of mock trading signal
+    # data is a list of sample trading signals
     datas = [
         [{
             "instrumentID": "BTCUSDT.BBP",
