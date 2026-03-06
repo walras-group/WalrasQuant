@@ -313,6 +313,21 @@ class BinanceAccountType(AccountType):
         return WS_ORDER_URLS.get(self, None)
 
     @property
+    def ws_public_url(self):
+        """Channel URL for high-freq public streams (bookTicker, depth). USD-M Futures only."""
+        return FUTURES_PUBLIC_STREAM_URLS.get(self)
+
+    @property
+    def ws_market_url(self):
+        """Channel URL for regular market streams (aggTrade, markPrice, kline). USD-M Futures only."""
+        return FUTURES_MARKET_STREAM_URLS.get(self)
+
+    @property
+    def ws_private_url(self):
+        """Channel URL for private user-data streams (listenKey). USD-M Futures only."""
+        return FUTURES_PRIVATE_STREAM_URLS.get(self)
+
+    @property
     def is_mock(self):
         return self in (self.LINEAR_MOCK, self.INVERSE_MOCK, self.SPOT_MOCK)
 
@@ -359,6 +374,25 @@ STREAM_URLS = {
     BinanceAccountType.SPOT_TESTNET: "wss://demo-stream.binance.com",
     BinanceAccountType.USD_M_FUTURE_TESTNET: "wss://fstream.binancefuture.com",
     BinanceAccountType.COIN_M_FUTURE_TESTNET: "wss://dstream.binancefuture.com",
+}
+
+# USD-M Futures channel-specific base URLs (Binance WebSocket URL migration)
+# Public  → high-freq book data:  bookTicker, depth
+# Market  → regular market data:  aggTrade, markPrice, kline, ticker, etc.
+# Private → user data stream:     listenKey / ORDER_TRADE_UPDATE / ACCOUNT_UPDATE
+FUTURES_PUBLIC_STREAM_URLS = {
+    BinanceAccountType.USD_M_FUTURE: "wss://fstream.binance.com/public",
+    BinanceAccountType.USD_M_FUTURE_TESTNET: "wss://fstream.binancefuture.com/public",
+}
+
+FUTURES_MARKET_STREAM_URLS = {
+    BinanceAccountType.USD_M_FUTURE: "wss://fstream.binance.com/market",
+    BinanceAccountType.USD_M_FUTURE_TESTNET: "wss://fstream.binancefuture.com/market",
+}
+
+FUTURES_PRIVATE_STREAM_URLS = {
+    BinanceAccountType.USD_M_FUTURE: "wss://fstream.binance.com/private",
+    BinanceAccountType.USD_M_FUTURE_TESTNET: "wss://fstream.binancefuture.com/private",
 }
 
 WS_ORDER_URLS = {

@@ -72,6 +72,19 @@ class BinancePublicConnector(PublicConnector):
                 f"BinanceAccountType.{account_type.value} is not supported for Binance Public Connector"
             )
 
+        # For USD-M Futures, use channel-specific URLs (public/market split).
+        # For all other account types, custom_url (or the legacy base URL) is used unchanged.
+        market_url = (
+            (account_type.ws_market_url + "/stream")
+            if account_type.ws_market_url
+            else custom_url
+        )
+        public_url = (
+            (account_type.ws_public_url + "/stream")
+            if account_type.ws_public_url
+            else None
+        )
+
         super().__init__(
             account_type=account_type,
             market=exchange.market,
@@ -82,7 +95,7 @@ class BinancePublicConnector(PublicConnector):
                 handler=self._ws_msg_handler,
                 task_manager=task_manager,
                 clock=clock,
-                custom_url=custom_url,
+                custom_url=market_url,
                 ws_suffix="/stream",
                 max_subscriptions_per_client=max_subscriptions_per_client,
                 max_clients=max_clients,
@@ -95,6 +108,23 @@ class BinancePublicConnector(PublicConnector):
                 enable_rate_limit=enable_rate_limit,
             ),
             task_manager=task_manager,
+        )
+
+        # Dedicated client for high-freq book streams (bookTicker, depth).
+        # Only created when the account type supports separate public channel URLs.
+        self._ws_public_client: BinanceWSClient | None = (
+            BinanceWSClient(
+                account_type=account_type,
+                handler=self._ws_msg_handler,
+                task_manager=task_manager,
+                clock=clock,
+                custom_url=public_url,
+                ws_suffix="/stream",
+                max_subscriptions_per_client=max_subscriptions_per_client,
+                max_clients=max_clients,
+            )
+            if public_url
+            else None
         )
         self._ws_general_decoder = msgspec.json.Decoder(BinanceWsMessageGeneral)
         self._ws_trade_decoder = msgspec.json.Decoder(BinanceTradeData)
@@ -392,7 +422,8 @@ class BinancePublicConnector(PublicConnector):
             if market is None:
                 raise ValueError(f"Symbol {s} not found")
             symbols.append(market.id)
-        self._ws_client.subscribe_book_ticker(symbols)
+        book_client = self._ws_public_client or self._ws_client
+        book_client.subscribe_book_ticker(symbols)
 
     def subscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
         symbols = []
@@ -404,7 +435,8 @@ class BinancePublicConnector(PublicConnector):
             if market is None:
                 raise ValueError(f"Symbol {s} not found")
             symbols.append(market.id)
-        self._ws_client.subscribe_partial_book_depth(symbols, int(level.value))
+        book_client = self._ws_public_client or self._ws_client
+        book_client.subscribe_partial_book_depth(symbols, int(level.value))
 
     def subscribe_kline(self, symbol: str | List[str], interval: KlineInterval):
         bnc_interval = BinanceEnumParser.to_binance_kline_interval(interval)
@@ -444,7 +476,8 @@ class BinancePublicConnector(PublicConnector):
             if market is None:
                 raise ValueError(f"Symbol {s} not found")
             symbols.append(market.id)
-        self._ws_client.unsubscribe_book_ticker(symbols)
+        book_client = self._ws_public_client or self._ws_client
+        book_client.unsubscribe_book_ticker(symbols)
 
     def unsubscribe_bookl2(self, symbol: str | List[str], level: BookLevel):
         symbols = []
@@ -456,7 +489,8 @@ class BinancePublicConnector(PublicConnector):
             if market is None:
                 raise ValueError(f"Symbol {s} not found")
             symbols.append(market.id)
-        self._ws_client.unsubscribe_partial_book_depth(symbols, int(level.value))
+        book_client = self._ws_public_client or self._ws_client
+        book_client.unsubscribe_partial_book_depth(symbols, int(level.value))
 
     def unsubscribe_kline(self, symbol: str | List[str], interval: KlineInterval):
         bnc_interval = BinanceEnumParser.to_binance_kline_interval(interval)
@@ -515,6 +549,16 @@ class BinancePublicConnector(PublicConnector):
             symbols.append(market.id)
 
         self._ws_client.unsubscribe_mark_price(symbols)
+
+    async def connect(self):
+        await self._ws_client.connect()
+        if self._ws_public_client:
+            await self._ws_public_client.connect()
+
+    async def wait_ready(self):
+        await self._ws_client.wait_ready()
+        if self._ws_public_client:
+            await self._ws_public_client.wait_ready()
 
     def _ws_msg_handler(self, raw: bytes):
         try:

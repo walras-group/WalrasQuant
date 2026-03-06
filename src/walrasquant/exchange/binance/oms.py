@@ -94,6 +94,12 @@ class BinanceOrderManagementSystem(OrderManagementSystem):
                 handler=self._ws_msg_handler,
                 task_manager=task_manager,
                 clock=clock,
+                # For USD-M Futures, connect to the dedicated /private channel URL
+                custom_url=(
+                    (account_type.ws_private_url + "/ws")
+                    if account_type.ws_private_url
+                    else None
+                ),
                 max_subscriptions_per_client=max_subscriptions_per_client,
                 max_clients=max_clients,
             )
