@@ -409,6 +409,76 @@ def logs_cmd(ctx: click.Context, name: str, follow: bool, days: int):
         sys.exit(1)
 
 
+@cli.command("flush")
+@click.argument("name")
+@click.option(
+    "--yes",
+    "-y",
+    is_flag=True,
+    help="Skip confirmation prompt.",
+)
+def flush_cmd(name: str, yes: bool):
+    """Flush (truncate) all strategy log files for a PM2 process.
+
+    NAME can be a PM2 process ID or a process name (STRATEGY_ID.USER_ID).
+    This clears the WalrasQuant strategy log files, not the PM2 logs.
+
+    Examples:\n
+      wq flush buy_and_sell.alice\n
+      wq flush 3\n
+      wq flush buy_and_sell.alice --yes
+    """
+    processes = _pm2_jlist()
+    proc = _find_process(processes, name)
+    if proc is None:
+        click.echo(f"Error: PM2 process '{name}' not found.", err=True)
+        click.echo(f"Available: {[p.get('name') for p in processes]}", err=True)
+        sys.exit(1)
+
+    log_base = _resolve_log_base(proc)
+    if log_base is None:
+        click.echo(
+            f"Error: Could not resolve log path for '{name}'.\n"
+            "Make sure the script contains LogConfig(filename=...) or has logs in cwd/logs/.",
+            err=True,
+        )
+        sys.exit(1)
+
+    # Find all rotated log files (any date)
+    pattern = f"{log_base.name}_*.log"
+    log_files = sorted(log_base.parent.glob(pattern))
+    # Also include the base log file without date suffix if it exists
+    base_log = log_base.with_suffix(".log")
+    if base_log.exists() and base_log not in log_files:
+        log_files.insert(0, base_log)
+
+    if not log_files:
+        click.echo(f"No log files found matching '{log_base}*.log'.")
+        return
+
+    proc_name = proc.get("name", name)
+    click.echo(f"Log files to flush for '{proc_name}':")
+    for f in log_files:
+        size = f.stat().st_size if f.exists() else 0
+        click.echo(f"  {f}  ({size:,} bytes)")
+
+    if not yes:
+        click.confirm("\nTruncate all listed files?", abort=True)
+
+    flushed, errors = 0, 0
+    for f in log_files:
+        try:
+            f.write_bytes(b"")
+            flushed += 1
+        except OSError as exc:
+            click.echo(f"Error flushing {f}: {exc}", err=True)
+            errors += 1
+
+    click.echo(f"Flushed {flushed} file(s)." + (f" {errors} error(s)." if errors else ""))
+    if errors:
+        sys.exit(1)
+
+
 @cli.command("stop")
 @click.argument("name")
 def stop_cmd(name: str):
@@ -432,6 +502,7 @@ def delete_cmd(name: str):
 
 cli.add_command(list_cmd, name="ls")
 cli.add_command(logs_cmd, name="log")
+cli.add_command(flush_cmd, name="clear")
 
 
 def main():
