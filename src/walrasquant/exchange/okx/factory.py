@@ -106,7 +106,6 @@ class OkxFactory(ExchangeFactory):
             clock=context.clock,
             task_manager=context.task_manager,
             registry=context.registry,
-            is_mock=context.is_mock,
             queue_maxsize=context.queue_maxsize,
         )
 

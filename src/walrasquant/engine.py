@@ -16,7 +16,6 @@ from walrasquant.base import (
     ExecutionManagementSystem,
     SubscriptionManagementSystem,
     OrderManagementSystem,
-    MockLinearConnector,
 )
 from walrasquant.exchange.registry import get_factory
 from walrasquant.exchange.base_factory import BuildContext
@@ -210,7 +209,6 @@ class Engine:
             task_manager=self._task_manager,
             cache=self._cache,
             registry=self._registry,
-            is_mock=self._config.is_mock,
         )
 
         for exchange_id, public_conn_configs in self._config.public_conn_config.items():
@@ -226,82 +224,36 @@ class Engine:
         self._public_connector_check()
 
     def _build_private_connectors(self):
-        if self._config.is_mock:
-            for (
-                exchange_id,
-                mock_conn_configs,
-            ) in self._config.private_conn_config.items():
-                if not mock_conn_configs:
-                    raise EngineBuildError(
-                        f"Private connector config for {exchange_id} is not set. Please add `{exchange_id}` in `private_conn_config`."
-                    )
-                for mock_conn_config in mock_conn_configs:
-                    account_type = mock_conn_config.account_type
+        # Create build context
+        context = BuildContext(
+            msgbus=self._msgbus,
+            clock=self._clock,
+            task_manager=self._task_manager,
+            cache=self._cache,
+            registry=self._registry,
+            queue_maxsize=self._config.queue_config.ems_maxsize,
+        )
 
-                    if mock_conn_config.account_type.is_linear_mock:
-                        private_connector = MockLinearConnector(
-                            initial_balance=mock_conn_config.initial_balance,
-                            account_type=account_type,
-                            exchange=self._exchanges[exchange_id],
-                            msgbus=self._msgbus,
-                            clock=self._clock,
-                            cache=self._cache,
-                            task_manager=self._task_manager,
-                            overwrite_balance=mock_conn_config.overwrite_balance,
-                            overwrite_position=mock_conn_config.overwrite_position,
-                            fee_rate=mock_conn_config.fee_rate,
-                            quote_currency=mock_conn_config.quote_currency,
-                            update_interval=mock_conn_config.update_interval,
-                            leverage=mock_conn_config.leverage,
-                        )
-                        self._private_connectors[account_type] = private_connector
-                    elif mock_conn_config.account_type.is_inverse_mock:
-                        # NOTE: currently not supported
-                        raise EngineBuildError(
-                            f"Mock connector for {account_type} is not supported."
-                        )
-                    elif mock_conn_config.account_type.is_spot_mock:
-                        # NOTE: currently not supported
-                        raise EngineBuildError(
-                            f"Mock connector for {account_type} is not supported."
-                        )
-                    else:
-                        raise EngineBuildError(
-                            f"Unsupported account type: {account_type} for mock connector."
-                        )
+        for (
+            exchange_id,
+            private_conn_configs,
+        ) in self._config.private_conn_config.items():
+            if not private_conn_configs:
+                raise EngineBuildError(
+                    f"Private connector config for {exchange_id} is not set. Please add `{exchange_id}` in `private_conn_config`."
+                )
 
-        else:
-            # Create build context
-            context = BuildContext(
-                msgbus=self._msgbus,
-                clock=self._clock,
-                task_manager=self._task_manager,
-                cache=self._cache,
-                registry=self._registry,
-                is_mock=self._config.is_mock,
-                queue_maxsize=self._config.queue_config.ems_maxsize,
-            )
+            factory = get_factory(exchange_id)
+            exchange = self._exchanges[exchange_id]
 
-            for (
-                exchange_id,
-                private_conn_configs,
-            ) in self._config.private_conn_config.items():
-                if not private_conn_configs:
-                    raise EngineBuildError(
-                        f"Private connector config for {exchange_id} is not set. Please add `{exchange_id}` in `private_conn_config`."
-                    )
+            for config in private_conn_configs:
+                # Let factory determine account type (handles testnet mapping)
+                account_type = factory.get_private_account_type(exchange, config)
 
-                factory = get_factory(exchange_id)
-                exchange = self._exchanges[exchange_id]
-
-                for config in private_conn_configs:
-                    # Let factory determine account type (handles testnet mapping)
-                    account_type = factory.get_private_account_type(exchange, config)
-
-                    private_connector = factory.create_private_connector(
-                        config, exchange, context, account_type
-                    )
-                    self._private_connectors[account_type] = private_connector
+                private_connector = factory.create_private_connector(
+                    config, exchange, context, account_type
+                )
+                self._private_connectors[account_type] = private_connector
 
     def _build_exchanges(self):
         for exchange_id, basic_config in self._config.basic_config.items():
@@ -342,7 +294,6 @@ class Engine:
             task_manager=self._task_manager,
             cache=self._cache,
             registry=self._registry,
-            is_mock=self._config.is_mock,
             queue_maxsize=self._config.queue_config.ems_maxsize,
         )
 
@@ -356,7 +307,6 @@ class Engine:
                     clock=self._clock,
                     task_manager=self._task_manager,
                     registry=self._registry,
-                    is_mock=self._config.is_mock,
                     queue_maxsize=self._config.queue_config.ems_maxsize,
                 )
                 self._ems[exchange_id]._build(self._private_connectors)

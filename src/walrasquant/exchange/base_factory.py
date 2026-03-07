@@ -31,7 +31,6 @@ class BuildContext:
     task_manager: Any
     cache: Any
     registry: Any  # OrderRegistry
-    is_mock: bool
     queue_maxsize: int = 0
 
 

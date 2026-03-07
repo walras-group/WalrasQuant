@@ -243,9 +243,6 @@ class BinanceAccountType(AccountType):
     SPOT_TESTNET = "SPOT_TESTNET"
     USD_M_FUTURE_TESTNET = "USD_M_FUTURE_TESTNET"
     COIN_M_FUTURE_TESTNET = "COIN_M_FUTURE_TESTNET"
-    LINEAR_MOCK = "LINEAR_MOCK"  # for mock linear connector
-    INVERSE_MOCK = "INVERSE_MOCK"  # for mock inverse connector
-    SPOT_MOCK = "SPOT_MOCK"  # for mock spot connector
 
     @property
     def exchange_id(self):
@@ -326,22 +323,6 @@ class BinanceAccountType(AccountType):
     def ws_private_url(self):
         """Channel URL for private user-data streams (listenKey). USD-M Futures only."""
         return FUTURES_PRIVATE_STREAM_URLS.get(self)
-
-    @property
-    def is_mock(self):
-        return self in (self.LINEAR_MOCK, self.INVERSE_MOCK, self.SPOT_MOCK)
-
-    @property
-    def is_linear_mock(self):
-        return self == self.LINEAR_MOCK
-
-    @property
-    def is_inverse_mock(self):
-        return self == self.INVERSE_MOCK
-
-    @property
-    def is_spot_mock(self):
-        return self == self.SPOT_MOCK
 
 
 class EndpointsType(Enum):

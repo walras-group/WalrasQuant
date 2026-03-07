@@ -459,6 +459,10 @@ class PrivateConnector(ABC):
         await self._api_client.close_session()
 
 
+# STALE: MockLinearConnector is no longer integrated into the engine.
+# The _pnl persistence path (_sync_pnl / _pnl table) was never completed and
+# has been removed from the backends. This class is kept for reference only
+# and will be deleted in a future cleanup.
 class MockLinearConnector:
     """
     open long -> cache.update_position
@@ -800,25 +804,14 @@ class MockLinearConnector:
         self._cache._apply_position(position)
         self._apply_fee(order)
 
-    async def _handle_pnl_update(self):
-        while True:
-            pnl, unrealized_pnl = self.pnl, self.unrealized_pnl
-            self._log.debug(f"Updating pnl: {pnl}, unrealized_pnl: {unrealized_pnl}")
-            await asyncio.sleep(self._update_interval)
-            self._update_unrealized_pnl()
-            await self._cache._sync_pnl(self._clock.timestamp_ms(), pnl, unrealized_pnl)
-
     async def connect(self):
         self._log.debug(f"Starting mock connector for {self._account_type}")
         await self._init_position()
         await self._init_balance()
-        self._task_manager.create_task(self._handle_pnl_update())
 
     async def wait_ready(self):
         """Mock connector is ready immediately after connect"""
         pass
 
     async def disconnect(self):
-        await self._cache._sync_pnl(
-            self._clock.timestamp_ms(), self.pnl, self.unrealized_pnl
-        )
+        pass

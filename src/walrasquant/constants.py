@@ -156,14 +156,6 @@ class EventType(Enum):
     INDEX_PRICE = 5
 
 
-class AlgoOrderStatus(Enum):
-    RUNNING = "RUNNING"
-    CANCELING = "CANCELING"
-    FINISHED = "FINISHED"
-    CANCELED = "CANCELED"
-    FAILED = "FAILED"
-
-
 class OrderStatus(Enum):
     # LOCAL
     INITIALIZED = "INITIALIZED"

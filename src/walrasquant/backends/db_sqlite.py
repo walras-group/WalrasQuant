@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Dict, Set, List, Optional, Any
 
 from walrasquant.backends.db import StorageBackend
-from walrasquant.schema import Order, Position, AlgoOrder, Balance, AccountBalance
+from walrasquant.schema import Order, Position, Balance, AccountBalance
 from walrasquant.constants import AccountType, ExchangeType
 
 
@@ -47,19 +47,9 @@ class SQLiteBackend(StorageBackend):
                     data BLOB
                 );
                 
-                CREATE INDEX IF NOT EXISTS idx_orders_symbol 
+                CREATE INDEX IF NOT EXISTS idx_orders_symbol
                 ON {self.table_prefix}_orders(symbol);
-                
-                CREATE TABLE IF NOT EXISTS {self.table_prefix}_algo_orders (
-                    timestamp INTEGER,
-                    oid TEXT PRIMARY KEY,
-                    symbol TEXT,
-                    data BLOB
-                );
-                
-                CREATE INDEX IF NOT EXISTS idx_algo_orders_symbol 
-                ON {self.table_prefix}_algo_orders(symbol);
-                
+
                 CREATE TABLE IF NOT EXISTS {self.table_prefix}_positions (
                     symbol PRIMARY KEY,
                     exchange TEXT,
@@ -81,12 +71,6 @@ class SQLiteBackend(StorageBackend):
                     free TEXT,
                     locked TEXT,
                     PRIMARY KEY (asset, account_type)
-                );
-                
-                CREATE TABLE IF NOT EXISTS {self.table_prefix}_pnl (
-                    timestamp INTEGER PRIMARY KEY,
-                    pnl REAL,
-                    unrealized_pnl REAL
                 );
                 
                 CREATE TABLE IF NOT EXISTS {self.table_prefix}_params (
@@ -114,7 +98,7 @@ class SQLiteBackend(StorageBackend):
 
     async def sync_orders(self, mem_orders: Dict[str, Order]) -> None:
         async with self._db_async.cursor() as cursor:
-            for oid, order in mem_orders.copy().items():
+            for order in mem_orders.copy().values():
                 await cursor.execute(
                     f"INSERT OR REPLACE INTO {self.table_prefix}_orders "
                     "(timestamp, oid, eid, symbol, side, type, amount, price, status, fee, fee_currency, data) "
@@ -132,21 +116,6 @@ class SQLiteBackend(StorageBackend):
                         str(order.fee) if order.fee is not None else None,
                         order.fee_currency,
                         self._encode(order),
-                    ),
-                )
-            await self._db_async.commit()
-
-    async def sync_algo_orders(self, mem_algo_orders: Dict[str, AlgoOrder]) -> None:
-        async with self._db_async.cursor() as cursor:
-            for oid, algo_order in mem_algo_orders.copy().items():
-                await cursor.execute(
-                    f"INSERT OR REPLACE INTO {self.table_prefix}_algo_orders "
-                    "(timestamp, oid, symbol, data) VALUES (?, ?, ?, ?)",
-                    (
-                        algo_order.timestamp,
-                        oid,
-                        algo_order.symbol,
-                        self._encode(algo_order),
                     ),
                 )
             await self._db_async.commit()
@@ -221,16 +190,12 @@ class SQLiteBackend(StorageBackend):
         self,
         oid: str,
         mem_orders: Dict[str, Order],
-        mem_algo_orders: Dict[str, AlgoOrder],
-    ) -> Optional[Order | AlgoOrder]:
+    ) -> Optional[Order]:
         if order := mem_orders.get(oid):
             return order
-        if algo_order := mem_algo_orders.get(oid):
-            return algo_order
 
         cursor = self._get_cursor()
         try:
-            # Try regular orders first
             cursor.execute(
                 f"SELECT data FROM {self.table_prefix}_orders WHERE oid = ?",
                 (oid,),
@@ -239,17 +204,6 @@ class SQLiteBackend(StorageBackend):
                 order = self._decode(row[0], Order)
                 mem_orders[oid] = order
                 return order
-
-            # Try algo orders
-            cursor.execute(
-                f"SELECT data FROM {self.table_prefix}_algo_orders WHERE oid = ?",
-                (oid,),
-            )
-            if row := cursor.fetchone():
-                algo_order = self._decode(row[0], AlgoOrder)
-                mem_algo_orders[oid] = algo_order
-                return algo_order
-
             return None
 
         except sqlite3.Error as e:

@@ -80,7 +80,7 @@ def _extract_log_filename(script_path: str) -> str | None:
         if match:
             return match.group(1)
         match = re.search(
-            r'LogConfig\s*\(.*?filename\s*=\s*settings\.([\w.]+)',
+            r"LogConfig\s*\(.*?filename\s*=\s*settings\.([\w.]+)",
             src,
             re.DOTALL,
         )
@@ -196,7 +196,7 @@ def _extract_config_field(script_path: str, field: str) -> str | None:
         if match:
             return match.group(1)
         match = re.search(
-            rf'Config\s*\(.*?{field}\s*=\s*settings\.([\w.]+)',
+            rf"Config\s*\(.*?{field}\s*=\s*settings\.([\w.]+)",
             src,
             re.DOTALL,
         )
@@ -474,7 +474,9 @@ def flush_cmd(name: str, yes: bool):
             click.echo(f"Error flushing {f}: {exc}", err=True)
             errors += 1
 
-    click.echo(f"Flushed {flushed} file(s)." + (f" {errors} error(s)." if errors else ""))
+    click.echo(
+        f"Flushed {flushed} file(s)." + (f" {errors} error(s)." if errors else "")
+    )
     if errors:
         sys.exit(1)
 

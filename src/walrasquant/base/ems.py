@@ -45,7 +45,6 @@ class ExecutionManagementSystem(ABC):
         clock: LiveClock,
         task_manager: TaskManager,
         registry: OrderRegistry,
-        is_mock: bool = False,
         queue_maxsize: int = 100_000,
     ):
         self._log = logging.getLogger(name=type(self).__name__)
@@ -61,7 +60,6 @@ class ExecutionManagementSystem(ABC):
             AccountType, asyncio.Queue[tuple[OrderSubmit, SubmitType]]
         ] = {}
         self._private_connectors: Dict[AccountType, PrivateConnector] | None = None
-        self._is_mock = is_mock
 
     def _safe_put(self, queue: asyncio.Queue, item: Any) -> None:
         if queue.maxsize == 0 or queue.qsize() < queue.maxsize:

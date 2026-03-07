@@ -25,9 +25,6 @@ class BitgetAccountType(AccountType):
     UTA_DEMO = "UTA_DEMO"
     SPOT_DEMO = "SPOT_DEMO"
     FUTURE_DEMO = "FUTURE_DEMO"
-    SPOT_MOCK = "SPOT_MOCK"
-    LINEAR_MOCK = "LINEAR_MOCK"
-    INVERSE_MOCK = "INVERSE_MOCK"
 
     @property
     def exchange_id(self):
@@ -51,36 +48,18 @@ class BitgetAccountType(AccountType):
 
     @property
     def is_spot(self):
-        return self in (self.SPOT, self.SPOT_DEMO, self.SPOT_MOCK)
+        return self in (self.SPOT, self.SPOT_DEMO)
 
     @property
     def is_future(self):
         return self in (
             self.FUTURE,
             self.FUTURE_DEMO,
-            self.LINEAR_MOCK,
-            self.INVERSE_MOCK,
         )
 
     @property
     def is_uta(self):
         return self in (self.UTA, self.UTA_DEMO)
-
-    @property
-    def is_mock(self):
-        return self in (self.SPOT_MOCK, self.LINEAR_MOCK, self.INVERSE_MOCK)
-
-    @property
-    def is_linear_mock(self):
-        return self == self.LINEAR_MOCK
-
-    @property
-    def is_inverse_mock(self):
-        return self == self.INVERSE_MOCK
-
-    @property
-    def is_spot_mock(self):
-        return self == self.SPOT_MOCK
 
 
 class BitgetInstType(Enum):

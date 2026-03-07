@@ -7,7 +7,6 @@ from walrasquant.base.sms import SubscriptionManagementSystem
 from walrasquant.base.connector import (
     PublicConnector,
     PrivateConnector,
-    MockLinearConnector,
 )
 from walrasquant.base.retry import RetryManager
 
@@ -21,6 +20,5 @@ __all__ = [
     "PublicConnector",
     "SubscriptionManagementSystem",
     "PrivateConnector",
-    "MockLinearConnector",
     "RetryManager",
 ]

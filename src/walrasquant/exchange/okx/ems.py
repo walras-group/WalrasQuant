@@ -30,7 +30,6 @@ class OkxExecutionManagementSystem(ExecutionManagementSystem):
         clock: LiveClock,
         task_manager: TaskManager,
         registry: OrderRegistry,
-        is_mock: bool = False,
         queue_maxsize: int = 100_000,
     ):
         super().__init__(
@@ -40,7 +39,6 @@ class OkxExecutionManagementSystem(ExecutionManagementSystem):
             clock=clock,
             task_manager=task_manager,
             registry=registry,
-            is_mock=is_mock,
             queue_maxsize=queue_maxsize,
         )
         self._okx_account_type: OkxAccountType = None
@@ -63,15 +61,7 @@ class OkxExecutionManagementSystem(ExecutionManagementSystem):
     def _instrument_id_to_account_type(
         self, instrument_id: InstrumentId
     ) -> AccountType:
-        if self._is_mock:
-            if instrument_id.is_spot:
-                return OkxAccountType.SPOT_MOCK
-            elif instrument_id.is_linear:
-                return OkxAccountType.LINEAR_MOCK
-            elif instrument_id.is_inverse:
-                return OkxAccountType.INVERSE_MOCK
-        else:
-            return self._okx_account_type
+        return self._okx_account_type
 
     def _submit_order(
         self,

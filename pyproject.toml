@@ -1,6 +1,6 @@
 [project]
 name = "walrasquant"
-version = "0.3.10"
+version = "0.3.11"
 description = "fastest python trading bot"
 authors = [
     {name = "River-Shi",email = "nachuan.shi.quant@gmail.com"}

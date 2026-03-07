@@ -38,9 +38,6 @@ def oid_to_cloid_hex(oid: str) -> str:
 class HyperLiquidAccountType(AccountType):
     MAINNET = "mainnet"
     TESTNET = "testnet"
-    LINEAR_MOCK = "linear_mock"
-    INVERSE_MOCK = "inverse_mock"
-    SPOT_MOCK = "spot_mock"
 
     @property
     def exchange_id(self):
@@ -61,22 +58,6 @@ class HyperLiquidAccountType(AccountType):
         if self.is_testnet:
             return "https://api.hyperliquid-testnet.xyz"
         return "https://api.hyperliquid.xyz"
-
-    @property
-    def is_mock(self):
-        return self in (self.LINEAR_MOCK, self.INVERSE_MOCK, self.SPOT_MOCK)
-
-    @property
-    def is_linear_mock(self):
-        return self == self.LINEAR_MOCK
-
-    @property
-    def is_inverse_mock(self):
-        return self == self.INVERSE_MOCK
-
-    @property
-    def is_spot_mock(self):
-        return self == self.SPOT_MOCK
 
 
 class HyperLiquidTimeInForce(Enum):

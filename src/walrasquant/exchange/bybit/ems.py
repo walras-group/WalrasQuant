@@ -23,7 +23,6 @@ class BybitExecutionManagementSystem(ExecutionManagementSystem):
         clock: LiveClock,
         task_manager: TaskManager,
         registry: OrderRegistry,
-        is_mock: bool = False,
         queue_maxsize: int = 100_000,
     ):
         super().__init__(
@@ -33,7 +32,6 @@ class BybitExecutionManagementSystem(ExecutionManagementSystem):
             clock=clock,
             task_manager=task_manager,
             registry=registry,
-            is_mock=is_mock,
             queue_maxsize=queue_maxsize,
         )
         self._bybit_account_type: BybitAccountType | None = None
@@ -64,15 +62,7 @@ class BybitExecutionManagementSystem(ExecutionManagementSystem):
     def _instrument_id_to_account_type(
         self, instrument_id: InstrumentId
     ) -> AccountType:
-        if self._is_mock:
-            if instrument_id.is_spot:
-                return BybitAccountType.SPOT_MOCK
-            elif instrument_id.is_linear:
-                return BybitAccountType.LINEAR_MOCK
-            elif instrument_id.is_inverse:
-                return BybitAccountType.INVERSE_MOCK
-        else:
-            return self._bybit_account_type
+        return self._bybit_account_type
 
     def _submit_order(
         self,

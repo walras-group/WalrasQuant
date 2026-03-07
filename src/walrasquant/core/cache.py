@@ -5,7 +5,7 @@ import re
 import redis
 import nexuslog as logging
 
-from typing import Dict, Set, Type, List, Optional, Any
+from typing import Dict, Set, List, Optional, Any
 from collections import defaultdict
 from returns.maybe import maybe
 from pathlib import Path
@@ -17,7 +17,6 @@ from walrasquant.schema import (
     Kline,
     BookL1,
     Trade,
-    AlgoOrder,
     AccountBalance,
     Balance,
     FundingRate,
@@ -61,7 +60,6 @@ class AsyncCache:
 
         # in-memory save
         self._mem_orders: Dict[str, Order] = {}  # oid -> Order
-        self._mem_algo_orders: Dict[str, AlgoOrder] = {}  # oid -> AlgoOrder
         self._mem_open_orders: Dict[ExchangeType, Set[str]] = defaultdict(
             set
         )  # exchange_id -> set(oid)
@@ -129,14 +127,6 @@ class AsyncCache:
         name = re.sub(r"[^a-zA-Z0-9_]", "_", name)
         return name.lower()
 
-    def _encode(self, obj: Order | Position | AlgoOrder) -> bytes:
-        return msgspec.json.encode(obj)
-
-    def _decode(
-        self, data: bytes, obj_type: Type[Order | Position | AlgoOrder]
-    ) -> Order | Position | AlgoOrder:
-        return msgspec.json.decode(data, type=obj_type)
-
     async def _init_storage(self):
         """Initialize the storage backend"""
         if self._storage_backend == StorageType.SQLITE:
@@ -183,7 +173,6 @@ class AsyncCache:
         """Periodically sync the cache"""
         while True:
             await self._backend.sync_orders(self._mem_orders)
-            await self._backend.sync_algo_orders(self._mem_algo_orders)
             await self._backend.sync_positions(self._mem_positions)
             await self._backend.sync_open_orders(
                 self._mem_open_orders, self._mem_orders
@@ -196,10 +185,6 @@ class AsyncCache:
     async def sync_orders(self):
         with self._order_lock:
             await self._backend.sync_orders(self._mem_orders)
-
-    async def sync_algo_orders(self):
-        with self._order_lock:
-            await self._backend.sync_algo_orders(self._mem_algo_orders)
 
     async def sync_positions(self):
         with self._position_lock:
@@ -239,21 +224,11 @@ class AsyncCache:
                     self._log.debug(f"removing order {oid} from symbol {symbol}")
                     order_set.discard(oid)
 
-            expired_algo_orders = [
-                oid
-                for oid, algo_order in self._mem_algo_orders.copy().items()
-                if algo_order.timestamp < expire_before
-            ]
-            for oid in expired_algo_orders:
-                del self._mem_algo_orders[oid]
-                self._log.debug(f"removing algo order {oid} from memory")
-
     async def close(self):
         """关闭缓存"""
         if self._storage_initialized and self._backend:
             try:
                 await self._backend.sync_orders(self._mem_orders)
-                await self._backend.sync_algo_orders(self._mem_algo_orders)
                 await self._backend.sync_positions(self._mem_positions)
                 await self._backend.sync_open_orders(
                     self._mem_open_orders, self._mem_orders
@@ -395,30 +370,27 @@ class AsyncCache:
             }
             return positions
 
-    def _order_status_update(self, order: Order | AlgoOrder) -> bool:
+    def _order_status_update(self, order: Order) -> bool:
         with self._order_lock:
-            if isinstance(order, AlgoOrder):
-                self._mem_algo_orders[order.oid] = order
-            else:
-                if not self._check_status_transition(order):
-                    return False
-                self._mem_orders[order.oid] = order
+            if not self._check_status_transition(order):
+                return False
+            self._mem_orders[order.oid] = order
 
-                # Remove from inflight tracking once exchange acknowledges the order
-                self._inflight_orders[order.symbol].discard(order.oid)
+            # Remove from inflight tracking once exchange acknowledges the order
+            self._inflight_orders[order.symbol].discard(order.oid)
 
-                # Ensure order is tracked in all sets if it's open (handles WebSocket arriving before REST API)
-                if not order.is_closed:
-                    self._mem_open_orders[order.exchange].add(order.oid)
-                    self._mem_symbol_orders[order.symbol].add(order.oid)
-                    self._mem_symbol_open_orders[order.symbol].add(order.oid)
-                    if order.is_cancel_failed:
-                        self._cancel_intent_oids.discard(order.oid)
-                else:
-                    self._mem_open_orders[order.exchange].discard(order.oid)
-                    self._mem_symbol_open_orders[order.symbol].discard(order.oid)
+            # Ensure order is tracked in all sets if it's open (handles WebSocket arriving before REST API)
+            if not order.is_closed:
+                self._mem_open_orders[order.exchange].add(order.oid)
+                self._mem_symbol_orders[order.symbol].add(order.oid)
+                self._mem_symbol_open_orders[order.symbol].add(order.oid)
+                if order.is_cancel_failed:
                     self._cancel_intent_oids.discard(order.oid)
-                return True
+            else:
+                self._mem_open_orders[order.exchange].discard(order.oid)
+                self._mem_symbol_open_orders[order.symbol].discard(order.oid)
+                self._cancel_intent_oids.discard(order.oid)
+            return True
 
     def mark_all_cancel_intent(self, symbol: str) -> None:
         with self._order_lock:
@@ -468,9 +440,9 @@ class AsyncCache:
         return self._backend.get_all_positions(exchange_id)
 
     @maybe
-    def get_order(self, oid: str) -> Optional[Order | AlgoOrder]:
+    def get_order(self, oid: str) -> Optional[Order]:
         with self._order_lock:
-            return self._backend.get_order(oid, self._mem_orders, self._mem_algo_orders)
+            return self._backend.get_order(oid, self._mem_orders)
 
     def get_symbol_orders(self, symbol: str, in_mem: bool = True) -> Set[str]:
         """Get all orders for a symbol from memory and storage"""

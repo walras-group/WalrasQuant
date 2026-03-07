@@ -13,7 +13,6 @@ from walrasquant.constants import (
     PositionSide,
     InstrumentType,
     ExchangeType,
-    AlgoOrderStatus,
     KlineInterval,
     TriggerType,
     DataType,
@@ -408,55 +407,6 @@ class Order(Struct):
         return self.type == OrderType.POST_ONLY
 
 
-class AlgoOrder(Struct, kw_only=True):
-    symbol: str
-    oid: str  # start with "ALGO-"
-    side: OrderSide
-    amount: Optional[Decimal] = None
-    duration: int
-    wait: int
-    status: AlgoOrderStatus
-    exchange: ExchangeType
-    timestamp: int
-    orders: List[str] = field(default_factory=list)  # [uuid1, uuid2, ...]
-    position_side: PositionSide | None = None
-    filled: Optional[Decimal] = None
-    cost: Optional[float] = None
-    average: Optional[float] = None
-
-    @property
-    def success(self) -> bool:
-        return not self.is_failed
-
-    @property
-    def is_running(self) -> bool:
-        return self.status == AlgoOrderStatus.RUNNING
-
-    @property
-    def is_finished(self) -> bool:
-        return self.status == AlgoOrderStatus.FINISHED
-
-    @property
-    def is_canceled(self) -> bool:
-        return self.status == AlgoOrderStatus.CANCELED
-
-    @property
-    def is_failed(self) -> bool:
-        return self.status == AlgoOrderStatus.FAILED
-
-    @property
-    def is_closed(self) -> bool:
-        return self.status in [
-            AlgoOrderStatus.CANCELED,
-            AlgoOrderStatus.FAILED,
-            AlgoOrderStatus.FINISHED,
-        ]
-
-    @property
-    def is_opened(self) -> bool:
-        return self.status in [AlgoOrderStatus.RUNNING, AlgoOrderStatus.CANCELING]
-
-
 class Balance(Struct):
     """
     Buy BTC/USDT: amount = 0.01, cost: 600
@@ -498,16 +448,12 @@ class AccountBalance(Struct):
 
     def _update_free(self, asset: str, amount: Decimal):
         if asset not in self.balances:
-            raise ValueError(
-                f"Asset {asset} not found in balances. Please add it in MockConnectorConfig"
-            )
+            raise ValueError(f"Asset {asset} not found in balances")
         self.balances[asset].free += amount
 
     def _update_locked(self, asset: str, amount: Decimal):
         if asset not in self.balances:
-            raise ValueError(
-                f"Asset {asset} not found in balances. Please add it in MockConnectorConfig"
-            )
+            raise ValueError(f"Asset {asset} not found in balances")
         self.balances[asset].locked += amount
 
     @property

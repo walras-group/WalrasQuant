@@ -120,9 +120,6 @@ class OkxAccountType(AccountType):
     LIVE = "live"
     # AWS = "aws" # deprecated
     DEMO = "demo"
-    LINEAR_MOCK = "linear_mock"
-    INVERSE_MOCK = "inverse_mock"
-    SPOT_MOCK = "spot_mock"
 
     @property
     def exchange_id(self):
@@ -135,22 +132,6 @@ class OkxAccountType(AccountType):
     @property
     def stream_url(self):
         return STREAM_URLS[self]
-
-    @property
-    def is_mock(self):
-        return self in (self.LINEAR_MOCK, self.INVERSE_MOCK, self.SPOT_MOCK)
-
-    @property
-    def is_linear_mock(self):
-        return self == self.LINEAR_MOCK
-
-    @property
-    def is_inverse_mock(self):
-        return self == self.INVERSE_MOCK
-
-    @property
-    def is_spot_mock(self):
-        return self == self.SPOT_MOCK
 
 
 STREAM_URLS = {

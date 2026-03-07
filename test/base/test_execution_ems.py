@@ -14,7 +14,6 @@ def ems(market, cache, message_bus, task_manager, order_registry):
         message_bus,
         task_manager,
         order_registry,
-        is_mock=False,
     )
 
     def mock_get_min_order_amount(self, symbol: str, market: BaseMarket) -> Decimal:
