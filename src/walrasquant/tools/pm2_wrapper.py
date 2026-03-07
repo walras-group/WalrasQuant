@@ -583,16 +583,29 @@ def _query_db(backend: str, db_path: str, table_prefix: str, query: str, params:
             conn.close()
 
 
+_POS_SORT_FIELDS = ("exchange", "symbol", "side", "amount")
+
+
 @cli.command("pos")
 @click.argument("name")
-def pos_cmd(name: str):
+@click.option(
+    "--sort",
+    "-s",
+    "sort_by",
+    type=click.Choice(_POS_SORT_FIELDS, case_sensitive=False),
+    multiple=True,
+    help="Sort field(s). Repeat to sort by multiple fields. Default: exchange, symbol.",
+)
+def pos_cmd(name: str, sort_by: tuple):
     """Show open positions for a strategy process.
 
     NAME can be a PM2 process name (STRATEGY_ID.USER_ID) or numeric PM2 id.
 
     Examples:\n
       wq pos buy_and_sell.alice\n
-      wq pos 0
+      wq pos 0\n
+      wq pos 0 --sort symbol\n
+      wq pos 0 -s exchange -s symbol
     """
     import json as _json
 
@@ -624,6 +637,11 @@ def pos_cmd(name: str):
     if not open_rows:
         click.echo("No open positions found.")
         return
+
+    # Sort: columns are (symbol=0, exchange=1, side=2, amount=3, data=4)
+    _field_idx = {"symbol": 0, "exchange": 1, "side": 2, "amount": 3}
+    effective_sort = list(sort_by) if sort_by else ["exchange", "symbol"]
+    open_rows.sort(key=lambda r: tuple((r[_field_idx[f]] or "").lower() for f in effective_sort))
 
     table = Table(box=box.ROUNDED, show_header=True, header_style="bold cyan")
     table.add_column("Symbol", style="bold")
