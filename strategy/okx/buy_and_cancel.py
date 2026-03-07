@@ -1,5 +1,5 @@
 from decimal import Decimal
-from walrasquant.constants import settings
+from walrasquant.constants import settings, StorageType
 from walrasquant.config import (
     Config,
     PublicConnectorConfig,
@@ -80,6 +80,7 @@ config = Config(
     strategy_id="okx_buy_and_cancel",
     user_id="user_test",
     strategy=Demo(),
+    storage_backend=StorageType.POSTGRESQL,
     log_config=LogConfig(level="INFO", filename="logs/okx_buy_and_cancel.log"),
     basic_config={
         ExchangeType.OKX: BasicConfig(

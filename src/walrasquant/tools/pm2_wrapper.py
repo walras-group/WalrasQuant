@@ -118,7 +118,7 @@ def _resolve_log_base(proc: dict) -> Path | None:
     name = proc.get("name", "")
     logs_dir = cwd_path / "logs"
     if logs_dir.is_dir():
-        candidates = sorted(logs_dir.glob(f"*{name}*.log"))
+        candidates = sorted(logs_dir.glob(f"{name}_????????.log"))
         if candidates:
             # Take stem of the latest file, strip date suffix (_YYYYMMDD)
             stem = candidates[-1].stem
@@ -418,17 +418,62 @@ def logs_cmd(ctx: click.Context, name: str, follow: bool, days: int):
     help="Skip confirmation prompt.",
 )
 def flush_cmd(name: str, yes: bool):
-    """Flush (truncate) all strategy log files for a PM2 process.
+    """Flush strategy log files for a PM2 process, or remove all logs.
 
-    NAME can be a PM2 process ID or a process name (STRATEGY_ID.USER_ID).
-    This clears the WalrasQuant strategy log files, not the PM2 logs.
+    NAME can be a PM2 process ID, a process name (STRATEGY_ID.USER_ID),
+    or the special keyword 'all' to delete every strategy log file.
+
+    This operates on WalrasQuant strategy log files, not PM2 logs.
 
     Examples:\n
       wq flush buy_and_sell.alice\n
       wq flush 3\n
-      wq flush buy_and_sell.alice --yes
+      wq flush all\n
+      wq flush all --yes
     """
     processes = _pm2_jlist()
+
+    if name == "all":
+        # Collect log files from every known PM2 process
+        log_files: list[Path] = []
+        for proc in processes:
+            log_base = _resolve_log_base(proc)
+            if log_base is None:
+                continue
+            files = sorted(log_base.parent.glob(f"{log_base.name}_????????.log"))
+            base_log = log_base.with_suffix(".log")
+            if base_log.exists() and base_log not in files:
+                files.insert(0, base_log)
+            log_files.extend(files)
+
+        if not log_files:
+            click.echo("No strategy log files found.")
+            return
+
+        click.echo(f"Log files to remove ({len(log_files)} total):")
+        for f in log_files:
+            size = f.stat().st_size if f.exists() else 0
+            click.echo(f"  {f}  ({size:,} bytes)")
+
+        if not yes:
+            click.confirm("\nDelete all listed files?", abort=True)
+
+        removed, errors = 0, 0
+        for f in log_files:
+            try:
+                f.unlink()
+                removed += 1
+            except OSError as exc:
+                click.echo(f"Error removing {f}: {exc}", err=True)
+                errors += 1
+
+        click.echo(
+            f"Removed {removed} file(s)." + (f" {errors} error(s)." if errors else "")
+        )
+        if errors:
+            sys.exit(1)
+        return
+
     proc = _find_process(processes, name)
     if proc is None:
         click.echo(f"Error: PM2 process '{name}' not found.", err=True)
@@ -444,8 +489,9 @@ def flush_cmd(name: str, yes: bool):
         )
         sys.exit(1)
 
-    # Find all rotated log files (any date)
-    pattern = f"{log_base.name}_*.log"
+    # Find all rotated log files (any date); use exact 8-digit date pattern to avoid
+    # matching files whose names share a common prefix (e.g. "app" matching "app_usdt_*")
+    pattern = f"{log_base.name}_????????.log"
     log_files = sorted(log_base.parent.glob(pattern))
     # Also include the base log file without date suffix if it exists
     base_log = log_base.with_suffix(".log")
@@ -479,6 +525,216 @@ def flush_cmd(name: str, yes: bool):
     )
     if errors:
         sys.exit(1)
+
+
+def _detect_backend(script_path: str) -> str:
+    """Return 'postgresql' if the script uses PostgreSQL storage, else 'sqlite'."""
+    try:
+        src = Path(script_path).read_text(encoding="utf-8", errors="ignore")
+        if re.search(r"StorageType\.POSTGRESQL|storage_backend.*POSTGRESQL", src, re.IGNORECASE):
+            return "postgresql"
+    except (OSError, PermissionError):
+        pass
+    return "sqlite"
+
+
+def _resolve_db(proc: dict) -> tuple[str, str, str]:
+    """Return (backend_type, db_path_or_empty, table_prefix) for a PM2 process."""
+    pm2_env = proc.get("pm2_env", {})
+    name = proc.get("name", "")
+    strategy_id, _, user_id = name.partition(".")
+    table_prefix = re.sub(r"[^a-zA-Z0-9_]", "_", f"{strategy_id}_{user_id}").lower()
+
+    script_path = pm2_env.get("pm_exec_path", "")
+    cwd = pm2_env.get("pm_cwd") or pm2_env.get("pm2_cwd") or ""
+    cwd_path = Path(cwd) if cwd else Path.cwd()
+
+    backend = _detect_backend(script_path)
+
+    if backend == "sqlite":
+        db_path_str = _extract_config_field(script_path, "db_path") or ".keys/cache.db"
+        db_path = Path(db_path_str)
+        if not db_path.is_absolute():
+            db_path = cwd_path / db_path
+        return "sqlite", str(db_path), table_prefix
+
+    return "postgresql", "", table_prefix
+
+
+def _query_db(backend: str, db_path: str, table_prefix: str, query: str, params: tuple = ()):
+    """Execute a SELECT and return rows."""
+    if backend == "sqlite":
+        import sqlite3
+        conn = sqlite3.connect(db_path)
+        try:
+            cur = conn.execute(query, params)
+            return cur.fetchall()
+        finally:
+            conn.close()
+    else:
+        import psycopg2
+        from walrasquant.constants import get_postgresql_config
+        conn = psycopg2.connect(**get_postgresql_config())
+        try:
+            cur = conn.cursor()
+            cur.execute(query, params)
+            return cur.fetchall()
+        finally:
+            conn.close()
+
+
+@cli.command("pos")
+@click.argument("name")
+def pos_cmd(name: str):
+    """Show open positions for a strategy process.
+
+    NAME can be a PM2 process name (STRATEGY_ID.USER_ID) or numeric PM2 id.
+
+    Examples:\n
+      wq pos buy_and_sell.alice\n
+      wq pos 0
+    """
+    import json as _json
+
+    processes = _pm2_jlist()
+    proc = _find_process(processes, name)
+    if proc is None:
+        click.echo(f"Error: PM2 process '{name}' not found.", err=True)
+        click.echo(f"Available: {[p.get('name') for p in processes]}", err=True)
+        sys.exit(1)
+
+    backend, db_path, table_prefix = _resolve_db(proc)
+
+    if backend == "sqlite" and not Path(db_path).exists():
+        click.echo(f"Error: SQLite database not found: {db_path}", err=True)
+        sys.exit(1)
+
+    query = f"SELECT symbol, exchange, side, amount, data FROM {table_prefix}_positions"
+    try:
+        rows = _query_db(backend, db_path, table_prefix, query)
+    except Exception as e:
+        if "no such table" in str(e).lower() or "does not exist" in str(e).lower():
+            click.echo("No open positions found.")
+            return
+        click.echo(f"Error querying positions: {e}", err=True)
+        sys.exit(1)
+
+    # Filter out flat/null positions
+    open_rows = [r for r in rows if r[2] and r[2].upper() not in ("FLAT", "NONE", "NULL")]
+    if not open_rows:
+        click.echo("No open positions found.")
+        return
+
+    table = Table(box=box.ROUNDED, show_header=True, header_style="bold cyan")
+    table.add_column("Symbol", style="bold")
+    table.add_column("Exchange")
+    table.add_column("Side", width=6)
+    table.add_column("Amount", justify="right")
+    table.add_column("Entry Price", justify="right")
+    table.add_column("Unrealized PnL", justify="right")
+    table.add_column("Realized PnL", justify="right")
+
+    for symbol, exchange, side, amount, data in open_rows:
+        try:
+            if isinstance(data, memoryview):
+                raw = bytes(data)
+            elif isinstance(data, str):
+                raw = data.encode()
+            else:
+                raw = data
+            d = _json.loads(raw)
+            entry_price = f"{d.get('entry_price', 0):.6g}"
+            unrealized = f"{d.get('unrealized_pnl', 0):.4f}"
+            realized = f"{d.get('realized_pnl', 0):.4f}"
+        except Exception:
+            entry_price = unrealized = realized = "?"
+
+        side_upper = (side or "").upper()
+        if side_upper in ("LONG", "BUY"):
+            side_str = f"[green]{side_upper}[/green]"
+        elif side_upper in ("SHORT", "SELL"):
+            side_str = f"[red]{side_upper}[/red]"
+        else:
+            side_str = side_upper
+
+        table.add_row(symbol, exchange or "", side_str, amount or "", entry_price, unrealized, realized)
+
+    console.print(table)
+
+
+@cli.command("bal")
+@click.argument("name")
+@click.option("--all", "-a", "show_all", is_flag=True, help="Show zero-balance assets too.")
+def bal_cmd(name: str, show_all: bool):
+    """Show non-zero account balances for a strategy process.
+
+    NAME can be a PM2 process name (STRATEGY_ID.USER_ID) or numeric PM2 id.
+    Zero-balance assets are hidden by default; use --all to show them.
+
+    Examples:\n
+      wq bal buy_and_sell.alice\n
+      wq bal 0\n
+      wq bal 0 --all
+    """
+    from decimal import Decimal
+
+    processes = _pm2_jlist()
+    proc = _find_process(processes, name)
+    if proc is None:
+        click.echo(f"Error: PM2 process '{name}' not found.", err=True)
+        click.echo(f"Available: {[p.get('name') for p in processes]}", err=True)
+        sys.exit(1)
+
+    backend, db_path, table_prefix = _resolve_db(proc)
+
+    if backend == "sqlite" and not Path(db_path).exists():
+        click.echo(f"Error: SQLite database not found: {db_path}", err=True)
+        sys.exit(1)
+
+    query = (
+        f"SELECT asset, account_type, free, locked FROM {table_prefix}_balances "
+        "ORDER BY account_type, asset"
+    )
+    try:
+        rows = _query_db(backend, db_path, table_prefix, query)
+    except Exception as e:
+        if "no such table" in str(e).lower() or "does not exist" in str(e).lower():
+            click.echo("No balance data found.")
+            return
+        click.echo(f"Error querying balances: {e}", err=True)
+        sys.exit(1)
+
+    if not rows:
+        click.echo("No balance data found.")
+        return
+
+    table = Table(box=box.ROUNDED, show_header=True, header_style="bold cyan")
+    table.add_column("Asset", style="bold")
+    table.add_column("Account Type")
+    table.add_column("Free", justify="right")
+    table.add_column("Locked", justify="right")
+    table.add_column("Total", justify="right")
+
+    for asset, account_type, free_str, locked_str in rows:
+        try:
+            free = Decimal(free_str or "0")
+            locked = Decimal(locked_str or "0")
+            total = free + locked
+        except Exception:
+            free = locked = total = Decimal("0")
+
+        if not show_all and total == Decimal("0"):
+            continue
+
+        table.add_row(
+            asset or "",
+            account_type or "",
+            str(free),
+            str(locked),
+            str(total),
+        )
+
+    console.print(table)
 
 
 @cli.command("stop")

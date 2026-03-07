@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from walrasquant.constants import settings
+from walrasquant.constants import settings, StorageType
 from walrasquant.config import (
     Config,
     PublicConnectorConfig,
@@ -77,6 +77,7 @@ config = Config(
     strategy_id="bybit_buy_and_sell",
     user_id="user_test",
     strategy=Demo(),
+    storage_backend=StorageType.POSTGRESQL,
     log_config=LogConfig(
         level="INFO",
         name_levels={"Strategy": "WARNING"},
